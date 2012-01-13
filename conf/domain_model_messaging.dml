@@ -1,0 +1,90 @@
+package pt.ist.messaging.domain;
+
+
+class MessagingSystem {
+}
+
+class Sender {
+	String fromName;
+	String fromAddress;
+}
+
+class Message {
+	String subject;
+	String body;
+	String htmlBody;
+	DateTime created;
+	DateTime sent;
+	String bccs;
+}
+
+
+relation MyOrgMessagingSystem {
+	.myorg.domain.MyOrg playsRole myOrg {
+		multiplicity 1..1;
+	}
+	MessagingSystem playsRole messagingSystem;
+}
+
+relation MessagingSystemSender {
+	MessagingSystem playsRole messagingSystem {
+		multiplicity 1..1;
+	}
+	Sender playsRole sender {
+		multiplicity *;
+	}
+}
+
+relation MessagingSystemMessage {
+	MessagingSystem playsRole messagingSystem {
+		multiplicity 1..1;
+	}
+	Message playsRole Message {
+		multiplicity *;
+	}
+}
+
+relation MessagingSystemMessagePending {
+	MessagingSystem playsRole messagingSystemFromPendingDispatch;
+	Message playsRole messagePendingDispatch {
+		multiplicity *;
+	}
+}
+
+relation SenderPersistentGroupMembers {
+	Sender playsRole senderFromMembers {
+		multiplicity *;
+	}
+	.myorg.domain.groups.PersistentGroup playsRole members {
+		multiplicity 1..1;
+	}
+}
+
+relation SenderPersistentGroupRecipients {
+	Sender playsRole senderFromRecipients {
+		multiplicity *;
+	}
+	.myorg.domain.groups.PersistentGroup playsRole recipients {
+		multiplicity *;
+	}
+}
+
+relation SenderMessage {
+	Sender playsRole sender {
+		multiplicity 1..1;
+	}
+	Message playsRole message {
+		multiplicity *;
+	}
+}
+
+relation MessagePersistentGroup {
+	Message playsRole message {
+		multiplicity *;
+	}
+	.myorg.domain.groups.PersistentGroup playsRole recipients {
+		multiplicity 1..*;
+	}
+}
+
+ 
