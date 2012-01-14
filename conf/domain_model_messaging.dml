@@ -15,8 +15,19 @@ class Message {
 	String htmlBody;
 	DateTime created;
 	DateTime sent;
-	String bccs;
+	String bccString;
 }
+
+class ReplyTo {
+}
+
+	class ConcreteReplyTo extends ReplyTo {
+		String replyToAddress;
+	}
+    
+    class CurrentUserReplyTo extends ReplyTo { }
+
+	class UserReplyTo extends ReplyTo { }
 
 
 relation MyOrgMessagingSystem {
@@ -78,13 +89,70 @@ relation SenderMessage {
 	}
 }
 
-relation MessagePersistentGroup {
-	Message playsRole message {
+relation SenderReplyTo {
+	Sender playsRole sender {
 		multiplicity *;
 	}
-	.myorg.domain.groups.PersistentGroup playsRole recipients {
-		multiplicity 1..*;
+	ReplyTo playsRole replyTo {
+		multiplicity *;
 	}
 }
 
- 
+relation MessageReplyTo {
+	Message playsRole message {
+		multiplicity *;
+	}
+	ReplyTo playsRole replyTo {
+		multiplicity *;
+	}
+}
+
+relation UserReplyToUser {
+	UserReplyTo playsRole userReplyTo;
+	.myorg.domain.User playsRole user {
+		multiplicity 1..1;
+	} 
+}
+
+relation MessageRecipientTo {
+	Message playsRole messageFromTos {
+		multiplicity *;
+	}
+	.myorg.domain.groups.PersistentGroup playsRole to {
+		multiplicity *;
+	}
+}
+
+relation MessageRecipientCc {
+	Message playsRole messageFromCc {
+		multiplicity *;
+	}
+	.myorg.domain.groups.PersistentGroup playsRole cc {
+		multiplicity *;
+	}
+}
+
+relation MessageRecipientBcc {
+	Message playsRole messageFromBcc {
+		multiplicity *;
+	}
+	.myorg.domain.groups.PersistentGroup playsRole bcc {
+		multiplicity *;
+	}
+}
+
+relation MessageUser {
+	Message playsRole message {
+		multiplicity *;
+	}
+	.myorg.domain.User playsRole user {
+		multiplicity 1..1;
+	}
+}
+
+relation EmailMessage {
+    .pt.ist.emailNotifier.domain.Email playsRole email {
+        multiplicity *;
+    }
+    Message playsRole message;
+}

@@ -1,2 +1,2 @@
 name=messaging
-depends=core
+depends=core,email-module
