@@ -7,16 +7,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jvstm.TransactionalCommand;
-import module.organization.domain.Person;
 import myorg.applicationTier.Authenticate.UserView;
 import myorg.domain.User;
+import myorg.domain.VirtualHost;
 import myorg.domain.groups.PersistentGroup;
 
 import org.joda.time.DateTime;
 
 import pt.ist.emailNotifier.domain.Email;
-import pt.ist.emailNotifier.domain.MessageId;
 import pt.ist.emailNotifier.util.EmailAddressList;
+import pt.ist.fenixWebFramework.services.Service;
 import pt.ist.fenixframework.pstm.Transaction;
 
 public class Message extends Message_Base {
@@ -97,6 +97,7 @@ public class Message extends Message_Base {
 	}
     }
 
+    @Service
     public void delete() {
 	getToSet().clear();
 	getCcSet().clear();
@@ -158,9 +159,11 @@ public class Message extends Message_Base {
 	private final Set<PersistentGroup> recipients;
 
 	private final Set<String> emailAddresses = new HashSet<String>();
+	private final String virtualHostName;
 
-	private Worker(final Set<PersistentGroup> recipients) {
+	private Worker(final Set<PersistentGroup> recipients, final String virtualHostName) {
 	    this.recipients = recipients;
+	    this.virtualHostName = virtualHostName;
 	}
 
 	@Override
@@ -168,8 +171,13 @@ public class Message extends Message_Base {
 	    Transaction.withTransaction(new TransactionalCommand() {
 		@Override
 		public void doIt() {
-		    for (final PersistentGroup recipient : recipients) {
-			addDestinationEmailAddresses(recipient, emailAddresses);
+		    try {
+			VirtualHost.setVirtualHostForThread(virtualHostName);
+			for (final PersistentGroup recipient : recipients) {
+			    addDestinationEmailAddresses(recipient, emailAddresses);
+			}
+		    } finally {
+			VirtualHost.releaseVirtualHostFromThread();
 		    }
 		}
 	    });
@@ -204,7 +212,7 @@ public class Message extends Message_Base {
 		}
 	    }
 	}
-	final Worker worker = new Worker(getBccSet());
+	final Worker worker = new Worker(getBccSet(), VirtualHost.getVirtualHostForThread().getHostname());
 	worker.start();
 	try {
 	    worker.join();
@@ -225,25 +233,30 @@ public class Message extends Message_Base {
     }
 
     public void dispatch() {
-	final Sender sender = getSender();
-	final User user = getUser();
-	final Set<String> destinationBccs = getDestinationBccs();
-	for (final Set<String> bccs : split(destinationBccs)) {
-	    if (!bccs.isEmpty()) {
-		final Email email = new Email(sender.getFromName(user), sender.getFromAddress(), getReplyToAddresses(user),
-			Collections.EMPTY_SET, Collections.EMPTY_SET, bccs, getSubject(), getBody(), getHtmlBody());
+	try {
+	    final Sender sender = getSender();
+	    VirtualHost.setVirtualHostForThread(sender.getVirtualHost());
+	    final User user = getUser();
+	    final Set<String> destinationBccs = getDestinationBccs();
+	    for (final Set<String> bccs : split(destinationBccs)) {
+		if (!bccs.isEmpty()) {
+		    final Email email = new Email(sender.getFromName(user), sender.getFromAddress(), getReplyToAddresses(user),
+			    Collections.EMPTY_SET, Collections.EMPTY_SET, bccs, getSubject(), getBody(), getHtmlBody());
+		    email.setMessage(this);
+		}
+	    }
+	    final Set<String> tos = getRecipientAddresses(getToSet());
+	    final Set<String> ccs = getRecipientAddresses(getCcSet());
+	    if (!tos.isEmpty() || !ccs.isEmpty()) {
+		final Email email = new Email(sender.getFromName(user), sender.getFromAddress(), getReplyToAddresses(user), tos,
+			ccs, Collections.EMPTY_SET, getSubject(), getBody(), getHtmlBody());
 		email.setMessage(this);
 	    }
+	    removeMessagingSystemFromPendingDispatch();
+	    setSent(new DateTime());
+	} finally {
+	    VirtualHost.releaseVirtualHostFromThread();
 	}
-	final Set<String> tos = getRecipientAddresses(getToSet());
-	final Set<String> ccs = getRecipientAddresses(getCcSet());
-	if (!tos.isEmpty() || !ccs.isEmpty()) {
-	    final Email email = new Email(sender.getFromName(user), sender.getFromAddress(), getReplyToAddresses(user), tos,
-		    ccs, Collections.EMPTY_SET, getSubject(), getBody(), getHtmlBody());
-	    email.setMessage(this);
-	}
-	removeMessagingSystemFromPendingDispatch();
-	setSent(new DateTime());
     }
 
     private Set<Set<String>> split(final Set<String> destinations) {

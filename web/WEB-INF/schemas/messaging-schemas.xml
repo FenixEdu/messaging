@@ -1,0 +1,7 @@
+<schema name="net.sourceforge.fenixedu.domain.util.email.ReplyTo.selectItem" type="pt.ist.messaging.domain.ReplyTo">
+	<slot name="replyToAddress"/>
+</schema>
+
+<schema name="net.sourceforge.fenixedu.domain.util.email.Recipient.selectItem" type="myorg.domain.groups.PersistentGroup">
+	<slot name="name"/>
+</schema>

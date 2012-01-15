@@ -9,6 +9,7 @@ import java.util.TreeSet;
 import myorg.applicationTier.Authenticate.UserView;
 import myorg.domain.RoleType;
 import myorg.domain.User;
+import myorg.domain.VirtualHost;
 import myorg.domain.groups.PersistentGroup;
 import pt.ist.fenixWebFramework.services.Service;
 
@@ -27,6 +28,7 @@ public class Sender extends Sender_Base {
     public Sender() {
 	super();
 	setMessagingSystem(MessagingSystem.getInstance());
+	setVirtualHost(VirtualHost.getVirtualHostForThread());
     }
 
     public Sender(final String fromName, final String fromAddress, final PersistentGroup members) {
@@ -59,9 +61,9 @@ public class Sender extends Sender_Base {
 	return senders;
     }
 
-    private boolean isMember(final User user) {
+    public boolean isMember(final User user) {
 	final PersistentGroup persistentGroup = getMembers();
-	return (hasMembers() && persistentGroup.isMember(user)) || user.hasRoleType(RoleType.MANAGER);
+	return (hasMembers() && persistentGroup.isMember(user)) || (user != null && user.hasRoleType(RoleType.MANAGER));
     }
 
     public static boolean userHasRecipients() {

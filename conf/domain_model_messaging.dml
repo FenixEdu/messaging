@@ -1,6 +1,9 @@
 package pt.ist.messaging.domain;
 
 
+external class .pt.ist.fenixframework.plugins.scheduler.domain.Task;
+
+
 class MessagingSystem {
 }
 
@@ -28,6 +31,10 @@ class ReplyTo {
     class CurrentUserReplyTo extends ReplyTo { }
 
 	class UserReplyTo extends ReplyTo { }
+
+class MessageTask extends .pt.ist.fenixframework.plugins.scheduler.domain.Task { }
+
+class SenderGroup extends .myorg.domain.groups.PersistentGroup { }
 
 
 relation MyOrgMessagingSystem {
@@ -155,4 +162,13 @@ relation EmailMessage {
         multiplicity *;
     }
     Message playsRole message;
+}
+
+relation SenderVirtualHost {
+    Sender playsRole sender {
+        multiplicity *;
+    }
+    .myorg.domain.VirtualHost playsRole virtualHost {
+    	multiplicity 1..1;
+    }
 }
