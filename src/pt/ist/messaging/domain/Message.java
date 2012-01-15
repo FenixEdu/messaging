@@ -109,6 +109,7 @@ public class Message extends Message_Base {
 	    }
 	}
 	for (final Email email : getEmailSet()) {
+	    email.removeMessage();
 	    email.delete();
 	}
 
