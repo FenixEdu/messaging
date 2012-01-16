@@ -175,25 +175,9 @@ public class EmailBean implements Serializable {
 
     @Service
     public Message send() {
-	final ResourceBundle resourceBundle = ResourceBundle.getBundle("resources.MessagingResources", Language.getLocale());
-
-	final StringBuilder message = new StringBuilder();
-	if (getMessage() != null && !getMessage().trim().isEmpty()) {
-	    message.append(getMessage());
-	    message.append("\n\n---\n");
-	    message.append(resourceBundle.getString("message.email.footer.prefix"));
-	    message.append(getSender().getFromName());
-	    message.append(resourceBundle.getString("message.email.footer.prefix.suffix"));
-	    for (final PersistentGroup recipient : getRecipients()) {
-		message.append("\n\t");
-		message.append(recipient.getPresentationName());
-	    }
-	    message.append("\n");
-	}
-
 	final String bccs = getBccs() == null ? null : getBccs().replace(" ", "");
 	final String htmlMessage = getHtmlMessage();
-	return new Message(getSender(), getReplyTos(), getRecipients(), getSubject(), message.toString(), bccs, htmlMessage);
+	return new Message(getSender(), getReplyTos(), getRecipients(), getSubject(), getMessage(), bccs, htmlMessage);
     }
 
 //    @Service

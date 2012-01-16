@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 import jvstm.TransactionalCommand;
@@ -18,6 +19,7 @@ import pt.ist.emailNotifier.domain.Email;
 import pt.ist.emailNotifier.util.EmailAddressList;
 import pt.ist.fenixWebFramework.services.Service;
 import pt.ist.fenixframework.pstm.Transaction;
+import pt.utl.ist.fenix.tools.util.i18n.Language;
 
 public class Message extends Message_Base {
 
@@ -321,6 +323,35 @@ public class Message extends Message_Base {
 	    }
 	}
 	return count;
+    }
+
+    @Override
+    public void setBody(final String body) {
+	if (body != null) {
+	    final ResourceBundle resourceBundle = ResourceBundle.getBundle("resources.MessagingResources", Language.getLocale());
+
+	    final StringBuilder message = new StringBuilder();
+	    if (!body.trim().isEmpty()) {
+		message.append(body);
+		message.append("\n\n---\n");
+		message.append(resourceBundle.getString("message.email.footer.prefix"));
+		message.append(getSender().getFromName());
+		message.append(resourceBundle.getString("message.email.footer.prefix.suffix"));
+		concatRecipients(message, getToSet());
+		concatRecipients(message, getCcSet());
+		concatRecipients(message, getBccSet());
+		message.append("\n");
+	    }
+	} else {
+	    super.setBody(body);
+	}
+    }
+
+    private void concatRecipients(final StringBuilder message, final Set<PersistentGroup> set) {
+	for (final PersistentGroup recipient : set) {
+	    message.append("\n\t");
+	    message.append(recipient.getPresentationName());
+	}	
     }
 
 }

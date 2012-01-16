@@ -53,7 +53,7 @@ public class Sender extends Sender_Base {
 
 	final SortedSet<Sender> senders = new TreeSet<Sender>(Sender.COMPARATOR_BY_FROM_NAME);
 	for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-	    if (sender.isMember(user)) {
+	    if (sender.getVirtualHost() == VirtualHost.getVirtualHostForThread() && sender.isMember(user)) {
 		senders.add(sender);
 	    }
 	}
@@ -69,7 +69,7 @@ public class Sender extends Sender_Base {
     public static boolean userHasRecipients() {
 	final User user = UserView.getCurrentUser();
 	for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-	    if (sender.isMember(user) && sender.hasAnyRecipients()) {
+	    if (sender.getVirtualHost() == VirtualHost.getVirtualHostForThread() && sender.isMember(user) && sender.hasAnyRecipients()) {
 		return true;
 	    }
 	}

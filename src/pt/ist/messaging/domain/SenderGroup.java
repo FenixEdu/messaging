@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import myorg.domain.User;
+import myorg.domain.VirtualHost;
 import myorg.domain.groups.PersistentGroup;
 import myorg.util.BundleUtil;
 import pt.ist.fenixWebFramework.services.Service;
@@ -27,7 +28,7 @@ public class SenderGroup extends SenderGroup_Base {
     @Override
     public boolean isMember(final User user) {
 	for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-	    if (sender.isMember(user)) {
+	    if (sender.getVirtualHost() == VirtualHost.getVirtualHostForThread() && sender.isMember(user)) {
 		return true;
 	    }
 	}
@@ -38,9 +39,11 @@ public class SenderGroup extends SenderGroup_Base {
     public Set<User> getMembers() {
 	final Set<User> members = new HashSet<User>();
 	for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-	    final PersistentGroup group = sender.getMembers();
-	    if (group != null) {
-		members.addAll(group.getMembers());
+	    if (sender.getVirtualHost() == VirtualHost.getVirtualHostForThread()) {
+		final PersistentGroup group = sender.getMembers();
+		if (group != null) {
+		    members.addAll(group.getMembers());
+		}
 	    }
 	}
 	return members;

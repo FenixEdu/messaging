@@ -172,3 +172,8 @@ relation SenderVirtualHost {
     	multiplicity 1..1;
     }
 }
+
+relation SystemSenderVirtualHost {
+    Sender playsRole systemSender;
+    .myorg.domain.VirtualHost playsRole virtualHostFromSystemSender;
+}
