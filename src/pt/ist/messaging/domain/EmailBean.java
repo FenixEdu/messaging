@@ -2,6 +2,7 @@ package pt.ist.messaging.domain;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -177,7 +178,8 @@ public class EmailBean implements Serializable {
     public Message send() {
 	final String bccs = getBccs() == null ? null : getBccs().replace(" ", "");
 	final String htmlMessage = getHtmlMessage();
-	return new Message(getSender(), getReplyTos(), getRecipients(), getSubject(), getMessage(), bccs, htmlMessage);
+	return new Message(getSender(), getReplyTos(), Collections.EMPTY_SET, Collections.EMPTY_SET, getRecipients(),
+		bccs, getSubject(), getMessage(), htmlMessage);
     }
 
 //    @Service

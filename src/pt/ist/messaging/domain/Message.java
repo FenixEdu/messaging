@@ -44,52 +44,21 @@ public class Message extends Message_Base {
 	setMessagingSystemFromPendingDispatch(messagingSystem);
     }
 
-    public Message(final Sender sender, String to, String subject, String body) {
-	this(sender, sender.getReplyToSet(), null, subject, body, to);
-    }
-
-    public Message(final Sender sender, final Collection<? extends ReplyTo> replyTos, final Collection<PersistentGroup> tos,
-	    final Collection<PersistentGroup> ccs, final Collection<PersistentGroup> bccs,
-	    final String subject, final String body, final Set<String> bccStrings) {
-	this(sender, replyTos, bccs, subject, body, bccStrings);
-	if (tos != null) getToSet().addAll(tos);
-	if (ccs != null) getCcSet().addAll(ccs);
-    }
-
-    public Message(final Sender sender, final Collection<? extends ReplyTo> replyTos, final Collection<PersistentGroup> tos,
-	    final Collection<PersistentGroup> ccs, final Collection<PersistentGroup> bccs,
-	    final String subject, final String body, final Set<String> bccStrings, final String htmlBody) {
-	this(sender, replyTos, bccs, subject, body, bccStrings);
-	if (tos != null) getToSet().addAll(tos);
-	if (ccs != null) getCcSet().addAll(ccs);
-    }
-
-    public Message(final Sender sender, final PersistentGroup bcc, final String subject, final String body) {
-	this(sender, sender.getConcreteReplyTos(), Collections.singleton(bcc), subject, body, new EmailAddressList(
-		Collections.EMPTY_LIST).toString());
-    }
-
-    public Message(final Sender sender, final Collection<? extends ReplyTo> replyTos, final Collection<PersistentGroup> bccs,
-	    final String subject, final String body, final Set<String> bccStrings) {
-	this(sender, replyTos, bccs, subject, body, new EmailAddressList(bccStrings).toString());
-    }
-
-    public Message(final Sender sender, final Collection<? extends ReplyTo> replyTos, final Collection<PersistentGroup> bccs,
-	    final String subject, final String body, final String bccString) {
+    public Message(final Sender sender, final Collection<? extends ReplyTo> replyTos,
+	    final Collection<PersistentGroup> tos, final Collection<PersistentGroup> ccs,
+	    final Collection<PersistentGroup> bccs, final String bccString,
+	    final String subject, final String body, final String htmlBody) {
 	this();
 	setSender(sender);
 	if (replyTos != null) getReplyToSet().addAll(replyTos);
+	if (tos != null) getToSet().addAll(tos);
+	if (ccs != null) getCcSet().addAll(ccs);
 	if (bccs != null) getBccSet().addAll(bccs);
-	setSubject(subject);
-	setBody(body);
 	setBccString(bccString);
 	setUser(UserView.getCurrentUser());
 	setCreated(new DateTime());
-    }
-
-    public Message(final Sender sender, final Collection<? extends ReplyTo> replyTos, final Collection<PersistentGroup> bccs,
-	    final String subject, final String body, final String bccString, final String htmlBody) {
-	this(sender, replyTos, bccs, subject, body, bccString);
+	setSubject(subject);
+	setBody(body);
 	setHtmlBody(htmlBody);
     }
 
@@ -335,6 +304,7 @@ public class Message extends Message_Base {
 		message.append(body);
 		message.append("\n\n---\n");
 		message.append(resourceBundle.getString("message.email.footer.prefix"));
+		message.append(" ");
 		message.append(getSender().getFromName());
 		message.append(resourceBundle.getString("message.email.footer.prefix.suffix"));
 		concatRecipients(message, getToSet());
@@ -342,6 +312,7 @@ public class Message extends Message_Base {
 		concatRecipients(message, getBccSet());
 		message.append("\n");
 	    }
+	    super.setBody(message.toString());
 	} else {
 	    super.setBody(body);
 	}
