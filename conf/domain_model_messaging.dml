@@ -1,7 +1,6 @@
 package pt.ist.messaging.domain;
 
 
-external class .pt.ist.fenixframework.plugins.scheduler.domain.Task;
 
 
 class MessagingSystem {
