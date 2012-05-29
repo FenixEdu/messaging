@@ -23,7 +23,7 @@
 	<fr:edit id="emailBean" name="emailBean">
 		<fr:schema type="pt.ist.messaging.domain.EmailBean" bundle="MESSAGING_RESOURCES">
 			<fr:slot name="sender" bundle="MESSAGING_RESOURCES" key="label.fromName" layout="menu-select-postback"
-					validator="pt.ist.fenixWebFramework.renderers.validators.RequiredValidator">
+					required="true">
 		        <fr:property name="providerClass" value="pt.ist.messaging.presentationTier.provider.EmailSenderProvider" />
 				<fr:property name="format" value="${fromName} (${fromAddress})" />
 				<fr:property name="destination" value="selectSender"/>
