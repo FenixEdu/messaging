@@ -286,7 +286,6 @@ public class Message extends Message_Base {
 
     public int getRecipientsWithEmailCount() {
 	int count = 0;
-	final long start = System.currentTimeMillis();
 	for (final PersistentGroup recipient : getBccSet()) {
 	    final Set<User> elements = recipient.getMembers();
 	    for (final User user : elements) {
@@ -295,8 +294,6 @@ public class Message extends Message_Base {
 		}
 	    }
 	}
-	final long end = System.currentTimeMillis();
-	System.out.println("getRecipientsWithEmailCount time : " + (end - start) + "ms");
 	return count;
     }
 
