@@ -32,13 +32,13 @@ import java.util.ResourceBundle;
 import java.util.Set;
 
 import jvstm.TransactionalCommand;
+
+import org.joda.time.DateTime;
+
 import pt.ist.bennu.core.applicationTier.Authenticate.UserView;
 import pt.ist.bennu.core.domain.User;
 import pt.ist.bennu.core.domain.VirtualHost;
 import pt.ist.bennu.core.domain.groups.PersistentGroup;
-
-import org.joda.time.DateTime;
-
 import pt.ist.emailNotifier.domain.Email;
 import pt.ist.emailNotifier.util.EmailAddressList;
 import pt.ist.fenixWebFramework.services.Service;
@@ -52,303 +52,314 @@ import pt.utl.ist.fenix.tools.util.i18n.Language;
  */
 public class Message extends Message_Base {
 
-    static final public Comparator<Message> COMPARATOR_BY_CREATED_DATE_OLDER_FIRST = new Comparator<Message>() {
-	public int compare(Message o1, Message o2) {
-	    return o1.getCreated().compareTo(o2.getCreated());
-	}
-    };
+	static final public Comparator<Message> COMPARATOR_BY_CREATED_DATE_OLDER_FIRST = new Comparator<Message>() {
+		@Override
+		public int compare(Message o1, Message o2) {
+			return o1.getCreated().compareTo(o2.getCreated());
+		}
+	};
 
-    static final public Comparator<Message> COMPARATOR_BY_CREATED_DATE_OLDER_LAST = new Comparator<Message>() {
-	public int compare(Message o1, Message o2) {
-	    return o2.getCreated().compareTo(o1.getCreated());
-	}
-    };
+	static final public Comparator<Message> COMPARATOR_BY_CREATED_DATE_OLDER_LAST = new Comparator<Message>() {
+		@Override
+		public int compare(Message o1, Message o2) {
+			return o2.getCreated().compareTo(o1.getCreated());
+		}
+	};
 
-    public static final int NUMBER_OF_SENT_EMAILS_TO_STAY = 500;
+	public static final int NUMBER_OF_SENT_EMAILS_TO_STAY = 500;
 
-    public Message() {
-	super();
-	final MessagingSystem messagingSystem = MessagingSystem.getInstance();
-	setMessagingSystem(messagingSystem);
-	setMessagingSystemFromPendingDispatch(messagingSystem);
-    }
-
-    public Message(final Sender sender, final Collection<? extends ReplyTo> replyTos,
-	    final Collection<PersistentGroup> tos, final Collection<PersistentGroup> ccs,
-	    final Collection<PersistentGroup> bccs, final String bccString,
-	    final String subject, final String body, final String htmlBody) {
-	this();
-	setSender(sender);
-	if (replyTos != null) getReplyToSet().addAll(replyTos);
-	if (tos != null) getToSet().addAll(tos);
-	if (ccs != null) getCcSet().addAll(ccs);
-	if (bccs != null) getBccSet().addAll(bccs);
-	setBccString(bccString);
-	setUser(UserView.getCurrentUser());
-	setCreated(new DateTime());
-	setSubject(subject);
-	setBody(body);
-	setHtmlBody(htmlBody);
-    }
-
-    public void safeDelete() {
-	if (getSent() == null) {
-	    delete();
-	}
-    }
-
-    @Service
-    public void delete() {
-	getToSet().clear();
-	getCcSet().clear();
-	getBccSet().clear();
-	for (final ReplyTo replyTo : getReplyToSet()) {
-	    removeReplyTo(replyTo);
-	    if (!replyTo.hasAnySender()) {
-		replyTo.delete();
-	    }
-	}
-	for (final Email email : getEmailSet()) {
-	    email.removeMessage();
-	    email.delete();
+	public Message() {
+		super();
+		final MessagingSystem messagingSystem = MessagingSystem.getInstance();
+		setMessagingSystem(messagingSystem);
+		setMessagingSystemFromPendingDispatch(messagingSystem);
 	}
 
-	removeSender();
-	removeUser();
-	removeMessagingSystemFromPendingDispatch();
-	removeMessagingSystem();
-	deleteDomainObject();
-    }
-
-    public String getRecipientsAsText() {
-	final StringBuilder stringBuilder = new StringBuilder();
-	recipients2Text(stringBuilder, getBccSet());
-	if (getBccString() != null && !getBccString().isEmpty()) {
-	    if (stringBuilder.length() > 0) {
-		stringBuilder.append("\n");
-	    }
-	    stringBuilder.append(getBccString());
+	public Message(final Sender sender, final Collection<? extends ReplyTo> replyTos, final Collection<PersistentGroup> tos,
+			final Collection<PersistentGroup> ccs, final Collection<PersistentGroup> bccs, final String bccString,
+			final String subject, final String body, final String htmlBody) {
+		this();
+		setSender(sender);
+		if (replyTos != null) {
+			getReplyToSet().addAll(replyTos);
+		}
+		if (tos != null) {
+			getToSet().addAll(tos);
+		}
+		if (ccs != null) {
+			getCcSet().addAll(ccs);
+		}
+		if (bccs != null) {
+			getBccSet().addAll(bccs);
+		}
+		setBccString(bccString);
+		setUser(UserView.getCurrentUser());
+		setCreated(new DateTime());
+		setSubject(subject);
+		setBody(body);
+		setHtmlBody(htmlBody);
 	}
-	return stringBuilder.toString();
-    }
 
-    public String getRecipientsAsToText() {
-	return recipients2Text(getToSet());
-    }
-
-    public String getRecipientsAsCcText() {
-	return recipients2Text(getCcSet());
-    }
-
-    protected static String recipients2Text(final Set<PersistentGroup> recipients) {
-	final StringBuilder stringBuilder = new StringBuilder();
-	recipients2Text(stringBuilder, recipients);
-	return stringBuilder.toString();
-    }
-
-    protected static void recipients2Text(final StringBuilder stringBuilder, final Set<PersistentGroup> recipients) {
-	for (final PersistentGroup recipient : recipients) {
-	    if (stringBuilder.length() > 0) {
-		stringBuilder.append("\n");
-	    }
-	    stringBuilder.append(recipient.getPresentationName());
+	public void safeDelete() {
+		if (getSent() == null) {
+			delete();
+		}
 	}
-    }
 
-    private static class Worker extends Thread {
+	@Service
+	public void delete() {
+		getToSet().clear();
+		getCcSet().clear();
+		getBccSet().clear();
+		for (final ReplyTo replyTo : getReplyToSet()) {
+			removeReplyTo(replyTo);
+			if (!replyTo.hasAnySender()) {
+				replyTo.delete();
+			}
+		}
+		for (final Email email : getEmailSet()) {
+			email.removeMessage();
+			email.delete();
+		}
 
-	private final Set<PersistentGroup> recipients;
+		removeSender();
+		removeUser();
+		removeMessagingSystemFromPendingDispatch();
+		removeMessagingSystem();
+		deleteDomainObject();
+	}
 
-	private final Set<String> emailAddresses = new HashSet<String>();
-	private final String virtualHostName;
+	public String getRecipientsAsText() {
+		final StringBuilder stringBuilder = new StringBuilder();
+		recipients2Text(stringBuilder, getBccSet());
+		if (getBccString() != null && !getBccString().isEmpty()) {
+			if (stringBuilder.length() > 0) {
+				stringBuilder.append("\n");
+			}
+			stringBuilder.append(getBccString());
+		}
+		return stringBuilder.toString();
+	}
 
-	private Worker(final Set<PersistentGroup> recipients, final String virtualHostName) {
-	    this.recipients = recipients;
-	    this.virtualHostName = virtualHostName;
+	public String getRecipientsAsToText() {
+		return recipients2Text(getToSet());
+	}
+
+	public String getRecipientsAsCcText() {
+		return recipients2Text(getCcSet());
+	}
+
+	protected static String recipients2Text(final Set<PersistentGroup> recipients) {
+		final StringBuilder stringBuilder = new StringBuilder();
+		recipients2Text(stringBuilder, recipients);
+		return stringBuilder.toString();
+	}
+
+	protected static void recipients2Text(final StringBuilder stringBuilder, final Set<PersistentGroup> recipients) {
+		for (final PersistentGroup recipient : recipients) {
+			if (stringBuilder.length() > 0) {
+				stringBuilder.append("\n");
+			}
+			stringBuilder.append(recipient.getPresentationName());
+		}
+	}
+
+	private static class Worker extends Thread {
+
+		private final Set<PersistentGroup> recipients;
+
+		private final Set<String> emailAddresses = new HashSet<String>();
+		private final String virtualHostName;
+
+		private Worker(final Set<PersistentGroup> recipients, final String virtualHostName) {
+			this.recipients = recipients;
+			this.virtualHostName = virtualHostName;
+		}
+
+		@Override
+		public void run() {
+			Transaction.withTransaction(new TransactionalCommand() {
+				@Override
+				public void doIt() {
+					try {
+						VirtualHost.setVirtualHostForThread(virtualHostName);
+						for (final PersistentGroup recipient : recipients) {
+							addDestinationEmailAddresses(recipient, emailAddresses);
+						}
+					} finally {
+						VirtualHost.releaseVirtualHostFromThread();
+					}
+				}
+			});
+		}
+
+	}
+
+	protected static Set<String> getRecipientAddresses(Set<PersistentGroup> recipients) {
+		final Set<String> emailAddresses = new HashSet<String>();
+		for (final PersistentGroup recipient : recipients) {
+			addDestinationEmailAddresses(recipient, emailAddresses);
+		}
+		return emailAddresses;
+	}
+
+	public static void addDestinationEmailAddresses(final PersistentGroup persistentGroup, final Set<String> emailAddresses) {
+		for (final User user : persistentGroup.getMembers()) {
+			final String value = user.getEmail();
+			if (value != null && !value.isEmpty()) {
+				emailAddresses.add(value);
+			}
+		}
+	}
+
+	protected Set<String> getDestinationBccs() {
+		final Set<String> emailAddresses = new HashSet<String>();
+		if (getBccString() != null && !getBccString().isEmpty()) {
+			for (final String emailAddress : getBccString().replace(',', ' ').replace(';', ' ').split(" ")) {
+				final String trimmed = emailAddress.trim();
+				if (!trimmed.isEmpty()) {
+					emailAddresses.add(emailAddress);
+				}
+			}
+		}
+		final Worker worker = new Worker(getBccSet(), VirtualHost.getVirtualHostForThread().getHostname());
+		worker.start();
+		try {
+			worker.join();
+		} catch (final InterruptedException e) {
+			throw new Error(e);
+		}
+		emailAddresses.addAll(worker.emailAddresses);
+		return emailAddresses;
+	}
+
+	protected String[] getReplyToAddresses(final User user) {
+		final String[] replyToAddresses = new String[getReplyToCount()];
+		int i = 0;
+		for (final ReplyTo replyTo : getReplyToSet()) {
+			replyToAddresses[i++] = replyTo.getReplyToAddress(user);
+		}
+		return replyToAddresses;
+	}
+
+	public void dispatch() {
+		try {
+			final Sender sender = getSender();
+			VirtualHost.setVirtualHostForThread(sender.getVirtualHost());
+			final User user = getUser();
+			final Set<String> destinationBccs = getDestinationBccs();
+			for (final Set<String> bccs : split(destinationBccs)) {
+				if (!bccs.isEmpty()) {
+					final Email email =
+							new Email(sender.getFromName(user), sender.getFromAddress(), getReplyToAddresses(user),
+									Collections.EMPTY_SET, Collections.EMPTY_SET, bccs, getSubject(), getBody(), getHtmlBody());
+					email.setMessage(this);
+				}
+			}
+			final Set<String> tos = getRecipientAddresses(getToSet());
+			final Set<String> ccs = getRecipientAddresses(getCcSet());
+			if (!tos.isEmpty() || !ccs.isEmpty()) {
+				final Email email =
+						new Email(sender.getFromName(user), sender.getFromAddress(), getReplyToAddresses(user), tos, ccs,
+								Collections.EMPTY_SET, getSubject(), getBody(), getHtmlBody());
+				email.setMessage(this);
+			}
+			removeMessagingSystemFromPendingDispatch();
+			setSent(new DateTime());
+		} finally {
+			VirtualHost.releaseVirtualHostFromThread();
+		}
+	}
+
+	private Set<Set<String>> split(final Set<String> destinations) {
+		final Set<Set<String>> result = new HashSet<Set<String>>();
+		int i = 0;
+		Set<String> subSet = new HashSet<String>();
+		for (final String destination : destinations) {
+			if (i++ == 50) {
+				result.add(subSet);
+				subSet = new HashSet<String>();
+				i = 1;
+			}
+			subSet.add(destination);
+		}
+		result.add(subSet);
+		return result;
+	}
+
+	public int getPossibleRecipientsCount() {
+		int count = 0;
+		for (final PersistentGroup recipient : getBccSet()) {
+			count += recipient.getMembers().size();
+		}
+		return count;
+	}
+
+	public int getRecipientsWithEmailCount() {
+		int count = 0;
+		for (final PersistentGroup recipient : getBccSet()) {
+			final Set<User> elements = recipient.getMembers();
+			for (final User user : elements) {
+				if (user.getEmail() != null) {
+					count++;
+				}
+			}
+		}
+		return count;
+	}
+
+	public int getSentMailsCount() {
+		int count = 0;
+		for (final Email email : getEmailSet()) {
+			final EmailAddressList confirmedAddresses = email.getConfirmedAddresses();
+			if (confirmedAddresses != null && !confirmedAddresses.isEmpty()) {
+				count += confirmedAddresses.toCollection().size();
+			}
+		}
+		return count;
+	}
+
+	public int getFailedMailsCount() {
+		int count = 0;
+		for (final Email email : getEmailSet()) {
+			EmailAddressList failedAddresses = email.getFailedAddresses();
+
+			if (failedAddresses != null && !failedAddresses.isEmpty()) {
+				count += failedAddresses.size();
+			}
+		}
+		return count;
 	}
 
 	@Override
-	public void run() {
-	    Transaction.withTransaction(new TransactionalCommand() {
-		@Override
-		public void doIt() {
-		    try {
-			VirtualHost.setVirtualHostForThread(virtualHostName);
-			for (final PersistentGroup recipient : recipients) {
-			    addDestinationEmailAddresses(recipient, emailAddresses);
+	public void setBody(final String body) {
+		if (body != null) {
+			final ResourceBundle resourceBundle = ResourceBundle.getBundle("resources.MessagingResources", Language.getLocale());
+
+			final StringBuilder message = new StringBuilder();
+			if (!body.trim().isEmpty()) {
+				message.append(body);
+				message.append("\n\n---\n");
+				message.append(resourceBundle.getString("message.email.footer.prefix"));
+				message.append(" ");
+				message.append(getSender().getFromName());
+				message.append(resourceBundle.getString("message.email.footer.prefix.suffix"));
+				concatRecipients(message, getToSet());
+				concatRecipients(message, getCcSet());
+				concatRecipients(message, getBccSet());
+				message.append("\n");
 			}
-		    } finally {
-			VirtualHost.releaseVirtualHostFromThread();
-		    }
+			super.setBody(message.toString());
+		} else {
+			super.setBody(body);
 		}
-	    });
 	}
 
-    }
-
-    protected static Set<String> getRecipientAddresses(Set<PersistentGroup> recipients) {
-	final Set<String> emailAddresses = new HashSet<String>();
-	for (final PersistentGroup recipient : recipients) {
-	    addDestinationEmailAddresses(recipient, emailAddresses);
-	}
-	return emailAddresses;
-    }
-
-    public static void addDestinationEmailAddresses(final PersistentGroup persistentGroup, final Set<String> emailAddresses) {
-	for (final User user : persistentGroup.getMembers()) {
-	    final String value = user.getEmail();
-	    if (value != null && !value.isEmpty()) {
-		emailAddresses.add(value);
-	    }
-	}
-    }
-
-    protected Set<String> getDestinationBccs() {
-	final Set<String> emailAddresses = new HashSet<String>();
-	if (getBccString() != null && !getBccString().isEmpty()) {
-	    for (final String emailAddress : getBccString().replace(',', ' ').replace(';', ' ').split(" ")) {
-		final String trimmed = emailAddress.trim();
-		if (!trimmed.isEmpty()) {
-		    emailAddresses.add(emailAddress);
+	private void concatRecipients(final StringBuilder message, final Set<PersistentGroup> set) {
+		for (final PersistentGroup recipient : set) {
+			message.append("\n\t");
+			message.append(recipient.getPresentationName());
 		}
-	    }
 	}
-	final Worker worker = new Worker(getBccSet(), VirtualHost.getVirtualHostForThread().getHostname());
-	worker.start();
-	try {
-	    worker.join();
-	} catch (final InterruptedException e) {
-	    throw new Error(e);
-	}
-	emailAddresses.addAll(worker.emailAddresses);
-	return emailAddresses;
-    }
-
-    protected String[] getReplyToAddresses(final User user) {
-	final String[] replyToAddresses = new String[getReplyToCount()];
-	int i = 0;
-	for (final ReplyTo replyTo : getReplyToSet()) {
-	    replyToAddresses[i++] = replyTo.getReplyToAddress(user);
-	}
-	return replyToAddresses;
-    }
-
-    public void dispatch() {
-	try {
-	    final Sender sender = getSender();
-	    VirtualHost.setVirtualHostForThread(sender.getVirtualHost());
-	    final User user = getUser();
-	    final Set<String> destinationBccs = getDestinationBccs();
-	    for (final Set<String> bccs : split(destinationBccs)) {
-		if (!bccs.isEmpty()) {
-		    final Email email = new Email(sender.getFromName(user), sender.getFromAddress(), getReplyToAddresses(user),
-			    Collections.EMPTY_SET, Collections.EMPTY_SET, bccs, getSubject(), getBody(), getHtmlBody());
-		    email.setMessage(this);
-		}
-	    }
-	    final Set<String> tos = getRecipientAddresses(getToSet());
-	    final Set<String> ccs = getRecipientAddresses(getCcSet());
-	    if (!tos.isEmpty() || !ccs.isEmpty()) {
-		final Email email = new Email(sender.getFromName(user), sender.getFromAddress(), getReplyToAddresses(user), tos,
-			ccs, Collections.EMPTY_SET, getSubject(), getBody(), getHtmlBody());
-		email.setMessage(this);
-	    }
-	    removeMessagingSystemFromPendingDispatch();
-	    setSent(new DateTime());
-	} finally {
-	    VirtualHost.releaseVirtualHostFromThread();
-	}
-    }
-
-    private Set<Set<String>> split(final Set<String> destinations) {
-	final Set<Set<String>> result = new HashSet<Set<String>>();
-	int i = 0;
-	Set<String> subSet = new HashSet<String>();
-	for (final String destination : destinations) {
-	    if (i++ == 50) {
-		result.add(subSet);
-		subSet = new HashSet<String>();
-		i = 1;
-	    }
-	    subSet.add(destination);
-	}
-	result.add(subSet);
-	return result;
-    }
-
-    public int getPossibleRecipientsCount() {
-	int count = 0;
-	for (final PersistentGroup recipient : getBccSet()) {
-	    count += recipient.getMembers().size();
-	}
-	return count;
-    }
-
-    public int getRecipientsWithEmailCount() {
-	int count = 0;
-	for (final PersistentGroup recipient : getBccSet()) {
-	    final Set<User> elements = recipient.getMembers();
-	    for (final User user : elements) {
-		if (user.getEmail() != null) {
-		    count++;
-		}
-	    }
-	}
-	return count;
-    }
-
-    public int getSentMailsCount() {
-	int count = 0;
-	for (final Email email : getEmailSet()) {
-	    final EmailAddressList confirmedAddresses = email.getConfirmedAddresses();
-	    if (confirmedAddresses != null && !confirmedAddresses.isEmpty()) {
-		count += confirmedAddresses.toCollection().size();
-	    }
-	}
-	return count;
-    }
-
-    public int getFailedMailsCount() {
-	int count = 0;
-	for (final Email email : getEmailSet()) {
-	    EmailAddressList failedAddresses = email.getFailedAddresses();
-
-	    if (failedAddresses != null && !failedAddresses.isEmpty()) {
-		count += failedAddresses.size();
-	    }
-	}
-	return count;
-    }
-
-    @Override
-    public void setBody(final String body) {
-	if (body != null) {
-	    final ResourceBundle resourceBundle = ResourceBundle.getBundle("resources.MessagingResources", Language.getLocale());
-
-	    final StringBuilder message = new StringBuilder();
-	    if (!body.trim().isEmpty()) {
-		message.append(body);
-		message.append("\n\n---\n");
-		message.append(resourceBundle.getString("message.email.footer.prefix"));
-		message.append(" ");
-		message.append(getSender().getFromName());
-		message.append(resourceBundle.getString("message.email.footer.prefix.suffix"));
-		concatRecipients(message, getToSet());
-		concatRecipients(message, getCcSet());
-		concatRecipients(message, getBccSet());
-		message.append("\n");
-	    }
-	    super.setBody(message.toString());
-	} else {
-	    super.setBody(body);
-	}
-    }
-
-    private void concatRecipients(final StringBuilder message, final Set<PersistentGroup> set) {
-	for (final PersistentGroup recipient : set) {
-	    message.append("\n\t");
-	    message.append(recipient.getPresentationName());
-	}	
-    }
 
 }

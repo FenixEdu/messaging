@@ -34,18 +34,18 @@ import pt.ist.bennu.core.domain.User;
  */
 public class CurrentUserReplyTo extends CurrentUserReplyTo_Base {
 
-    public CurrentUserReplyTo() {
-        super();
-    }
+	public CurrentUserReplyTo() {
+		super();
+	}
 
-    @Override
-    public String getReplyToAddress(final User user) {
-	return user == null ? getReplyToAddress() : user.getEmail();
-    }
+	@Override
+	public String getReplyToAddress(final User user) {
+		return user == null ? getReplyToAddress() : user.getEmail();
+	}
 
-    public String getReplyToAddress() {
-	final User user = UserView.getCurrentUser();
-	return user == null ? null : user.getEmail();
-    }
+	public String getReplyToAddress() {
+		final User user = UserView.getCurrentUser();
+		return user == null ? null : user.getEmail();
+	}
 
 }

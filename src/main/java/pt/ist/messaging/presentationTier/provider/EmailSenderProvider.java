@@ -36,12 +36,14 @@ import pt.ist.messaging.domain.Sender;
  */
 public class EmailSenderProvider implements DataProvider {
 
-    public Object provide(final Object source, final Object currentValue) {
-	return Sender.getAvailableSenders();
-    }
+	@Override
+	public Object provide(final Object source, final Object currentValue) {
+		return Sender.getAvailableSenders();
+	}
 
-    public Converter getConverter() {
-	return new DomainObjectKeyConverter();
-    }
+	@Override
+	public Converter getConverter() {
+		return new DomainObjectKeyConverter();
+	}
 
 }

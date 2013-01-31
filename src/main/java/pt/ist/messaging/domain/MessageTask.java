@@ -37,21 +37,21 @@ import pt.utl.ist.fenix.tools.util.i18n.Language;
  */
 public class MessageTask extends MessageTask_Base {
 
-    @Override
-    @Service
-    public void runTask() {
-	Language.setLocale(Language.getDefaultLocale());
-	final MessagingSystem messagingSystem = MessagingSystem.getInstance();
-	final Set<Sender> senders = new HashSet<Sender>();
-	for (final Message message : messagingSystem.getMessagePendingDispatchSet()) {
-	    senders.add(message.getSender());
+	@Override
+	@Service
+	public void runTask() {
+		Language.setLocale(Language.getDefaultLocale());
+		final MessagingSystem messagingSystem = MessagingSystem.getInstance();
+		final Set<Sender> senders = new HashSet<Sender>();
+		for (final Message message : messagingSystem.getMessagePendingDispatchSet()) {
+			senders.add(message.getSender());
+		}
+		for (final Sender sender : senders) {
+			sender.deleteOldMessages();
+		}
+		for (final Message message : messagingSystem.getMessagePendingDispatchSet()) {
+			message.dispatch();
+		}
 	}
-	for (final Sender sender : senders) {
-	    sender.deleteOldMessages();
-	}
-	for (final Message message : messagingSystem.getMessagePendingDispatchSet()) {
-	    message.dispatch();
-	}
-    }
 
 }
