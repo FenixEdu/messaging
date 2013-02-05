@@ -40,20 +40,20 @@ import pt.ist.messaging.domain.Sender;
  */
 public class EmailReplyTosProvider implements DataProvider {
 
-	@Override
-	public Object provide(final Object source, final Object currentValue) {
-		final EmailBean emailBean = (EmailBean) source;
-		final Sender sender = emailBean.getSender();
-		final Set<ReplyTo> replyTos = new HashSet<ReplyTo>();
-		if (sender != null) {
-			replyTos.addAll(sender.getConcreteReplyTos());
-		}
-		return replyTos;
-	}
+    @Override
+    public Object provide(final Object source, final Object currentValue) {
+        final EmailBean emailBean = (EmailBean) source;
+        final Sender sender = emailBean.getSender();
+        final Set<ReplyTo> replyTos = new HashSet<ReplyTo>();
+        if (sender != null) {
+            replyTos.addAll(sender.getConcreteReplyTos());
+        }
+        return replyTos;
+    }
 
-	@Override
-	public Converter getConverter() {
-		return null;
-	}
+    @Override
+    public Converter getConverter() {
+        return null;
+    }
 
 }

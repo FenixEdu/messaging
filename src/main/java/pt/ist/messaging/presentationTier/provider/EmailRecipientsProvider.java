@@ -40,21 +40,21 @@ import pt.ist.messaging.domain.Sender;
  */
 public class EmailRecipientsProvider implements DataProvider {
 
-	@Override
-	public Object provide(final Object source, final Object currentValue) {
-		final EmailBean emailBean = (EmailBean) source;
-		final Sender sender = emailBean.getSender();
-		final Set<PersistentGroup> recipients = new TreeSet<PersistentGroup>(PersistentGroup.COMPARATOR_BY_NAME);
-		recipients.addAll(emailBean.getRecipients());
-		if (sender != null) {
-			recipients.addAll(sender.getRecipientsSet());
-		}
-		return recipients;
-	}
+    @Override
+    public Object provide(final Object source, final Object currentValue) {
+        final EmailBean emailBean = (EmailBean) source;
+        final Sender sender = emailBean.getSender();
+        final Set<PersistentGroup> recipients = new TreeSet<PersistentGroup>(PersistentGroup.COMPARATOR_BY_NAME);
+        recipients.addAll(emailBean.getRecipients());
+        if (sender != null) {
+            recipients.addAll(sender.getRecipientsSet());
+        }
+        return recipients;
+    }
 
-	@Override
-	public Converter getConverter() {
-		return null;
-	}
+    @Override
+    public Converter getConverter() {
+        return null;
+    }
 
 }

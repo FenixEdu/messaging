@@ -36,22 +36,22 @@ import pt.ist.bennu.core.domain.User;
  */
 public abstract class ReplyTo extends ReplyTo_Base {
 
-	protected ReplyTo() {
-		super();
-	}
+    protected ReplyTo() {
+        super();
+    }
 
-	public void delete() {
-		getMessageSet().clear();
-		getSenderSet().clear();
-		deleteDomainObject();
-	}
+    public void delete() {
+        getMessageSet().clear();
+        getSenderSet().clear();
+        deleteDomainObject();
+    }
 
-	public abstract String getReplyToAddress(final User user);
+    public abstract String getReplyToAddress(final User user);
 
-	public abstract String getReplyToAddress();
+    public abstract String getReplyToAddress();
 
-	public Collection<? extends ReplyTo> asCollection() {
-		return Collections.singletonList(this);
-	}
+    public Collection<? extends ReplyTo> asCollection() {
+        return Collections.singletonList(this);
+    }
 
 }
