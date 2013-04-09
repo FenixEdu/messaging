@@ -25,7 +25,7 @@
 package pt.ist.messaging.domain;
 
 import pt.ist.bennu.core.domain.MyOrg;
-import pt.ist.fenixWebFramework.services.Service;
+import pt.ist.fenixframework.Atomic;
 
 /**
  * 
@@ -44,7 +44,7 @@ public class MessagingSystem extends MessagingSystem_Base {
         return myOrg.hasMessagingSystem() ? myOrg.getMessagingSystem() : createMessagingSystem(myOrg);
     }
 
-    @Service
+    @Atomic
     private static MessagingSystem createMessagingSystem(final MyOrg myOrg) {
         return myOrg.hasMessagingSystem() ? myOrg.getMessagingSystem() : new MessagingSystem();
     }

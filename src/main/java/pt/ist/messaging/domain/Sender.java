@@ -35,7 +35,7 @@ import pt.ist.bennu.core.domain.RoleType;
 import pt.ist.bennu.core.domain.User;
 import pt.ist.bennu.core.domain.VirtualHost;
 import pt.ist.bennu.core.domain.groups.PersistentGroup;
-import pt.ist.fenixWebFramework.services.Service;
+import pt.ist.fenixframework.Atomic;
 
 /**
  * 
@@ -106,7 +106,7 @@ public class Sender extends Sender_Base {
         return false;
     }
 
-    @Service
+    @Atomic
     public List<ReplyTo> getConcreteReplyTos() {
         List<ReplyTo> replyTos = new ArrayList<ReplyTo>();
         for (ReplyTo replyTo : getReplyToSet()) {

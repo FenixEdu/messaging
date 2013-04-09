@@ -31,8 +31,6 @@ import java.util.HashSet;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-import jvstm.TransactionalCommand;
-
 import org.joda.time.DateTime;
 
 import pt.ist.bennu.core.applicationTier.Authenticate.UserView;
@@ -41,8 +39,7 @@ import pt.ist.bennu.core.domain.VirtualHost;
 import pt.ist.bennu.core.domain.groups.PersistentGroup;
 import pt.ist.emailNotifier.domain.Email;
 import pt.ist.emailNotifier.util.EmailAddressList;
-import pt.ist.fenixWebFramework.services.Service;
-import pt.ist.fenixframework.pstm.Transaction;
+import pt.ist.fenixframework.Atomic;
 import pt.utl.ist.fenix.tools.util.i18n.Language;
 
 /**
@@ -106,7 +103,7 @@ public class Message extends Message_Base {
         }
     }
 
-    @Service
+    @Atomic
     public void delete() {
         getToSet().clear();
         getCcSet().clear();
@@ -176,21 +173,17 @@ public class Message extends Message_Base {
             this.virtualHostName = virtualHostName;
         }
 
+        @Atomic
         @Override
         public void run() {
-            Transaction.withTransaction(new TransactionalCommand() {
-                @Override
-                public void doIt() {
-                    try {
-                        VirtualHost.setVirtualHostForThread(virtualHostName);
-                        for (final PersistentGroup recipient : recipients) {
-                            addDestinationEmailAddresses(recipient, emailAddresses);
-                        }
-                    } finally {
-                        VirtualHost.releaseVirtualHostFromThread();
-                    }
+            try {
+                VirtualHost.setVirtualHostForThread(virtualHostName);
+                for (final PersistentGroup recipient : recipients) {
+                    addDestinationEmailAddresses(recipient, emailAddresses);
                 }
-            });
+            } finally {
+                VirtualHost.releaseVirtualHostFromThread();
+            }
         }
 
     }

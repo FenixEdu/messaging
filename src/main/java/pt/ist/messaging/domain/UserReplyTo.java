@@ -26,7 +26,7 @@ package pt.ist.messaging.domain;
 
 import pt.ist.bennu.core.domain.User;
 import pt.ist.bennu.core.domain.exceptions.DomainException;
-import pt.ist.fenixWebFramework.services.Service;
+import pt.ist.fenixframework.Atomic;
 
 /**
  * 
@@ -43,7 +43,7 @@ public class UserReplyTo extends UserReplyTo_Base {
         setUser(user);
     }
 
-    @Service
+    @Atomic
     public static UserReplyTo createFor(final User user) {
         return user.hasUserReplyTo() ? user.getUserReplyTo() : new UserReplyTo(user);
     }
@@ -53,6 +53,7 @@ public class UserReplyTo extends UserReplyTo_Base {
         return user.getEmail();
     }
 
+    @Override
     public String getReplyToAddress() {
         return getUser().getEmail();
     }
