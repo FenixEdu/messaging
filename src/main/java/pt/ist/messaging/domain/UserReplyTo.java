@@ -37,7 +37,7 @@ public class UserReplyTo extends UserReplyTo_Base {
 
     public UserReplyTo(final User user) {
         super();
-        if (user.hasUserReplyTo()) {
+        if (user.getUserReplyTo() != null) {
             throw new DomainException("error.person.already.has.reply.to");
         }
         setUser(user);
@@ -45,7 +45,7 @@ public class UserReplyTo extends UserReplyTo_Base {
 
     @Atomic
     public static UserReplyTo createFor(final User user) {
-        return user.hasUserReplyTo() ? user.getUserReplyTo() : new UserReplyTo(user);
+        return user.getUserReplyTo() != null ? user.getUserReplyTo() : new UserReplyTo(user);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class UserReplyTo extends UserReplyTo_Base {
 
     @Override
     public void delete() {
-        removeUser();
+        setUser(null);
         super.delete();
     }
 

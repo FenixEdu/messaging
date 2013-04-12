@@ -54,4 +54,14 @@ public abstract class ReplyTo extends ReplyTo_Base {
         return Collections.singletonList(this);
     }
 
+    @Deprecated
+    public java.util.Set<pt.ist.messaging.domain.Sender> getSender() {
+        return getSenderSet();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.messaging.domain.Message> getMessage() {
+        return getMessageSet();
+    }
+
 }

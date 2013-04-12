@@ -110,19 +110,19 @@ public class Message extends Message_Base {
         getBccSet().clear();
         for (final ReplyTo replyTo : getReplyToSet()) {
             removeReplyTo(replyTo);
-            if (!replyTo.hasAnySender()) {
+            if (replyTo.getSenderSet().isEmpty()) {
                 replyTo.delete();
             }
         }
         for (final Email email : getEmailSet()) {
-            email.removeMessage();
+            email.setMessage(null);
             email.delete();
         }
 
-        removeSender();
-        removeUser();
-        removeMessagingSystemFromPendingDispatch();
-        removeMessagingSystem();
+        setSender(null);
+        setUser(null);
+        setMessagingSystemFromPendingDispatch(null);
+        setMessagingSystem(null);
         deleteDomainObject();
     }
 
@@ -227,7 +227,7 @@ public class Message extends Message_Base {
     }
 
     protected String[] getReplyToAddresses(final User user) {
-        final String[] replyToAddresses = new String[getReplyToCount()];
+        final String[] replyToAddresses = new String[getReplyToSet().size()];
         int i = 0;
         for (final ReplyTo replyTo : getReplyToSet()) {
             replyToAddresses[i++] = replyTo.getReplyToAddress(user);
@@ -257,7 +257,7 @@ public class Message extends Message_Base {
                                 Collections.EMPTY_SET, getSubject(), getBody(), getHtmlBody());
                 email.setMessage(this);
             }
-            removeMessagingSystemFromPendingDispatch();
+            setMessagingSystemFromPendingDispatch(null);
             setSent(new DateTime());
         } finally {
             VirtualHost.releaseVirtualHostFromThread();
@@ -353,6 +353,31 @@ public class Message extends Message_Base {
             message.append("\n\t");
             message.append(recipient.getPresentationName());
         }
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.bennu.core.domain.groups.PersistentGroup> getCc() {
+        return getCcSet();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.bennu.core.domain.groups.PersistentGroup> getBcc() {
+        return getBccSet();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.bennu.core.domain.groups.PersistentGroup> getTo() {
+        return getToSet();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.emailNotifier.domain.Email> getEmail() {
+        return getEmailSet();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.messaging.domain.ReplyTo> getReplyTo() {
+        return getReplyToSet();
     }
 
 }
