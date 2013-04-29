@@ -31,7 +31,7 @@ import pt.ist.bennu.core.domain.User;
 import pt.ist.bennu.core.domain.VirtualHost;
 import pt.ist.bennu.core.domain.groups.PersistentGroup;
 import pt.ist.bennu.core.util.BundleUtil;
-import pt.ist.fenixWebFramework.services.Service;
+import pt.ist.fenixframework.Atomic;
 
 /**
  * 
@@ -78,7 +78,7 @@ public class SenderGroup extends SenderGroup_Base {
         return members;
     }
 
-    @Service
+    @Atomic
     public static SenderGroup getInstance() {
         final SenderGroup group = (SenderGroup) PersistentGroup.getSystemGroup(SenderGroup.class);
         return group == null ? new SenderGroup() : group;
