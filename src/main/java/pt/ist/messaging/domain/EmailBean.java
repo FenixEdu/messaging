@@ -36,7 +36,7 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 
 import pt.ist.bennu.core.domain.groups.PersistentGroup;
-import pt.ist.fenixWebFramework.services.Service;
+import pt.ist.fenixframework.Atomic;
 import pt.utl.ist.fenix.tools.util.EMail;
 import pt.utl.ist.fenix.tools.util.i18n.Language;
 
@@ -202,7 +202,7 @@ public class EmailBean implements Serializable {
         this.createdDate = createdDate;
     }
 
-    @Service
+    @Atomic
     public Message send() {
         final String bccs = getBccs() == null ? null : getBccs().replace(" ", "");
         final String htmlMessage = getHtmlMessage();

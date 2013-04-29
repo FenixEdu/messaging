@@ -27,7 +27,7 @@ package pt.ist.messaging.domain;
 import java.util.HashSet;
 import java.util.Set;
 
-import pt.ist.fenixWebFramework.services.Service;
+import pt.ist.fenixframework.Atomic;
 import pt.utl.ist.fenix.tools.util.i18n.Language;
 
 /**
@@ -37,8 +37,8 @@ import pt.utl.ist.fenix.tools.util.i18n.Language;
  */
 public class MessageTask extends MessageTask_Base {
 
+    @Atomic
     @Override
-    @Service
     public void runTask() {
         Language.setLocale(Language.getDefaultLocale());
         final MessagingSystem messagingSystem = MessagingSystem.getInstance();
