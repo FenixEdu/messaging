@@ -25,7 +25,7 @@
 package pt.ist.messaging.domain;
 
 import pt.ist.bennu.core.domain.MyOrg;
-import pt.ist.fenixWebFramework.services.Service;
+import pt.ist.fenixframework.Atomic;
 
 /**
  * 
@@ -41,12 +41,27 @@ public class MessagingSystem extends MessagingSystem_Base {
 
     public static MessagingSystem getInstance() {
         final MyOrg myOrg = MyOrg.getInstance();
-        return myOrg.hasMessagingSystem() ? myOrg.getMessagingSystem() : createMessagingSystem(myOrg);
+        return myOrg.getMessagingSystem() != null ? myOrg.getMessagingSystem() : createMessagingSystem(myOrg);
     }
 
-    @Service
+    @Atomic
     private static MessagingSystem createMessagingSystem(final MyOrg myOrg) {
-        return myOrg.hasMessagingSystem() ? myOrg.getMessagingSystem() : new MessagingSystem();
+        return myOrg.getMessagingSystem() != null ? myOrg.getMessagingSystem() : new MessagingSystem();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.messaging.domain.Sender> getSender() {
+        return getSenderSet();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.messaging.domain.Message> getMessage() {
+        return getMessageSet();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.messaging.domain.Message> getMessagePendingDispatch() {
+        return getMessagePendingDispatchSet();
     }
 
 }

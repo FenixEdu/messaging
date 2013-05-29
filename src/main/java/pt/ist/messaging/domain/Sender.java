@@ -35,7 +35,7 @@ import pt.ist.bennu.core.domain.RoleType;
 import pt.ist.bennu.core.domain.User;
 import pt.ist.bennu.core.domain.VirtualHost;
 import pt.ist.bennu.core.domain.groups.PersistentGroup;
-import pt.ist.fenixWebFramework.services.Service;
+import pt.ist.fenixframework.Atomic;
 
 /**
  * 
@@ -71,9 +71,9 @@ public class Sender extends Sender_Base {
         for (final Message message : getMessageSet()) {
             message.delete();
         }
-        removeMembers();
+        setMembers(null);
         getRecipientsSet().clear();
-        removeMessagingSystem();
+        setMessagingSystem(null);
         deleteDomainObject();
     }
 
@@ -92,27 +92,28 @@ public class Sender extends Sender_Base {
 
     public boolean isMember(final User user) {
         final PersistentGroup persistentGroup = getMembers();
-        return (hasMembers() && persistentGroup.isMember(user)) || (user != null && user.hasRoleType(RoleType.MANAGER));
+        return (getMembers() != null && persistentGroup.isMember(user)) || (user != null && user.hasRoleType(RoleType.MANAGER));
     }
 
     public static boolean userHasRecipients() {
         final User user = UserView.getCurrentUser();
         for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
             if (sender.getVirtualHost() == VirtualHost.getVirtualHostForThread() && sender.isMember(user)
-                    && sender.hasAnyRecipients()) {
+                    && !sender.getRecipientsSet().isEmpty()) {
                 return true;
             }
         }
         return false;
     }
 
-    @Service
+    @Atomic
     public List<ReplyTo> getConcreteReplyTos() {
         List<ReplyTo> replyTos = new ArrayList<ReplyTo>();
         for (ReplyTo replyTo : getReplyToSet()) {
             if (replyTo instanceof CurrentUserReplyTo) {
                 final User user = UserView.getCurrentUser();
-                final UserReplyTo userReplyTo = user.hasUserReplyTo() ? user.getUserReplyTo() : UserReplyTo.createFor(user);
+                final UserReplyTo userReplyTo =
+                        user.getUserReplyTo() != null ? user.getUserReplyTo() : UserReplyTo.createFor(user);
                 replyTos.add(userReplyTo);
             } else {
                 replyTos.add(replyTo);
@@ -137,6 +138,21 @@ public class Sender extends Sender_Base {
                 }
             }
         }
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.messaging.domain.ReplyTo> getReplyTo() {
+        return getReplyToSet();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.bennu.core.domain.groups.PersistentGroup> getRecipients() {
+        return getRecipientsSet();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.messaging.domain.Message> getMessage() {
+        return getMessageSet();
     }
 
 }

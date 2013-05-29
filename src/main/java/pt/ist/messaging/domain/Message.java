@@ -31,8 +31,6 @@ import java.util.HashSet;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-import jvstm.TransactionalCommand;
-
 import org.joda.time.DateTime;
 
 import pt.ist.bennu.core.applicationTier.Authenticate.UserView;
@@ -41,8 +39,7 @@ import pt.ist.bennu.core.domain.VirtualHost;
 import pt.ist.bennu.core.domain.groups.PersistentGroup;
 import pt.ist.emailNotifier.domain.Email;
 import pt.ist.emailNotifier.util.EmailAddressList;
-import pt.ist.fenixWebFramework.services.Service;
-import pt.ist.fenixframework.pstm.Transaction;
+import pt.ist.fenixframework.Atomic;
 import pt.utl.ist.fenix.tools.util.i18n.Language;
 
 /**
@@ -106,26 +103,26 @@ public class Message extends Message_Base {
         }
     }
 
-    @Service
+    @Atomic
     public void delete() {
         getToSet().clear();
         getCcSet().clear();
         getBccSet().clear();
         for (final ReplyTo replyTo : getReplyToSet()) {
             removeReplyTo(replyTo);
-            if (!replyTo.hasAnySender()) {
+            if (replyTo.getSenderSet().isEmpty()) {
                 replyTo.delete();
             }
         }
         for (final Email email : getEmailSet()) {
-            email.removeMessage();
+            email.setMessage(null);
             email.delete();
         }
 
-        removeSender();
-        removeUser();
-        removeMessagingSystemFromPendingDispatch();
-        removeMessagingSystem();
+        setSender(null);
+        setUser(null);
+        setMessagingSystemFromPendingDispatch(null);
+        setMessagingSystem(null);
         deleteDomainObject();
     }
 
@@ -176,21 +173,17 @@ public class Message extends Message_Base {
             this.virtualHostName = virtualHostName;
         }
 
+        @Atomic
         @Override
         public void run() {
-            Transaction.withTransaction(new TransactionalCommand() {
-                @Override
-                public void doIt() {
-                    try {
-                        VirtualHost.setVirtualHostForThread(virtualHostName);
-                        for (final PersistentGroup recipient : recipients) {
-                            addDestinationEmailAddresses(recipient, emailAddresses);
-                        }
-                    } finally {
-                        VirtualHost.releaseVirtualHostFromThread();
-                    }
+            try {
+                VirtualHost.setVirtualHostForThread(virtualHostName);
+                for (final PersistentGroup recipient : recipients) {
+                    addDestinationEmailAddresses(recipient, emailAddresses);
                 }
-            });
+            } finally {
+                VirtualHost.releaseVirtualHostFromThread();
+            }
         }
 
     }
@@ -234,7 +227,7 @@ public class Message extends Message_Base {
     }
 
     protected String[] getReplyToAddresses(final User user) {
-        final String[] replyToAddresses = new String[getReplyToCount()];
+        final String[] replyToAddresses = new String[getReplyToSet().size()];
         int i = 0;
         for (final ReplyTo replyTo : getReplyToSet()) {
             replyToAddresses[i++] = replyTo.getReplyToAddress(user);
@@ -264,7 +257,7 @@ public class Message extends Message_Base {
                                 Collections.EMPTY_SET, getSubject(), getBody(), getHtmlBody());
                 email.setMessage(this);
             }
-            removeMessagingSystemFromPendingDispatch();
+            setMessagingSystemFromPendingDispatch(null);
             setSent(new DateTime());
         } finally {
             VirtualHost.releaseVirtualHostFromThread();
@@ -360,6 +353,31 @@ public class Message extends Message_Base {
             message.append("\n\t");
             message.append(recipient.getPresentationName());
         }
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.bennu.core.domain.groups.PersistentGroup> getCc() {
+        return getCcSet();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.bennu.core.domain.groups.PersistentGroup> getBcc() {
+        return getBccSet();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.bennu.core.domain.groups.PersistentGroup> getTo() {
+        return getToSet();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.emailNotifier.domain.Email> getEmail() {
+        return getEmailSet();
+    }
+
+    @Deprecated
+    public java.util.Set<pt.ist.messaging.domain.ReplyTo> getReplyTo() {
+        return getReplyToSet();
     }
 
 }
