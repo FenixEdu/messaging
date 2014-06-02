@@ -3,14 +3,14 @@
  *
  * Copyright 2012 Instituto Superior Tecnico
  * Founding Authors: Luis Cruz
- * 
+ *
  *      https://fenix-ashes.ist.utl.pt/
- * 
+ *
  *   This file is part of the Messaging Module.
  *
  *   The Messaging Module is free software: you can
  *   redistribute it and/or modify it under the terms of the GNU Lesser General
- *   Public License as published by the Free Software Foundation, either version 
+ *   Public License as published by the Free Software Foundation, either version
  *   3 of the License, or (at your option) any later version.
  *
  *   The Messaging Module is distributed in the hope that it will be useful,
@@ -20,7 +20,7 @@
  *
  *   You should have received a copy of the GNU Lesser General Public License
  *   along with the Messaging Module. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 package org.fenixedu.messaging.domain;
 
@@ -30,17 +30,18 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import pt.ist.bennu.core.applicationTier.Authenticate.UserView;
-import pt.ist.bennu.core.domain.RoleType;
-import pt.ist.bennu.core.domain.User;
-import pt.ist.bennu.core.domain.VirtualHost;
-import pt.ist.bennu.core.domain.groups.PersistentGroup;
+import org.fenixedu.bennu.core.domain.Bennu;
+import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
+import org.fenixedu.bennu.core.groups.DynamicGroup;
+import org.fenixedu.bennu.core.security.Authenticate;
+
 import pt.ist.fenixframework.Atomic;
 
 /**
- * 
+ *
  * @author Luis Cruz
- * 
+ *
  */
 public class Sender extends Sender_Base {
 
@@ -57,7 +58,7 @@ public class Sender extends Sender_Base {
     public Sender() {
         super();
         setMessagingSystem(MessagingSystem.getInstance());
-        setVirtualHost(VirtualHost.getVirtualHostForThread());
+        setVirtualHost(Bennu.getInstance());
     }
 
     public Sender(final String fromName, final String fromAddress, final PersistentGroup members) {
@@ -78,11 +79,11 @@ public class Sender extends Sender_Base {
     }
 
     public static SortedSet<Sender> getAvailableSenders() {
-        final User user = UserView.getCurrentUser();
+        final User user = Authenticate.getUser();
 
         final SortedSet<Sender> senders = new TreeSet<Sender>(Sender.COMPARATOR_BY_FROM_NAME);
         for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-            if (sender.getVirtualHost() == VirtualHost.getVirtualHostForThread() && sender.isMember(user)) {
+            if (sender.isMember(user)) {
                 senders.add(sender);
             }
         }
@@ -91,15 +92,13 @@ public class Sender extends Sender_Base {
     }
 
     public boolean isMember(final User user) {
-        final PersistentGroup persistentGroup = getMembers();
-        return (getMembers() != null && persistentGroup.isMember(user)) || (user != null && user.hasRoleType(RoleType.MANAGER));
+        return getMembers().toGroup().or(DynamicGroup.get("managers")).isMember(user);
     }
 
     public static boolean userHasRecipients() {
-        final User user = UserView.getCurrentUser();
+        final User user = Authenticate.getUser();
         for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-            if (sender.getVirtualHost() == VirtualHost.getVirtualHostForThread() && sender.isMember(user)
-                    && !sender.getRecipientsSet().isEmpty()) {
+            if (sender.isMember(user) && !sender.getRecipientsSet().isEmpty()) {
                 return true;
             }
         }
@@ -111,10 +110,10 @@ public class Sender extends Sender_Base {
         List<ReplyTo> replyTos = new ArrayList<ReplyTo>();
         for (ReplyTo replyTo : getReplyToSet()) {
             if (replyTo instanceof CurrentUserReplyTo) {
-                final User user = UserView.getCurrentUser();
+                final User user = Authenticate.getUser();
                 final UserReplyTo userReplyTo =
                         user.getUserReplyTo() != null ? user.getUserReplyTo() : UserReplyTo.createFor(user);
-                replyTos.add(userReplyTo);
+                        replyTos.add(userReplyTo);
             } else {
                 replyTos.add(replyTo);
             }
@@ -139,20 +138,4 @@ public class Sender extends Sender_Base {
             }
         }
     }
-
-    @Deprecated
-    public java.util.Set<org.fenixedu.messaging.domain.ReplyTo> getReplyTo() {
-        return getReplyToSet();
-    }
-
-    @Deprecated
-    public java.util.Set<pt.ist.bennu.core.domain.groups.PersistentGroup> getRecipients() {
-        return getRecipientsSet();
-    }
-
-    @Deprecated
-    public java.util.Set<org.fenixedu.messaging.domain.Message> getMessage() {
-        return getMessageSet();
-    }
-
 }

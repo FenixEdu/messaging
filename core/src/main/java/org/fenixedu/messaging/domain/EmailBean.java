@@ -3,14 +3,14 @@
  *
  * Copyright 2012 Instituto Superior Tecnico
  * Founding Authors: Luis Cruz
- * 
+ *
  *      https://fenix-ashes.ist.utl.pt/
- * 
+ *
  *   This file is part of the Messaging Module.
  *
  *   The Messaging Module is free software: you can
  *   redistribute it and/or modify it under the terms of the GNU Lesser General
- *   Public License as published by the Free Software Foundation, either version 
+ *   Public License as published by the Free Software Foundation, either version
  *   3 of the License, or (at your option) any later version.
  *
  *   The Messaging Module is distributed in the hope that it will be useful,
@@ -20,7 +20,7 @@
  *
  *   You should have received a copy of the GNU Lesser General Public License
  *   along with the Messaging Module. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 package org.fenixedu.messaging.domain;
 
@@ -35,20 +35,18 @@ import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 
-import pt.ist.bennu.core.domain.groups.PersistentGroup;
 import pt.ist.fenixframework.Atomic;
 import pt.utl.ist.fenix.tools.util.EMail;
-import pt.utl.ist.fenix.tools.util.i18n.Language;
 
 /**
- * 
+ *
  * @author Luis Cruz
- * 
+ *
  */
 public class EmailBean implements Serializable {
 
     private Sender sender;
-    private Set<PersistentGroup> recipients;
+    private Set<Group> recipients;
     private String tos, ccs, bccs;
     private String subject, message, htmlMessage;
     private Set<ReplyTo> replyTos;
@@ -73,22 +71,22 @@ public class EmailBean implements Serializable {
         this.sender = sender;
     }
 
-    public List<PersistentGroup> getRecipients() {
-        final List<PersistentGroup> result = new ArrayList<PersistentGroup>();
+    public List<Group> getRecipients() {
+        final List<Group> result = new ArrayList<Group>();
         if (recipients != null) {
-            for (final PersistentGroup recipient : recipients) {
+            for (final Group recipient : recipients) {
                 result.add(recipient);
             }
         }
         return result;
     }
 
-    public void setRecipients(List<PersistentGroup> recipients) {
+    public void setRecipients(List<Group> recipients) {
         if (recipients == null) {
             this.recipients = null;
         } else {
-            this.recipients = new HashSet<PersistentGroup>();
-            for (final PersistentGroup recipient : recipients) {
+            this.recipients = new HashSet<Group>();
+            for (final Group recipient : recipients) {
                 this.recipients.add(recipient);
             }
         }
@@ -212,7 +210,7 @@ public class EmailBean implements Serializable {
 
 //    @Service
 //    public void removeRecipients() {
-//	for(final PersistentGroup recipient : getRecipients()) {
+//	for(final Group recipient : getRecipients()) {
 //	    getSender().removeRecipients(recipient);
 //	}
 //	setRecipients(null);

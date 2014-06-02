@@ -3,14 +3,14 @@
  *
  * Copyright 2012 Instituto Superior Tecnico
  * Founding Authors: Luis Cruz
- * 
+ *
  *      https://fenix-ashes.ist.utl.pt/
- * 
+ *
  *   This file is part of the Messaging Module.
  *
  *   The Messaging Module is free software: you can
  *   redistribute it and/or modify it under the terms of the GNU Lesser General
- *   Public License as published by the Free Software Foundation, either version 
+ *   Public License as published by the Free Software Foundation, either version
  *   3 of the License, or (at your option) any later version.
  *
  *   The Messaging Module is distributed in the hope that it will be useful,
@@ -20,44 +20,66 @@
  *
  *   You should have received a copy of the GNU Lesser General Public License
  *   along with the Messaging Module. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 package org.fenixedu.messaging.domain;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
-import pt.ist.bennu.core.domain.User;
-import pt.ist.bennu.core.domain.VirtualHost;
-import pt.ist.bennu.core.domain.groups.PersistentGroup;
-import pt.ist.bennu.core.util.BundleUtil;
-import pt.ist.fenixframework.Atomic;
+import org.fenixedu.bennu.core.annotation.GroupOperator;
+import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
+import org.fenixedu.bennu.core.groups.CustomGroup;
+import org.fenixedu.bennu.core.i18n.BundleUtil;
+import org.joda.time.DateTime;
 
 /**
- * 
+ *
  * @author Luis Cruz
- * 
+ *
  */
-public class SenderGroup extends SenderGroup_Base {
+@GroupOperator("sender")
+public class SenderGroup extends CustomGroup {
+    private static final long serialVersionUID = 804590197340198679L;
 
-    protected SenderGroup() {
+    public SenderGroup() {
         super();
-        setSystemGroupMyOrg(getMyOrg());
-    }
-
-    protected String getNameLable() {
-        return "label.persistent.group.sender.name";
     }
 
     @Override
-    public String getName() {
-        return BundleUtil.getStringFromResourceBundle("resources/MessagingResources", getNameLable());
+    public String getPresentationName() {
+        return BundleUtil.getString("resources/MessagingResources", "label.persistent.group.sender.name");
     }
 
     @Override
-    public boolean isMember(final User user) {
+    public PersistentGroup toPersistentGroup() {
+        return PersistentSenderGroup.getInstance();
+    }
+
+    @Override
+    public Set<User> getMembers() {
+        final Set<User> members = new HashSet<User>();
         for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-            if (sender.getVirtualHost() == VirtualHost.getVirtualHostForThread() && sender.isMember(user)) {
+            members.addAll(sender.getMembers().getMembers());
+        }
+        return members;
+    }
+
+    @Override
+    public Set<User> getMembers(DateTime when) {
+        final Set<User> members = new HashSet<User>();
+        for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
+            members.addAll(sender.getMembers().getMembers(when));
+        }
+        return members;
+    }
+
+    @Override
+    public boolean isMember(User user) {
+        for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
+            if (sender.isMember(user)) {
                 return true;
             }
         }
@@ -65,23 +87,22 @@ public class SenderGroup extends SenderGroup_Base {
     }
 
     @Override
-    public Set<User> getMembers() {
-        final Set<User> members = new HashSet<User>();
+    public boolean isMember(User user, DateTime when) {
         for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-            if (sender.getVirtualHost() == VirtualHost.getVirtualHostForThread()) {
-                final PersistentGroup group = sender.getMembers();
-                if (group != null) {
-                    members.addAll(group.getMembers());
-                }
+            if (sender.isMember(user, when)) {
+                return true;
             }
         }
-        return members;
+        return false;
     }
 
-    @Atomic
-    public static SenderGroup getInstance() {
-        final SenderGroup group = (SenderGroup) PersistentGroup.getSystemGroup(SenderGroup.class);
-        return group == null ? new SenderGroup() : group;
+    @Override
+    public boolean equals(Object object) {
+        return object instanceof SenderGroup;
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(SenderGroup.class);
+    }
 }

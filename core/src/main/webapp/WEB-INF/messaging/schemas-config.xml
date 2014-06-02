@@ -5,7 +5,7 @@
 	<slot name="replyToAddress"/>
 </schema>
 
-<schema name="net.sourceforge.fenixedu.domain.util.email.Recipient.selectItem" type="pt.ist.bennu.core.domain.groups.PersistentGroup">
-	<slot name="name"/>
+<schema name="net.sourceforge.fenixedu.domain.util.email.Recipient.selectItem" type="org.fenixedu.bennu.core.groups.Group">
+	<slot name="presentationName"/>
 </schema>
 </schemas>

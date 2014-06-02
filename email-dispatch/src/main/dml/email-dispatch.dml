@@ -37,10 +37,6 @@ class MessageId {
 	DateTime sendTime;
 }
 
-class EmailTask extends .pt.ist.fenixframework.plugins.scheduler.domain.Task;
-
-class EmailDispatcher extends .pt.ist.bennu.core.domain.scheduler.Task;
-
 relation EmailNotifierEmail {
 	EmailNotifier playsRole emailNotifier;
 	Email playsRole emails {
@@ -63,6 +59,6 @@ relation EmailMessageTransportResult {
 }
 
 relation MyOrgEmailNotifier {
-    .pt.ist.bennu.core.domain.MyOrg playsRole myOrg;
+    .org.fenixedu.bennu.core.domain.Bennu playsRole myOrg;
     EmailNotifier playsRole emailNotifier;
 }

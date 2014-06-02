@@ -24,7 +24,7 @@
  */
 package org.fenixedu.messaging.domain;
 
-import pt.ist.bennu.core.domain.User;
+import org.fenixedu.bennu.core.domain.User;
 
 /**
  * 

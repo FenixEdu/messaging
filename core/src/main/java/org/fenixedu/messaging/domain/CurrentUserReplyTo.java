@@ -24,8 +24,8 @@
  */
 package org.fenixedu.messaging.domain;
 
-import pt.ist.bennu.core.applicationTier.Authenticate.UserView;
-import pt.ist.bennu.core.domain.User;
+import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.core.security.Authenticate;
 
 /**
  * 
@@ -43,8 +43,9 @@ public class CurrentUserReplyTo extends CurrentUserReplyTo_Base {
         return user == null ? getReplyToAddress() : user.getEmail();
     }
 
+    @Override
     public String getReplyToAddress() {
-        final User user = UserView.getCurrentUser();
+        final User user = Authenticate.getUser();
         return user == null ? null : user.getEmail();
     }
 

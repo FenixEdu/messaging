@@ -3,14 +3,14 @@
  *
  * Copyright 2009 Instituto Superior Tecnico
  * Founding Authors: Luis Cruz
- * 
+ *
  *      https://fenix-ashes.ist.utl.pt/
- * 
+ *
  *   This file is part of the E-mail SMTP Adapter Module.
  *
  *   The E-mail SMTP Adapter Module is free software: you can
  *   redistribute it and/or modify it under the terms of the GNU Lesser General
- *   Public License as published by the Free Software Foundation, either version 
+ *   Public License as published by the Free Software Foundation, either version
  *   3 of the License, or (at your option) any later version.
  *
  *   The E-mail Module is distributed in the hope that it will be useful,
@@ -20,7 +20,7 @@
  *
  *   You should have received a copy of the GNU Lesser General Public License
  *   along with the E-mail Module. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 package org.fenixedu.messaging.emaildispatch.domain;
 
@@ -45,17 +45,16 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import javax.mail.internet.MimeUtility;
 
+import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration;
+import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration.ConfigurationProperties;
 import org.fenixedu.messaging.emaildispatch.util.EmailAddressList;
 import org.joda.time.DateTime;
 
-import pt.ist.bennu.core._development.PropertiesManager;
-import pt.utl.ist.fenix.tools.util.StringAppender;
-
 /**
- * 
+ *
  * @author Luis Cruz
  * @author Paulo Abrantes
- * 
+ *
  */
 public class Email extends Email_Base {
 
@@ -64,10 +63,11 @@ public class Email extends Email_Base {
 
     private static synchronized Session init() {
         final Properties properties = new Properties();
-        properties.put("mail.smtp.host", PropertiesManager.getProperty("mail.smtp.host"));
-        properties.put("mail.smtp.name", PropertiesManager.getProperty("mail.smtp.name"));
-        properties.put("mailSender.max.recipients", PropertiesManager.getProperty("mailSender.max.recipients"));
-        properties.put("mailingList.host.name", PropertiesManager.getProperty("mailingList.host.name"));
+        ConfigurationProperties conf = EmailDispatchConfiguration.getConfiguration();
+        properties.put("mail.smtp.host", conf.mailSmtpHost());
+        properties.put("mail.smtp.name", conf.mailSmtpName());
+        properties.put("mailSender.max.recipients", conf.mailSenderMaxRecipients());
+        properties.put("mailingList.host.name", conf.mailingListHostName());
         properties.put("mail.debug", "true");
         final Session tempSession = Session.getDefaultInstance(properties, null);
         for (final Entry<Object, Object> entry : tempSession.getProperties().entrySet()) {
@@ -192,8 +192,7 @@ public class Email extends Email_Base {
     }
 
     protected static String constructFromString(final String fromName, String fromAddress) {
-        return (fromName == null || fromName.length() == 0) ? fromAddress : StringAppender.append(fromName.replace(',', ' '),
-                " <", fromAddress, ">");
+        return (fromName == null || fromName.length() == 0) ? fromAddress : fromName.replace(',', ' ') + " <" + fromAddress + ">";
     }
 
     private class EmailMimeMessage extends MimeMessage {

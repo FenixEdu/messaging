@@ -16,6 +16,14 @@
             <artifactId>email-dispatch</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.fenixedu</groupId>
+            <artifactId>bennu-portal</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.fenixedu</groupId>
+            <artifactId>bennu-renderers</artifactId>
+        </dependency>
     </dependencies>
 
     <repositories>

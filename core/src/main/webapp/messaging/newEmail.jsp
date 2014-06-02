@@ -40,7 +40,7 @@
         		<fr:property name="eachSchema" value="net.sourceforge.fenixedu.domain.util.email.Recipient.selectItem"/>
         		<fr:property name="eachLayout" value="values"/>
         		<fr:property name="classes" value="nobullet noindent"/>
-        		<fr:property name="sortBy" value="name"/>
+        		<fr:property name="sortBy" value="presentationName"/>
     		</fr:slot>
 			<fr:slot name="bccs" bundle="MESSAGING_RESOURCES" key="label.receiversOfCopy">
 				<fr:property name="size" value="50" />

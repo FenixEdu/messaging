@@ -3,14 +3,14 @@
  *
  * Copyright 2012 Instituto Superior Tecnico
  * Founding Authors: Luis Cruz
- * 
+ *
  *      https://fenix-ashes.ist.utl.pt/
- * 
+ *
  *   This file is part of the Messaging Module.
  *
  *   The Messaging Module is free software: you can
  *   redistribute it and/or modify it under the terms of the GNU Lesser General
- *   Public License as published by the Free Software Foundation, either version 
+ *   Public License as published by the Free Software Foundation, either version
  *   3 of the License, or (at your option) any later version.
  *
  *   The Messaging Module is distributed in the hope that it will be useful,
@@ -20,7 +20,7 @@
  *
  *   You should have received a copy of the GNU Lesser General Public License
  *   along with the Messaging Module. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 package org.fenixedu.messaging.ui;
 
@@ -34,57 +34,42 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+import org.fenixedu.bennu.core.presentationTier.actions.BaseAction;
 import org.fenixedu.messaging.domain.EmailBean;
 import org.fenixedu.messaging.domain.Message;
 import org.fenixedu.messaging.domain.Sender;
-import org.fenixedu.messaging.domain.SenderGroup;
 
-import pt.ist.bennu.core.domain.VirtualHost;
-import pt.ist.bennu.core.domain.contents.ActionNode;
-import pt.ist.bennu.core.domain.contents.Node;
-import pt.ist.bennu.core.presentationTier.actions.ContextBaseAction;
 import pt.ist.fenixWebFramework.renderers.utils.RenderUtils;
-import pt.ist.fenixWebFramework.servlets.functionalities.CreateNodeAction;
 import pt.ist.fenixWebFramework.struts.annotations.Mapping;
-import pt.utl.ist.fenix.tools.util.i18n.Language;
 
-@Mapping(path = "/messagingAction")
 /**
- * 
+ *
  * @author Luis Cruz
- * 
+ *
  */
-public class MessagingAction extends ContextBaseAction {
-
-    @CreateNodeAction(bundle = "MESSAGING_RESOURCES", key = "add.node.messaging.interface", groupKey = "label.module.messaging")
-    public ActionForward createExpenditureNodes(final ActionMapping mapping, final ActionForm form,
-            final HttpServletRequest request, final HttpServletResponse response) throws Exception {
-        final VirtualHost virtualHost = getDomainObject(request, "virtualHostToManageId");
-        final Node node = getDomainObject(request, "parentOfNodesToManageId");
-
-        ActionNode.createActionNode(virtualHost, node, "/messagingAction", "listSenders", "resources.MessagingResources",
-                "label.module.messaging", SenderGroup.getInstance());
-
-        return forwardToMuneConfiguration(request, virtualHost, node);
-    }
-
+@StrutsApplication(bundle = "MessagingResources", path = "messaging", titleKey = "title.messaging", accessGroup = "sender",
+        hint = "Messaging")
+@StrutsFunctionality(app = MessagingAction.class, path = "email", titleKey = "title.messaging.emails")
+@Mapping(path = "/messagingAction")
+public class MessagingAction extends BaseAction {
+    @EntryPoint
     public ActionForward listSenders(final ActionMapping mapping, final ActionForm form, final HttpServletRequest request,
             final HttpServletResponse response) throws Exception {
         final SortedSet<Sender> senders = Sender.getAvailableSenders();
         request.setAttribute("senders", senders);
-        return forward(request, "/messaging/listSenders.jsp");
+        return forward("/messaging/listSenders.jsp");
     }
 
     public ActionForward viewSender(final ActionMapping mapping, final ActionForm form, final HttpServletRequest request,
             final HttpServletResponse response) throws Exception {
         final Sender sender = getDomainObject(request, "senderId");
         request.setAttribute("sender", sender);
-        return forward(request, "/messaging/viewSender.jsp");
+        return forward("/messaging/viewSender.jsp");
     }
 
     public ActionForward viewSender(final HttpServletRequest request, final Sender sender) throws Exception {
         request.setAttribute("sender", sender);
-        return forward(request, "/messaging/viewSender.jsp");
+        return forward("/messaging/viewSender.jsp");
     }
 
     public ActionForward newEmail(final ActionMapping mapping, final ActionForm form, final HttpServletRequest request,
@@ -112,7 +97,7 @@ public class MessagingAction extends ContextBaseAction {
 
         request.setAttribute("emailBean", emailBean);
 
-        return forward(request, "/messaging/newEmail.jsp");
+        return forward("/messaging/newEmail.jsp");
     }
 
     public ActionForward sendEmail(ActionMapping mapping, ActionForm actionForm, HttpServletRequest request,
@@ -121,11 +106,11 @@ public class MessagingAction extends ContextBaseAction {
         RenderUtils.invalidateViewState();
         String validate = emailBean.validate();
         if (validate != null) {
-            final ResourceBundle resourceBundle = ResourceBundle.getBundle("resources.MessagingResources", Language.getLocale());
+            final ResourceBundle resourceBundle = ResourceBundle.getBundle("resources.MessagingResources", I18N.getLocale());
             final String noneSentString = resourceBundle.getString("error.email.none.sent");
             request.setAttribute("errorMessage", noneSentString + " " + validate);
             request.setAttribute("emailBean", emailBean);
-            return forward(request, "/messaging/newEmail.jsp");
+            return forward("/messaging/newEmail.jsp");
         }
         final Message message = emailBean.send();
         request.setAttribute("created", Boolean.TRUE);
@@ -134,7 +119,7 @@ public class MessagingAction extends ContextBaseAction {
 
     public ActionForward viewMessage(final ActionMapping mapping, final HttpServletRequest request, final Message message) {
         request.setAttribute("message", message);
-        return forward(request, "/messaging/viewMessage.jsp");
+        return forward("/messaging/viewMessage.jsp");
     }
 
     public ActionForward viewMessage(ActionMapping mapping, ActionForm actionForm, HttpServletRequest request,

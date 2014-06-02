@@ -1,8 +1,5 @@
 package org.fenixedu.messaging.domain;
 
-
-
-
 class MessagingSystem {
 }
 
@@ -31,13 +28,11 @@ class ReplyTo {
 
 	class UserReplyTo extends ReplyTo { }
 
-class MessageTask extends .pt.ist.fenixframework.plugins.scheduler.domain.Task { }
-
-class SenderGroup extends .pt.ist.bennu.core.domain.groups.PersistentGroup { }
+class PersistentSenderGroup extends .org.fenixedu.bennu.core.domain.groups.PersistentGroup { }
 
 
 relation MyOrgMessagingSystem {
-	.pt.ist.bennu.core.domain.MyOrg playsRole myOrg {
+	.org.fenixedu.bennu.core.domain.Bennu playsRole myOrg {
 		multiplicity 1..1;
 	}
 	MessagingSystem playsRole messagingSystem;
@@ -72,7 +67,7 @@ relation SenderPersistentGroupMembers {
 	Sender playsRole senderFromMembers {
 		multiplicity *;
 	}
-	.pt.ist.bennu.core.domain.groups.PersistentGroup playsRole members {
+	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole members {
 		multiplicity 1..1;
 	}
 }
@@ -81,7 +76,7 @@ relation SenderPersistentGroupRecipients {
 	Sender playsRole senderFromRecipients {
 		multiplicity *;
 	}
-	.pt.ist.bennu.core.domain.groups.PersistentGroup playsRole recipients {
+	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole recipients {
 		multiplicity *;
 	}
 }
@@ -115,7 +110,7 @@ relation MessageReplyTo {
 
 relation UserReplyToUser {
 	UserReplyTo playsRole userReplyTo;
-	.pt.ist.bennu.core.domain.User playsRole user {
+	.org.fenixedu.bennu.core.domain.User playsRole user {
 		multiplicity 1..1;
 	} 
 }
@@ -124,7 +119,7 @@ relation MessageRecipientTo {
 	Message playsRole messageFromTos {
 		multiplicity *;
 	}
-	.pt.ist.bennu.core.domain.groups.PersistentGroup playsRole to {
+	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole to {
 		multiplicity *;
 	}
 }
@@ -133,7 +128,7 @@ relation MessageRecipientCc {
 	Message playsRole messageFromCc {
 		multiplicity *;
 	}
-	.pt.ist.bennu.core.domain.groups.PersistentGroup playsRole cc {
+	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole cc {
 		multiplicity *;
 	}
 }
@@ -142,7 +137,7 @@ relation MessageRecipientBcc {
 	Message playsRole messageFromBcc {
 		multiplicity *;
 	}
-	.pt.ist.bennu.core.domain.groups.PersistentGroup playsRole bcc {
+	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole bcc {
 		multiplicity *;
 	}
 }
@@ -151,7 +146,7 @@ relation MessageUser {
 	Message playsRole message {
 		multiplicity *;
 	}
-	.pt.ist.bennu.core.domain.User playsRole user {
+	.org.fenixedu.bennu.core.domain.User playsRole user {
 		multiplicity 1..1;
 	}
 }
@@ -167,12 +162,12 @@ relation SenderVirtualHost {
     Sender playsRole sender {
         multiplicity *;
     }
-    .pt.ist.bennu.core.domain.VirtualHost playsRole virtualHost {
+    .org.fenixedu.bennu.core.domain.Bennu playsRole virtualHost {
     	multiplicity 1..1;
     }
 }
 
 relation SystemSenderVirtualHost {
     Sender playsRole systemSender;
-    .pt.ist.bennu.core.domain.VirtualHost playsRole virtualHostFromSystemSender;
+    .org.fenixedu.bennu.core.domain.Bennu playsRole virtualHostFromSystemSender;
 }
