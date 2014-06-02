@@ -1,4 +1,4 @@
-package pt.ist.messaging.domain;
+package org.fenixedu.messaging.domain;
 
 
 
@@ -157,7 +157,7 @@ relation MessageUser {
 }
 
 relation EmailMessage {
-    .pt.ist.emailNotifier.domain.Email playsRole email {
+    .org.fenixedu.messaging.emaildispatch.domain.Email playsRole email {
         multiplicity *;
     }
     Message playsRole message;

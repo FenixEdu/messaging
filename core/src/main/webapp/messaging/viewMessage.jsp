@@ -6,7 +6,7 @@
 
 <%@page import="java.util.Set"%>
 <%@page import="java.util.TreeSet"%>
-<%@page import="pt.ist.emailNotifier.util.EmailAddressList"%>
+<%@page import="org.fenixedu.messaging.emaildispatch.util.EmailAddressList"%>
 
 <html:xhtml/>
 
@@ -28,7 +28,7 @@
 	</logic:notPresent>
 
 	<fr:view name="message" schema="net.sourceforge.fenixedu.domain.util.email.Message.info">
-		<fr:schema type="pt.ist.messaging.domain.Message" bundle="MESSAGING_RESOURCES">
+		<fr:schema type="org.fenixedu.messaging.domain.Message" bundle="MESSAGING_RESOURCES">
 			<fr:slot name="sender.fromName" bundle="MESSAGING_RESOURCES" key="label.fromName"/>
 			<fr:slot name="sender.fromAddress" bundle="MESSAGING_RESOURCES" key="label.messaging.sender.fromAddress"/>
 			<fr:slot name="created" bundle="MESSAGING_RESOURCES" key="label.email.created"/>
@@ -54,7 +54,7 @@
 
 	<h3><bean:message bundle="MESSAGING_RESOURCES" key="title.email.sent.emails.resume"/></h3>
 	<fr:view name="message">
-		<fr:schema bundle="MESSAGING_RESOURCES" type="pt.ist.messaging.domain.Message">
+		<fr:schema bundle="MESSAGING_RESOURCES" type="org.fenixedu.messaging.domain.Message">
 			<fr:slot name="possibleRecipientsCount" key="label.possibleRecipientsCount"/>
 			<fr:slot name="recipientsWithEmailCount" key="label.recipientsWithEmailCount"/>
 			<fr:slot name="sentMailsCount" key="label.sentMailsCount"/>
@@ -67,7 +67,7 @@
 	</fr:view>
 	
 	<% final Set failed = new TreeSet(); %>
-	<logic:iterate id="utilEmail" type="pt.ist.emailNotifier.domain.Email" name="message" property="emailSet">
+	<logic:iterate id="utilEmail" type="org.fenixedu.messaging.emaildispatch.domain.Email" name="message" property="emailSet">
 		<%
 			final EmailAddressList failedAddressList = utilEmail.getFailedAddresses();
 			if (failedAddressList != null && !failedAddressList.isEmpty()) {
@@ -79,7 +79,7 @@
 		if (!failed.isEmpty()) {
 		    %>
 				<h3>
-					Não foi possível entregar o e-mail aos seguintes destinatários:
+					Nï¿½o foi possï¿½vel entregar o e-mail aos seguintes destinatï¿½rios:
 				</h3>
 		    	<ul>
 		    <%

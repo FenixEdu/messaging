@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE schemas SYSTEM "../fenix-renderers-schemas.dtd" []>
 <schemas>
-<schema name="net.sourceforge.fenixedu.domain.util.email.ReplyTo.selectItem" type="pt.ist.messaging.domain.ReplyTo">
+<schema name="net.sourceforge.fenixedu.domain.util.email.ReplyTo.selectItem" type="org.fenixedu.messaging.domain.ReplyTo">
 	<slot name="replyToAddress"/>
 </schema>
 

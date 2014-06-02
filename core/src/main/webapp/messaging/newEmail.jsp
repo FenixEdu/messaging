@@ -1,4 +1,4 @@
-<%@page import="pt.ist.messaging.domain.MessagingSystem"%>
+<%@page import="org.fenixedu.messaging.domain.MessagingSystem"%>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-html" prefix="html" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-bean" prefix="bean" %>
@@ -21,22 +21,22 @@
 	<html:hidden property="method" value="sendEmail"/>
 
 	<fr:edit id="emailBean" name="emailBean">
-		<fr:schema type="pt.ist.messaging.domain.EmailBean" bundle="MESSAGING_RESOURCES">
+		<fr:schema type="org.fenixedu.messaging.domain.EmailBean" bundle="MESSAGING_RESOURCES">
 			<fr:slot name="sender" bundle="MESSAGING_RESOURCES" key="label.fromName" layout="menu-select-postback"
 					required="true">
-		        <fr:property name="providerClass" value="pt.ist.messaging.presentationTier.provider.EmailSenderProvider" />
+		        <fr:property name="providerClass" value="org.fenixedu.messaging.ui.EmailSenderProvider" />
 				<fr:property name="format" value="${fromName} (${fromAddress})" />
 				<fr:property name="destination" value="selectSender"/>
 			</fr:slot>
     		<fr:slot name="replyTos" layout="option-select" key="label.replyTos">
-        		<fr:property name="providerClass" value="pt.ist.messaging.presentationTier.provider.EmailReplyTosProvider" />
+        		<fr:property name="providerClass" value="org.fenixedu.messaging.ui.EmailReplyTosProvider" />
         		<fr:property name="eachSchema" value="net.sourceforge.fenixedu.domain.util.email.ReplyTo.selectItem"/>
         		<fr:property name="eachLayout" value="values"/>
         		<fr:property name="classes" value="nobullet noindent"/>
         		<fr:property name="sortBy" value="replyToAddress"/>
     		</fr:slot>
     		<fr:slot name="recipients" layout="option-select" key="label.receiversGroup">
-        		<fr:property name="providerClass" value="pt.ist.messaging.presentationTier.provider.EmailRecipientsProvider" />
+        		<fr:property name="providerClass" value="org.fenixedu.messaging.ui.EmailRecipientsProvider" />
         		<fr:property name="eachSchema" value="net.sourceforge.fenixedu.domain.util.email.Recipient.selectItem"/>
         		<fr:property name="eachLayout" value="values"/>
         		<fr:property name="classes" value="nobullet noindent"/>

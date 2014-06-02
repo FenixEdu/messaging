@@ -1,4 +1,4 @@
-<%@page import="pt.ist.messaging.domain.MessagingSystem"%>
+<%@page import="org.fenixedu.messaging.domain.MessagingSystem"%>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-html" prefix="html" %>
 <%@ taglib uri="http://jakarta.apache.org/struts/tags-bean" prefix="bean" %>
@@ -65,7 +65,7 @@
 <br/>
 
 <fr:view name="sender" property="messageSet">
-	<fr:schema type="pt.ist.messaging.domain.Message" bundle="MESSAGING_RESOURCES">
+	<fr:schema type="org.fenixedu.messaging.domain.Message" bundle="MESSAGING_RESOURCES">
 		<fr:slot name="created" bundle="MESSAGING_RESOURCES" key="label.email.created"/>
 		<fr:slot name="subject" bundle="MESSAGING_RESOURCES" key="label.email.subject"/>
 		<fr:slot name="sent" bundle="MESSAGING_RESOURCES" key="label.email.sentDate"/>
