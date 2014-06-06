@@ -25,6 +25,7 @@
 package org.fenixedu.messaging.domain;
 
 import org.fenixedu.bennu.core.domain.Bennu;
+import org.fenixedu.messaging.MessagingSystemConfiguration;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
@@ -35,19 +36,52 @@ import pt.ist.fenixframework.Atomic.TxMode;
  *
  */
 public class MessagingSystem extends MessagingSystem_Base {
-
     private MessagingSystem() {
         super();
-        setMyOrg(Bennu.getInstance());
+        setBennu(Bennu.getInstance());
+        setPersistentSenderGroup(new PersistentSenderGroup());
     }
 
     public static MessagingSystem getInstance() {
-        return Bennu.getInstance().getMessagingSystem() != null ? Bennu.getInstance().getMessagingSystem() : create();
+        if (Bennu.getInstance().getMessagingSystem() == null) {
+            return createMessagingSystem();
+        }
+        return Bennu.getInstance().getMessagingSystem();
     }
 
     @Atomic(mode = TxMode.WRITE)
-    private static MessagingSystem create() {
-        return Bennu.getInstance().getMessagingSystem() != null ? Bennu.getInstance().getMessagingSystem() : new MessagingSystem();
+    private static MessagingSystem createMessagingSystem() {
+        if (Bennu.getInstance().getMessagingSystem() == null) {
+            return new MessagingSystem();
+        }
+        return Bennu.getInstance().getMessagingSystem();
     }
 
+    private static MessageDispatcher dispatcher = null;
+
+    public static void setMessageDispatcher(MessageDispatcher dispatcher) {
+        MessagingSystem.dispatcher = dispatcher;
+    }
+
+    @Atomic(mode = TxMode.WRITE)
+    public static int deleteOldMessages() {
+        int counter = 0;
+        int daysToKeepSentMessages = MessagingSystemConfiguration.getConfiguration().daysToKeepSentMessages();
+        for (Message message : MessagingSystem.getInstance().getMessageSet()) {
+            if (message.getDispatchReport() != null && message.getDispatchReport().getFinishedDelivery() != null
+                    && message.getDispatchReport().getFinishedDelivery().plusDays(daysToKeepSentMessages).isBeforeNow()) {
+                message.delete();
+                counter++;
+            }
+        }
+        return counter;
+    }
+
+    @Atomic(mode = TxMode.WRITE)
+    public static MessageDispatchReport dispatch(Message message) {
+        MessageDispatchReport report = dispatcher.dispatch(message);
+        message.setMessagingSystemFromPendingDispatch(null);
+        message.setDispatchReport(report);
+        return report;
+    }
 }

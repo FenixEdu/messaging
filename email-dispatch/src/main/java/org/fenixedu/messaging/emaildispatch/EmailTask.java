@@ -1,5 +1,5 @@
 /*
- * @(#)MessageId.java
+ * @(#)EmailTask.java
  *
  * Copyright 2012 Instituto Superior Tecnico
  * Founding Authors: Luis Cruz
@@ -22,26 +22,19 @@
  *   along with the E-mail Module. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package org.fenixedu.messaging.emaildispatch.domain;
+package org.fenixedu.messaging.emaildispatch;
 
-import org.joda.time.DateTime;
+import org.fenixedu.bennu.scheduler.CronTask;
+import org.fenixedu.bennu.scheduler.annotation.Task;
+import org.fenixedu.messaging.domain.MessagingSystem;
+import org.fenixedu.messaging.emaildispatch.domain.LocalEmailMessageDispatchReport;
 
-/**
- *
- * @author Luis Cruz
- *
- */
-public class MessageId extends MessageId_Base {
-
-    public MessageId(final Email email, final String messageID) {
-        setSendTime(new DateTime());
-        setEmail(email);
-        setId(messageID);
+@Task(englishTitle = "Email Sender", readOnly = true)
+public class EmailTask extends CronTask {
+    @Override
+    public void runTask() throws Exception {
+        for (LocalEmailMessageDispatchReport report : MessagingSystem.getInstance().getUnfinishedReportsSet()) {
+            report.deliver();
+        }
     }
-
-    public void delete() {
-        setEmail(null);
-        deleteDomainObject();
-    }
-
 }

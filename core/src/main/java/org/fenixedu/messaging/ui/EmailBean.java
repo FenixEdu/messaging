@@ -22,7 +22,7 @@
  *   along with the Messaging Module. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package org.fenixedu.messaging.domain;
+package org.fenixedu.messaging.ui;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -31,12 +31,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
 
 import org.apache.commons.lang.StringUtils;
+import org.fenixedu.bennu.core.groups.Group;
+import org.fenixedu.commons.i18n.I18N;
+import org.fenixedu.messaging.domain.Message;
+import org.fenixedu.messaging.domain.ReplyTo;
+import org.fenixedu.messaging.domain.Sender;
 import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
-import pt.utl.ist.fenix.tools.util.EMail;
 
 /**
  *
@@ -44,9 +53,10 @@ import pt.utl.ist.fenix.tools.util.EMail;
  *
  */
 public class EmailBean implements Serializable {
+    private static final long serialVersionUID = -2004655177098978589L;
 
     private Sender sender;
-    private Set<Group> recipients;
+    private List<Group> recipients = new ArrayList<>();
     private String tos, ccs, bccs;
     private String subject, message, htmlMessage;
     private Set<ReplyTo> replyTos;
@@ -59,7 +69,7 @@ public class EmailBean implements Serializable {
         this.subject = message.getSubject();
         this.message = message.getBody();
         this.htmlMessage = message.getHtmlBody();
-        this.bccs = message.getBccString();
+        this.bccs = message.getExtraBccs();
         this.createdDate = message.getCreated();
     }
 
@@ -72,28 +82,15 @@ public class EmailBean implements Serializable {
     }
 
     public List<Group> getRecipients() {
-        final List<Group> result = new ArrayList<Group>();
-        if (recipients != null) {
-            for (final Group recipient : recipients) {
-                result.add(recipient);
-            }
-        }
-        return result;
+        return recipients;
     }
 
     public void setRecipients(List<Group> recipients) {
-        if (recipients == null) {
-            this.recipients = null;
-        } else {
-            this.recipients = new HashSet<Group>();
-            for (final Group recipient : recipients) {
-                this.recipients.add(recipient);
-            }
-        }
+        this.recipients = recipients;
     }
 
-    public List<ReplyTo> getReplyTos() {
-        final List<ReplyTo> result = new ArrayList<ReplyTo>();
+    public Set<ReplyTo> getReplyTos() {
+        final Set<ReplyTo> result = new HashSet<ReplyTo>();
         if (replyTos != null) {
             for (final ReplyTo replyTo : replyTos) {
                 result.add(replyTo);
@@ -162,7 +159,7 @@ public class EmailBean implements Serializable {
     }
 
     public String validate() {
-        final ResourceBundle resourceBundle = ResourceBundle.getBundle("resources.MessagingResources", Language.getLocale());
+        final ResourceBundle resourceBundle = ResourceBundle.getBundle("resources.MessagingResources", I18N.getLocale());
 
         String bccs = getBccs();
         if (getRecipients().isEmpty() && StringUtils.isEmpty(bccs)) {
@@ -173,7 +170,7 @@ public class EmailBean implements Serializable {
             String[] emails = bccs.split(",");
             for (String emailString : emails) {
                 final String email = emailString.trim();
-                if (!email.matches(EMail.W3C_EMAIL_SINTAX_VALIDATOR)) {
+                if (!isValidEmailAddress(email)) {
                     StringBuilder builder = new StringBuilder(resourceBundle.getString("error.email.validation.bcc.invalid"));
                     builder.append(email);
                     return builder.toString();
@@ -202,18 +199,28 @@ public class EmailBean implements Serializable {
 
     @Atomic
     public Message send() {
-        final String bccs = getBccs() == null ? null : getBccs().replace(" ", "");
-        final String htmlMessage = getHtmlMessage();
-        return new Message(getSender(), getReplyTos(), Collections.EMPTY_SET, Collections.EMPTY_SET, getRecipients(), bccs,
-                getSubject(), getMessage(), htmlMessage);
+        Set<String> extraBccs = Stream.of(getBccs().split(",")).map(bcc -> bcc.trim()).collect(Collectors.toSet());
+        Set<Group> recipientSet = new HashSet<Group>(recipients);
+        return getSender().send(getSubject(), getMessage(), getHtmlMessage(), Collections.emptySet(), Collections.emptySet(),
+                recipientSet, extraBccs, getReplyTos());
     }
 
+    private static boolean isValidEmailAddress(String email) {
+        boolean result = true;
+        try {
+            InternetAddress emailAddr = new InternetAddress(email);
+            emailAddr.validate();
+        } catch (AddressException ex) {
+            result = false;
+        }
+        return result;
+    }
 //    @Service
 //    public void removeRecipients() {
-//	for(final Group recipient : getRecipients()) {
-//	    getSender().removeRecipients(recipient);
-//	}
-//	setRecipients(null);
+//  for(final PersistentGroup recipient : getRecipients()) {
+//      getSender().removeRecipients(recipient);
+//  }
+//  setRecipients(null);
 //    }
 
 }

@@ -21,11 +21,11 @@
 	<html:hidden property="method" value="sendEmail"/>
 
 	<fr:edit id="emailBean" name="emailBean">
-		<fr:schema type="org.fenixedu.messaging.domain.EmailBean" bundle="MESSAGING_RESOURCES">
+		<fr:schema type="org.fenixedu.messaging.ui.EmailBean" bundle="MESSAGING_RESOURCES">
 			<fr:slot name="sender" bundle="MESSAGING_RESOURCES" key="label.fromName" layout="menu-select-postback"
 					required="true">
 		        <fr:property name="providerClass" value="org.fenixedu.messaging.ui.EmailSenderProvider" />
-				<fr:property name="format" value="${fromName} (${fromAddress})" />
+				<fr:property name="format" value="\${fromName} (\${fromAddress})" />
 				<fr:property name="destination" value="selectSender"/>
 			</fr:slot>
     		<fr:slot name="replyTos" layout="option-select" key="label.replyTos">

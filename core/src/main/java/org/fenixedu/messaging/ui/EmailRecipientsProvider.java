@@ -28,7 +28,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.fenixedu.bennu.core.groups.Group;
-import org.fenixedu.messaging.domain.EmailBean;
 import org.fenixedu.messaging.domain.Sender;
 
 import pt.ist.fenixWebFramework.renderers.DataProvider;
@@ -48,7 +47,7 @@ public class EmailRecipientsProvider implements DataProvider {
         final SortedSet<Group> recipients = new TreeSet<>();
         recipients.addAll(emailBean.getRecipients());
         if (sender != null) {
-            recipients.addAll(sender.getRecipientsSet());
+            recipients.addAll(sender.getRecipients());
         }
         return recipients;
     }
@@ -57,5 +56,4 @@ public class EmailRecipientsProvider implements DataProvider {
     public Converter getConverter() {
         return null;
     }
-
 }

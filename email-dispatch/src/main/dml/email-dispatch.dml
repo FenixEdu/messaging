@@ -1,64 +1,40 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
+class LocalEmailMessageDispatchReport extends .org.fenixedu.messaging.domain.MessageDispatchReport;
 
+class MimeMessageHandler {
+    protected String toAddresses;
+    protected String ccAddresses;
+    protected String bccAddresses;
+}
 
+class EmailBlacklist {
+    protected JsonElement blacklist;
+}
 
-valueType org.fenixedu.messaging.emaildispatch.util.EmailAddressList as EmailAddressList {
-    externalizeWith {
-        String toString();
+relation EmailQueue {
+    protected .org.fenixedu.messaging.domain.MessagingSystem playsRole queue {
+        multiplicity 0..1;
     }
-}
-
-
-class EmailNotifier {
-}
-
-class Email {
-	EmailAddressList bccAddresses;
-	String body;
-	String htmlBody;
-	EmailAddressList ccAddresses;
-	String fromAddress;
-	String fromName;
-	EmailAddressList replyTos;
-	String subject;
-	EmailAddressList toAddresses;
-	EmailAddressList confirmedAddresses;
-	EmailAddressList failedAddresses;
-}
-
-class MessageTransportResult {
-	Integer code;
-	String description;
-}
-
-class MessageId {
-	String id;
-	DateTime sendTime;
-}
-
-relation EmailNotifierEmail {
-	EmailNotifier playsRole emailNotifier;
-	Email playsRole emails {
-		multiplicity *;
-	}
-}
-
-relation MessageIdEmail {
-    Email playsRole email;
-    MessageId playsRole messageIds {
+    public LocalEmailMessageDispatchReport playsRole unfinishedReports {
         multiplicity *;
     }
 }
 
-relation EmailMessageTransportResult {
-	Email playsRole email;
-	MessageTransportResult playsRole messageTransportResult {
-		multiplicity *;
-	}
+relation MessageDispatchReportEmails {
+    protected LocalEmailMessageDispatchReport playsRole report {
+        multiplicity 1..1;
+    }
+    protected MimeMessageHandler playsRole handler {
+        multiplicity *;
+    }
 }
 
-relation MyOrgEmailNotifier {
-    .org.fenixedu.bennu.core.domain.Bennu playsRole myOrg;
-    EmailNotifier playsRole emailNotifier;
+relation EmailBlacklistRoot {
+    protected .org.fenixedu.messaging.domain.MessagingSystem playsRole messagingSystem {
+        multiplicity 1..1;
+    }
+    public EmailBlacklist playsRole blacklist {
+        multiplicity 0..1;
+    }
 }

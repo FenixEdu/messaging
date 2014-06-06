@@ -8,9 +8,14 @@
     </parent>
 
     <artifactId>email-dispatch</artifactId>
-    <name>Bennu Email Dispatching</name>
+    <name>Email Dispatcher</name>
 
     <dependencies>
+        <dependency>
+            <groupId>org.fenixedu</groupId>
+            <artifactId>messaging</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>mail</artifactId>

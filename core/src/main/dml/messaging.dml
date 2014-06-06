@@ -13,8 +13,16 @@ class Message {
 	String body;
 	String htmlBody;
 	DateTime created;
-	DateTime sent;
-	String bccString;
+	String extraBccs;
+}
+
+class MessageDispatchReport {
+    public DateTime startedDelivery;
+    public DateTime finishedDelivery;
+    public Integer totalCount;
+    public Integer deliveredCount;
+    public Integer invalidCount;
+    public Integer failedCount;
 }
 
 class ReplyTo {
@@ -28,95 +36,118 @@ class ReplyTo {
 
 	class UserReplyTo extends ReplyTo { }
 
-class PersistentSenderGroup extends .org.fenixedu.bennu.core.domain.groups.PersistentGroup { }
+class PersistentSenderGroup extends .org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 
-
-relation MyOrgMessagingSystem {
-	.org.fenixedu.bennu.core.domain.Bennu playsRole myOrg {
-		multiplicity 1..1;
+relation MessagingSystemRoot {
+    protected .org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+        multiplicity 1..1;
+    }
+	public MessagingSystem playsRole messagingSystem {
+        multiplicity 0..1;
 	}
-	MessagingSystem playsRole messagingSystem;
 }
 
 relation MessagingSystemSender {
-	MessagingSystem playsRole messagingSystem {
+	protected MessagingSystem playsRole messagingSystem {
 		multiplicity 1..1;
 	}
-	Sender playsRole sender {
+	protected Sender playsRole sender {
 		multiplicity *;
 	}
 }
 
+relation MessagingSystemSystemSender {
+    protected MessagingSystem playsRole rootForSystemSender {
+        multiplicity 1..1;
+    }
+    public Sender playsRole systemSender {
+        multiplicity 0..1;
+    }
+}
+
 relation MessagingSystemMessage {
-	MessagingSystem playsRole messagingSystem {
+	protected MessagingSystem playsRole messagingSystem {
 		multiplicity 1..1;
 	}
-	Message playsRole Message {
+	public Message playsRole message {
 		multiplicity *;
 	}
 }
 
 relation MessagingSystemMessagePending {
-	MessagingSystem playsRole messagingSystemFromPendingDispatch;
-	Message playsRole messagePendingDispatch {
+	protected MessagingSystem playsRole messagingSystemFromPendingDispatch {
+        multiplicity 0..1;
+    }
+	protected Message playsRole messagePendingDispatch {
 		multiplicity *;
 	}
 }
 
+relation MessageDispatchReports {
+    protected Message playsRole message {
+        multiplicity 1..1;
+    }
+    protected MessageDispatchReport playsRole dispatchReport {
+        multiplicity 0..1;
+    }
+}
+
 relation SenderPersistentGroupMembers {
-	Sender playsRole senderFromMembers {
+	protected Sender playsRole senderFromMember {
 		multiplicity *;
 	}
-	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole members {
+	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole memberGroup {
 		multiplicity 1..1;
 	}
 }
 
 relation SenderPersistentGroupRecipients {
-	Sender playsRole senderFromRecipients {
+	protected Sender playsRole senderFromRecipient {
 		multiplicity *;
 	}
-	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole recipients {
+	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole recipient {
 		multiplicity *;
 	}
 }
 
 relation SenderMessage {
-	Sender playsRole sender {
+	public Sender playsRole sender {
 		multiplicity 1..1;
 	}
-	Message playsRole message {
+	protected Message playsRole message {
 		multiplicity *;
 	}
 }
 
 relation SenderReplyTo {
-	Sender playsRole sender {
+	protected Sender playsRole sender {
 		multiplicity *;
 	}
-	ReplyTo playsRole replyTo {
+	public ReplyTo playsRole replyTo {
 		multiplicity *;
 	}
 }
 
 relation MessageReplyTo {
-	Message playsRole message {
+	protected Message playsRole message {
 		multiplicity *;
 	}
-	ReplyTo playsRole replyTo {
+	protected ReplyTo playsRole replyTo {
 		multiplicity *;
 	}
 }
 
 relation UserReplyToUser {
-	UserReplyTo playsRole userReplyTo;
-	.org.fenixedu.bennu.core.domain.User playsRole user {
+	public UserReplyTo playsRole userReplyTo {
+        multiplicity 0..1;
+	}
+	protected .org.fenixedu.bennu.core.domain.User playsRole user {
 		multiplicity 1..1;
 	} 
 }
 
 relation MessageRecipientTo {
-	Message playsRole messageFromTos {
+	protected Message playsRole messageFromTo {
 		multiplicity *;
 	}
 	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole to {
@@ -125,7 +156,7 @@ relation MessageRecipientTo {
 }
 
 relation MessageRecipientCc {
-	Message playsRole messageFromCc {
+	protected Message playsRole messageFromCc {
 		multiplicity *;
 	}
 	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole cc {
@@ -134,7 +165,7 @@ relation MessageRecipientCc {
 }
 
 relation MessageRecipientBcc {
-	Message playsRole messageFromBcc {
+	protected Message playsRole messageFromBcc {
 		multiplicity *;
 	}
 	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole bcc {
@@ -143,31 +174,19 @@ relation MessageRecipientBcc {
 }
 
 relation MessageUser {
-	Message playsRole message {
+	protected Message playsRole message {
 		multiplicity *;
 	}
-	.org.fenixedu.bennu.core.domain.User playsRole user {
+	protected .org.fenixedu.bennu.core.domain.User playsRole user {
 		multiplicity 1..1;
 	}
 }
 
-relation EmailMessage {
-    .org.fenixedu.messaging.emaildispatch.domain.Email playsRole email {
-        multiplicity *;
+relation MessagingSystemPersistentSenderGroup {
+    protected PersistentSenderGroup playsRole persistentSenderGroup {
+        multiplicity 1..1;
     }
-    Message playsRole message;
-}
-
-relation SenderVirtualHost {
-    Sender playsRole sender {
-        multiplicity *;
+    protected MessagingSystem playsRole messagingSystem {
+        multiplicity 1..1;
     }
-    .org.fenixedu.bennu.core.domain.Bennu playsRole virtualHost {
-    	multiplicity 1..1;
-    }
-}
-
-relation SystemSenderVirtualHost {
-    Sender playsRole systemSender;
-    .org.fenixedu.bennu.core.domain.Bennu playsRole virtualHostFromSystemSender;
 }

@@ -24,17 +24,20 @@
  */
 package org.fenixedu.messaging.domain;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 import org.fenixedu.bennu.core.groups.DynamicGroup;
+import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
+import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
 
@@ -55,59 +58,65 @@ public class Sender extends Sender_Base {
 
     };
 
-    public Sender() {
+    protected Sender() {
         super();
         setMessagingSystem(MessagingSystem.getInstance());
-        setVirtualHost(Bennu.getInstance());
     }
 
-    public Sender(final String fromName, final String fromAddress, final PersistentGroup members) {
+    public Sender(final String fromName, final String fromAddress, final Group members) {
         this();
         setFromName(fromName);
         setFromAddress(fromAddress);
-        setMembers(members);
+        setMemberGroup(members.toPersistentGroup());
     }
 
     public void delete() {
         for (final Message message : getMessageSet()) {
             message.delete();
         }
-        setMembers(null);
-        getRecipientsSet().clear();
+        setMemberGroup(null);
+        getRecipientSet().clear();
         setMessagingSystem(null);
         deleteDomainObject();
     }
 
-    public static SortedSet<Sender> getAvailableSenders() {
-        final User user = Authenticate.getUser();
+    public Group getMembers() {
+        return getMemberGroup().toGroup();
+    }
 
-        final SortedSet<Sender> senders = new TreeSet<Sender>(Sender.COMPARATOR_BY_FROM_NAME);
-        for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-            if (sender.isMember(user)) {
-                senders.add(sender);
-            }
-        }
-
-        return senders;
+    public void setMembers(Group members) {
+        super.setMemberGroup(members.toPersistentGroup());
     }
 
     public boolean isMember(final User user) {
-        return getMembers().toGroup().or(DynamicGroup.get("managers")).isMember(user);
+        return getMembers().isMember(user) || DynamicGroup.get("managers").isMember(user);
     }
 
-    public static boolean userHasRecipients() {
-        final User user = Authenticate.getUser();
-        for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-            if (sender.isMember(user) && !sender.getRecipientsSet().isEmpty()) {
-                return true;
-            }
+    public boolean isMember(User user, DateTime when) {
+        return getMembers().isMember(user, when) || DynamicGroup.get("managers").isMember(user, when);
+    }
+
+    public Set<Group> getRecipients() {
+        return getRecipientSet().stream().map(g -> g.toGroup()).collect(Collectors.toSet());
+    }
+
+    public void addRecipient(Group recipient) {
+        PersistentGroup group = recipient.toPersistentGroup();
+        if (!getRecipientSet().contains(group)) {
+            super.addRecipient(group);
         }
-        return false;
+    }
+
+    public void removeRecipient(Group recipient) {
+        PersistentGroup group = recipient.toPersistentGroup();
+        if (getRecipientSet().contains(group)) {
+            super.removeRecipient(group);
+        }
     }
 
     @Atomic
-    public List<ReplyTo> getConcreteReplyTos() {
-        List<ReplyTo> replyTos = new ArrayList<ReplyTo>();
+    public Set<ReplyTo> getConcreteReplyTos() {
+        Set<ReplyTo> replyTos = new HashSet<ReplyTo>();
         for (ReplyTo replyTo : getReplyToSet()) {
             if (replyTo instanceof CurrentUserReplyTo) {
                 final User user = Authenticate.getUser();
@@ -125,17 +134,40 @@ public class Sender extends Sender_Base {
         return getFromName();
     }
 
-    public void deleteOldMessages() {
-        final SortedSet<Message> messages = new TreeSet<Message>(Message.COMPARATOR_BY_CREATED_DATE_OLDER_LAST);
-        messages.addAll(getMessageSet());
-        int sentCounter = 0;
-        for (final Message message : messages) {
-            if (message.getSent() != null) {
-                ++sentCounter;
-                if (sentCounter > Message.NUMBER_OF_SENT_EMAILS_TO_STAY) {
-                    message.delete();
-                }
+    public Message send(String subject, String body, String htmlBody, Set<Group> to, Set<Group> cc, Set<Group> bcc,
+            Set<String> extraBccs) {
+        return new Message(this, subject, body, htmlBody, to, cc, bcc, extraBccs, getConcreteReplyTos());
+    }
+
+    public Message send(String subject, String body, String htmlBody, Set<Group> to, Set<Group> cc, Set<Group> bcc,
+            Set<String> extraBccs, Set<ReplyTo> replyTos) {
+        return new Message(this, subject, body, htmlBody, to, cc, bcc, extraBccs, replyTos);
+    }
+
+    public static boolean userHasRecipients() {
+        final User user = Authenticate.getUser();
+        for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
+            if (sender.isMember(user) && !sender.getRecipientSet().isEmpty()) {
+                return true;
             }
         }
+        return false;
+    }
+
+    public static SortedSet<Sender> getAvailableSenders() {
+        final User user = Authenticate.getUser();
+
+        final SortedSet<Sender> senders = new TreeSet<Sender>(Sender.COMPARATOR_BY_FROM_NAME);
+        for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
+            if (sender.isMember(user)) {
+                senders.add(sender);
+            }
+        }
+
+        return senders;
+    }
+
+    public static Stream<Sender> all() {
+        return MessagingSystem.getInstance().getSenderSet().stream();
     }
 }

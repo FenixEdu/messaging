@@ -13,16 +13,11 @@
     <dependencies>
         <dependency>
             <groupId>org.fenixedu</groupId>
-            <artifactId>email-dispatch</artifactId>
-            <version>${project.version}</version>
+            <artifactId>bennu-renderers</artifactId>
         </dependency>
         <dependency>
             <groupId>org.fenixedu</groupId>
             <artifactId>bennu-portal</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.fenixedu</groupId>
-            <artifactId>bennu-renderers</artifactId>
         </dependency>
     </dependencies>
 
