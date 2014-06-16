@@ -55,9 +55,11 @@
 <br/>
 <br/>
 
+<bean:define id="policy" name="sender" property="policy" />
+
 <div class="infoop">
    	<p class="mvert0">
-   		<bean:message bundle="MESSAGING_RESOURCES" key="label.message.email.send.queue"/>
+   		<bean:message bundle="MESSAGING_RESOURCES" key="label.message.email.send.queue" arg0="<%= policy.toString() %>"/>
    	</p>
 </div>
 

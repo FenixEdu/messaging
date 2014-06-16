@@ -25,7 +25,6 @@
 package org.fenixedu.messaging.domain;
 
 import org.fenixedu.bennu.core.domain.Bennu;
-import org.fenixedu.messaging.MessagingSystemConfiguration;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
@@ -64,17 +63,10 @@ public class MessagingSystem extends MessagingSystem_Base {
     }
 
     @Atomic(mode = TxMode.WRITE)
-    public static int deleteOldMessages() {
-        int counter = 0;
-        int daysToKeepSentMessages = MessagingSystemConfiguration.getConfiguration().daysToKeepSentMessages();
-        for (Message message : MessagingSystem.getInstance().getMessageSet()) {
-            if (message.getDispatchReport() != null && message.getDispatchReport().getFinishedDelivery() != null
-                    && message.getDispatchReport().getFinishedDelivery().plusDays(daysToKeepSentMessages).isBeforeNow()) {
-                message.delete();
-                counter++;
-            }
+    public static void deleteOldMessages() {
+        for (Sender sender : MessagingSystem.getInstance().getSenderSet()) {
+            sender.pruneOldMessages();
         }
-        return counter;
     }
 
     @Atomic(mode = TxMode.WRITE)

@@ -24,6 +24,7 @@
  */
 package org.fenixedu.messaging.domain;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
@@ -63,11 +64,18 @@ public class Sender extends Sender_Base {
         setMessagingSystem(MessagingSystem.getInstance());
     }
 
-    public Sender(final String fromName, final String fromAddress, final Group members) {
+    public Sender(final String fromName, final String fromAddress, final Group members, MessageDeletionPolicy policy) {
         this();
         setFromName(fromName);
         setFromAddress(fromAddress);
-        setMemberGroup(members.toPersistentGroup());
+        setMembers(members);
+        setPolicy(policy);
+    }
+
+    @Override
+    public Set<Message> getMessageSet() {
+        // TODO remove when framework supports read-only relations
+        return Collections.unmodifiableSet(super.getMessageSet());
     }
 
     public void delete() {
@@ -122,7 +130,7 @@ public class Sender extends Sender_Base {
                 final User user = Authenticate.getUser();
                 final UserReplyTo userReplyTo =
                         user.getUserReplyTo() != null ? user.getUserReplyTo() : UserReplyTo.createFor(user);
-                        replyTos.add(userReplyTo);
+                replyTos.add(userReplyTo);
             } else {
                 replyTos.add(replyTo);
             }
@@ -132,6 +140,10 @@ public class Sender extends Sender_Base {
 
     public String getFromName(final User user) {
         return getFromName();
+    }
+
+    public void pruneOldMessages() {
+        getPolicy().pruneSender(this);
     }
 
     public Message send(String subject, String body, String htmlBody, Set<Group> to, Set<Group> cc, Set<Group> bcc,

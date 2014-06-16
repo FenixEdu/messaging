@@ -1,11 +1,19 @@
 package org.fenixedu.messaging.domain;
 
+valueType org.fenixedu.messaging.domain.MessageDeletionPolicy as MessageDeletionPolicy {
+    externalizeWith {
+        String serialize();
+    }
+    internalizeWith internalize();
+}
+
 class MessagingSystem {
 }
 
 class Sender {
 	String fromName;
 	String fromAddress;
+	MessageDeletionPolicy policy;
 }
 
 class Message {

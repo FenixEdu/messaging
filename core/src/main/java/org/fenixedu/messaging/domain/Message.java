@@ -49,7 +49,7 @@ import com.google.common.collect.Sets;
  * @author Luis Cruz
  *
  */
-public final class Message extends Message_Base {
+public final class Message extends Message_Base implements Comparable<Message> {
 
     static final public Comparator<Message> COMPARATOR_BY_CREATED_DATE_OLDER_FIRST = new Comparator<Message>() {
         @Override
@@ -114,6 +114,10 @@ public final class Message extends Message_Base {
     public MessageDispatchReport getDispatchReport() {
         // TODO remove when the framework supports read-only properties
         return super.getDispatchReport();
+    }
+
+    public DateTime getSent() {
+        return getDispatchReport() != null ? getDispatchReport().getFinishedDelivery() : null;
     }
 
     public void safeDelete() {
@@ -213,4 +217,9 @@ public final class Message extends Message_Base {
                 .transform(Group.groupToGroupName);
     }
 
+    @Override
+    public int compareTo(Message o) {
+        int date = -getCreated().compareTo(o.getCreated());
+        return date != 0 ? date : getExternalId().compareTo(o.getExternalId());
+    }
 }

@@ -14,6 +14,7 @@ import org.fenixedu.bennu.core.bootstrap.annotations.Section;
 import org.fenixedu.bennu.core.groups.AnyoneGroup;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.messaging.bootstrap.MessagingSystemBootstrap.SystemSenderSection;
+import org.fenixedu.messaging.domain.MessageDeletionPolicy;
 import org.fenixedu.messaging.domain.MessagingSystem;
 import org.fenixedu.messaging.domain.Sender;
 
@@ -38,7 +39,9 @@ public class MessagingSystemBootstrap {
                     "error.messaging.bootstrapper.emptyGroupExpression", "resources.MessagingResources"));
         }
 
-        Sender sender = new Sender(section.getFromName(), section.getFromAddress(), Group.parse(section.getGroupExpression()));
+        Sender sender =
+                new Sender(section.getFromName(), section.getFromAddress(), Group.parse(section.getGroupExpression()),
+                        MessageDeletionPolicy.unlimited());
         sender.addRecipient(AnyoneGroup.get());
         MessagingSystem.getInstance().setSystemSender(sender);
 
