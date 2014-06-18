@@ -32,7 +32,7 @@
 			<fr:slot name="sender.fromAddress" bundle="MESSAGING_RESOURCES" key="label.messaging.sender.fromAddress"/>
 			<fr:slot name="created" bundle="MESSAGING_RESOURCES" key="label.email.created"/>
 			<fr:slot name="user.presentationName" bundle="MESSAGING_RESOURCES" key="label.email.sent.by"/>
-			<fr:slot name="replyTo" bundle="MESSAGING_RESOURCES" key="label.replyTos">
+			<fr:slot name="replyTos" bundle="MESSAGING_RESOURCES" key="label.replyTos">
 	    		<fr:property name="eachSchema" value="net.sourceforge.fenixedu.domain.util.email.ReplyTo.selectItem"/>
         		<fr:property name="eachLayout" value="values"/>
 			</fr:slot>

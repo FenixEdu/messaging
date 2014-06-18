@@ -35,9 +35,9 @@
 			</th>
 			<td>
 				<ul>
-					<logic:iterate id="replyTo" name="sender" property="replyTo">
+					<logic:iterate id="replyTo" name="sender" property="replyTos">
 						<li>
-							<bean:write name="replyTo" property="replyToAddress"/>
+							<bean:write name="replyTo" property="address"/>
 						</li>
 					</logic:iterate>
 				</ul>
@@ -70,7 +70,7 @@
 	<fr:schema type="org.fenixedu.messaging.domain.Message" bundle="MESSAGING_RESOURCES">
 		<fr:slot name="created" bundle="MESSAGING_RESOURCES" key="label.email.created"/>
 		<fr:slot name="subject" bundle="MESSAGING_RESOURCES" key="label.email.subject"/>
-		<fr:slot name="dispatchReport.finished" bundle="MESSAGING_RESOURCES" key="label.email.sentDate"/>
+		<fr:slot name="dispatchReport" bundle="MESSAGING_RESOURCES" key="label.email.sentDate"/>
 	</fr:schema>
 	<fr:layout name="tabular">
 		<fr:property name="classes" value="tstyle2 thlight"/>

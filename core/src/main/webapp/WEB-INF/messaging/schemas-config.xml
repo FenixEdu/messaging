@@ -2,7 +2,7 @@
 <!DOCTYPE schemas SYSTEM "../fenix-renderers-schemas.dtd" []>
 <schemas>
 <schema name="net.sourceforge.fenixedu.domain.util.email.ReplyTo.selectItem" type="org.fenixedu.messaging.domain.ReplyTo">
-	<slot name="replyToAddress"/>
+	<slot name="address"/>
 </schema>
 
 <schema name="net.sourceforge.fenixedu.domain.util.email.Recipient.selectItem" type="org.fenixedu.bennu.core.groups.Group">

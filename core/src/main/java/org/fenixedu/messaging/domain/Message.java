@@ -25,10 +25,8 @@
 package org.fenixedu.messaging.domain;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -120,25 +118,25 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder replyToSystem() {
-            this.replyTo.addAll(sender.getConcreteReplyTos());
+            this.replyTo.addAll(sender.getReplyTos());
             return this;
         }
 
-        public MessageBuilder replyTo(Set<? extends ReplyTo> replyTo) {
-            this.replyTo.addAll(replyTo);
+        public MessageBuilder replyTo(Set<ReplyTo> replyTos) {
+            this.replyTo.addAll(replyTos);
             return this;
         }
 
-        public MessageBuilder replyTo(ReplyTo... replyTo) {
-            for (ReplyTo reply : replyTo) {
-                this.replyTo.add(reply);
+        public MessageBuilder replyTo(ReplyTo... replyTos) {
+            for (ReplyTo replyTo : replyTos) {
+                this.replyTo.add(replyTo);
             }
             return this;
         }
 
         public MessageBuilder replyTo(String... emails) {
             for (String email : emails) {
-                this.replyTo.add(new ConcreteReplyTo(email));
+                this.replyTo.add(ReplyTo.concrete(email));
             }
             return this;
         }
@@ -191,9 +189,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
             }
         }
         if (replyTos != null) {
-            for (ReplyTo replyTo : replyTos) {
-                addReplyTo(replyTo);
-            }
+            setReplyToArray(new ReplyTos(replyTos));
         }
         setExtraBccs(Joiner.on(", ").join(extraBccs));
         setSubject(subject);
@@ -228,12 +224,6 @@ public final class Message extends Message_Base implements Comparable<Message> {
         getToSet().clear();
         getCcSet().clear();
         getBccSet().clear();
-        for (final ReplyTo replyTo : getReplyToSet()) {
-            removeReplyTo(replyTo);
-            if (replyTo.getSenderSet().isEmpty()) {
-                replyTo.delete();
-            }
-        }
         if (getDispatchReport() != null) {
             getDispatchReport().delete();
         }
@@ -296,12 +286,8 @@ public final class Message extends Message_Base implements Comparable<Message> {
         return base;
     }
 
-    public List<String> getReplyToAddresses() {
-        List<String> replyTos = new ArrayList<>();
-        for (final ReplyTo replyTo : getReplyToSet()) {
-            replyTos.add(replyTo.getReplyToAddress(getUser()));
-        }
-        return replyTos;
+    public Set<String> getReplyTos() {
+        return getReplyToArray().addresses();
     }
 
     private Set<String> recipientsToEmails(Set<PersistentGroup> recipients) {

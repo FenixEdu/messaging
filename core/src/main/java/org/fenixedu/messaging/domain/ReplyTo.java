@@ -1,56 +1,84 @@
-/*
- * @(#)ReplyTo.java
- *
- * Copyright 2012 Instituto Superior Tecnico
- * Founding Authors: Luis Cruz
- *
- *      https://fenix-ashes.ist.utl.pt/
- *
- *   This file is part of the Messaging Module.
- *
- *   The Messaging Module is free software: you can
- *   redistribute it and/or modify it under the terms of the GNU Lesser General
- *   Public License as published by the Free Software Foundation, either version
- *   3 of the License, or (at your option) any later version.
- *
- *   The Messaging Module is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *   GNU Lesser General Public License for more details.
- *
- *   You should have received a copy of the GNU Lesser General Public License
- *   along with the Messaging Module. If not, see <http://www.gnu.org/licenses/>.
- *
- */
 package org.fenixedu.messaging.domain;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.core.security.Authenticate;
 
-/**
- *
- * @author Luis Cruz
- *
- */
-public abstract class ReplyTo extends ReplyTo_Base {
+public abstract class ReplyTo {
+    public abstract String getAddress();
 
-    protected ReplyTo() {
-        super();
+    public abstract String serialize();
+
+    public static class ConcreteReplyTo extends ReplyTo {
+        private String email;
+
+        public ConcreteReplyTo(String email) {
+            this.email = email;
+        }
+
+        @Override
+        public String getAddress() {
+            return email;
+        }
+
+        @Override
+        public String serialize() {
+            return email;
+        }
     }
 
-    public void delete() {
-        getMessageSet().clear();
-        getSenderSet().clear();
-        deleteDomainObject();
+    public static class UserReplyTo extends ReplyTo {
+        private User user;
+
+        public UserReplyTo(User user) {
+            this.user = user;
+        }
+
+        @Override
+        public String getAddress() {
+            return user.getEmail();
+        }
+
+        @Override
+        public String serialize() {
+            return user.getUsername();
+        }
     }
 
-    public abstract String getReplyToAddress(final User user);
+    public static class CurrentUserReplyTo extends ReplyTo {
+        @Override
+        public String getAddress() {
+            return Authenticate.getUser() != null ? Authenticate.getUser().getEmail() : null;
+        }
 
-    public abstract String getReplyToAddress();
+        @Override
+        public String serialize() {
+            return "-1";
+        }
+    }
 
-    public Collection<? extends ReplyTo> asCollection() {
-        return Collections.singletonList(this);
+    public static ReplyTo concrete(String email) {
+        return new ConcreteReplyTo(email);
+    }
+
+    public static ReplyTo user(User user) {
+        return new UserReplyTo(user);
+    }
+
+    public static ReplyTo currentUser() {
+        return new CurrentUserReplyTo();
+    }
+
+    public static ReplyTo parse(String serialized) {
+        if (serialized.contains("@")) {
+            return concrete(serialized);
+        } else if (serialized.equals("-1")) {
+            return currentUser();
+        } else {
+            User user = User.findByUsername(serialized);
+            if (user != null) {
+                return user(user);
+            }
+            return null;
+        }
     }
 }

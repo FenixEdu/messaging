@@ -7,12 +7,20 @@ valueType org.fenixedu.messaging.domain.MessageDeletionPolicy as MessageDeletion
     internalizeWith internalize();
 }
 
+valueType org.fenixedu.messaging.domain.ReplyTos as ReplyTos {
+    externalizeWith {
+        String serialize();
+    }
+    internalizeWith internalize();
+}
+
 class MessagingSystem {
 }
 
 class Sender {
 	String fromName;
 	String fromAddress;
+	protected ReplyTos replyToArray (REQUIRED);
 	MessageDeletionPolicy policy;
 }
 
@@ -21,6 +29,7 @@ class Message {
 	String body;
 	String htmlBody;
 	DateTime created;
+    protected ReplyTos replyToArray (REQUIRED);
 	String extraBccs;
 }
 
@@ -32,17 +41,6 @@ class MessageDispatchReport {
     public Integer invalidCount;
     public Integer failedCount;
 }
-
-class ReplyTo {
-}
-
-	class ConcreteReplyTo extends ReplyTo {
-		String replyToAddress;
-	}
-    
-    class CurrentUserReplyTo extends ReplyTo { }
-
-	class UserReplyTo extends ReplyTo { }
 
 class PersistentSenderGroup extends .org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 
@@ -125,33 +123,6 @@ relation SenderMessage {
 	protected Message playsRole message {
 		multiplicity *;
 	}
-}
-
-relation SenderReplyTo {
-	protected Sender playsRole sender {
-		multiplicity *;
-	}
-	public ReplyTo playsRole replyTo {
-		multiplicity *;
-	}
-}
-
-relation MessageReplyTo {
-	protected Message playsRole message {
-		multiplicity *;
-	}
-	protected ReplyTo playsRole replyTo {
-		multiplicity *;
-	}
-}
-
-relation UserReplyToUser {
-	public UserReplyTo playsRole userReplyTo {
-        multiplicity 0..1;
-	}
-	protected .org.fenixedu.bennu.core.domain.User playsRole user {
-		multiplicity 1..1;
-	} 
 }
 
 relation MessageRecipientTo {

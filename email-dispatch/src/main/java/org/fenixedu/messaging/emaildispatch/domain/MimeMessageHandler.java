@@ -102,7 +102,7 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
         message.setSubject(getReport().getMessage().getSubject());
 
         List<Address> replyTos = new ArrayList<>();
-        for (String replyTo : getReport().getMessage().getReplyToAddresses()) {
+        for (String replyTo : getReport().getMessage().getReplyTos()) {
             replyTos.add(new InternetAddress(replyTo));
         }
         message.setReplyTo(replyTos.toArray(new Address[0]));

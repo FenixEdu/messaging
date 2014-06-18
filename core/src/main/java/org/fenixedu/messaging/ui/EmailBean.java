@@ -26,7 +26,6 @@ package org.fenixedu.messaging.ui;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -89,24 +88,11 @@ public class EmailBean implements Serializable {
     }
 
     public Set<ReplyTo> getReplyTos() {
-        final Set<ReplyTo> result = new HashSet<ReplyTo>();
-        if (replyTos != null) {
-            for (final ReplyTo replyTo : replyTos) {
-                result.add(replyTo);
-            }
-        }
-        return result;
+        return replyTos;
     }
 
-    public void setReplyTos(List<ReplyTo> replyTos) {
-        if (replyTos == null) {
-            this.replyTos = null;
-        } else {
-            this.replyTos = new HashSet<ReplyTo>();
-            for (final ReplyTo replyTo : replyTos) {
-                this.replyTos.add(replyTo);
-            }
-        }
+    public void setReplyTos(Set<ReplyTo> replyTos) {
+        this.replyTos = replyTos;
     }
 
     public String getTos() {
@@ -201,7 +187,7 @@ public class EmailBean implements Serializable {
         String[] extraBccs =
                 Stream.of(getBccs().split(",")).map(bcc -> bcc.trim()).collect(Collectors.toSet()).toArray(new String[0]);
         return getSender().message(getSubject(), getMessage()).htmlBody(getHtmlMessage()).bcc(recipients.toArray(new Group[0]))
-                .bcc(extraBccs).replyTo(getReplyTos()).send();
+                .bcc(extraBccs).replyTo(getReplyTos().toArray(new String[0])).send();
     }
 
     private static boolean isValidEmailAddress(String email) {

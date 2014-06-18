@@ -46,7 +46,7 @@ public class EmailReplyTosProvider implements DataProvider {
         final Sender sender = emailBean.getSender();
         final Set<ReplyTo> replyTos = new HashSet<>();
         if (sender != null) {
-            replyTos.addAll(sender.getConcreteReplyTos());
+            replyTos.addAll(sender.getReplyTos());
         }
         return replyTos;
     }

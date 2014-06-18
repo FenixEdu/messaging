@@ -26,7 +26,6 @@ package org.fenixedu.messaging.domain;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -39,8 +38,6 @@ import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.messaging.domain.Message.MessageBuilder;
 import org.joda.time.DateTime;
-
-import pt.ist.fenixframework.Atomic;
 
 /**
  *
@@ -68,6 +65,7 @@ public class Sender extends Sender_Base {
         this();
         setFromName(fromName);
         setFromAddress(fromAddress);
+        setReplyToArray(new ReplyTos());
         setMembers(members);
         setPolicy(policy);
     }
@@ -122,20 +120,28 @@ public class Sender extends Sender_Base {
         }
     }
 
-    @Atomic
-    public Set<ReplyTo> getConcreteReplyTos() {
-        Set<ReplyTo> replyTos = new HashSet<ReplyTo>();
-        for (ReplyTo replyTo : getReplyToSet()) {
-            if (replyTo instanceof CurrentUserReplyTo) {
-                final User user = Authenticate.getUser();
-                final UserReplyTo userReplyTo =
-                        user.getUserReplyTo() != null ? user.getUserReplyTo() : UserReplyTo.createFor(user);
-                replyTos.add(userReplyTo);
-            } else {
-                replyTos.add(replyTo);
-            }
-        }
-        return replyTos;
+    public Set<ReplyTo> getReplyTos() {
+        return getReplyToArray() != null ? getReplyToArray().replyTos() : Collections.emptySet();
+    }
+
+    public void setReplyTos(Set<ReplyTo> replyTos) {
+        setReplyToArray(new ReplyTos(replyTos));
+    }
+
+    public void addReplyTo(String replyTo) {
+        setReplyToArray(getReplyToArray().add(replyTo));
+    }
+
+    public void addReplyTo(ReplyTo replyTo) {
+        setReplyToArray(getReplyToArray().add(replyTo));
+    }
+
+    public void addReplyTo(User user) {
+        setReplyToArray(getReplyToArray().add(user));
+    }
+
+    public void addCurrentUserReplyTo() {
+        setReplyToArray(getReplyToArray().addCurrentLoggedUser());
     }
 
     public String getFromName(final User user) {
