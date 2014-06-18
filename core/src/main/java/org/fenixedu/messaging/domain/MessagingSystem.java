@@ -76,4 +76,8 @@ public class MessagingSystem extends MessagingSystem_Base {
         message.setDispatchReport(report);
         return report;
     }
+
+    public static Sender systemSender() {
+        return getInstance().getSystemSender();
+    }
 }

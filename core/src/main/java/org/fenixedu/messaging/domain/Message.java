@@ -24,8 +24,10 @@
  */
 package org.fenixedu.messaging.domain;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,6 +52,101 @@ import com.google.common.collect.Sets;
  *
  */
 public final class Message extends Message_Base implements Comparable<Message> {
+    public static final class MessageBuilder implements Serializable {
+        private static final long serialVersionUID = 525424959825814582L;
+
+        private Sender sender;
+
+        private String subject;
+
+        private String body;
+
+        private String htmlBody;
+
+        private Set<Group> to = new HashSet<>();
+
+        private Set<Group> cc = new HashSet<>();
+
+        private Set<Group> bcc = new HashSet<>();
+
+        private Set<String> extraBcc = new HashSet<>();
+
+        private Set<ReplyTo> replyTo = new HashSet<>();
+
+        public MessageBuilder(Sender sender, String subject, String body) {
+            this.sender = sender;
+            this.subject = subject;
+            this.body = body;
+        }
+
+        public MessageBuilder htmlBody(String htmlBody) {
+            this.htmlBody = htmlBody;
+            return this;
+        }
+
+        public MessageBuilder to(Group... to) {
+            for (Group group : to) {
+                this.to.add(group);
+            }
+            return this;
+        }
+
+        public MessageBuilder cc(Group... cc) {
+            for (Group group : cc) {
+                this.cc.add(group);
+            }
+            return this;
+        }
+
+        public MessageBuilder bcc(Group... bcc) {
+            for (Group group : bcc) {
+                this.bcc.add(group);
+            }
+            return this;
+        }
+
+        public MessageBuilder bcc(Set<String> bcc) {
+            for (String group : bcc) {
+                this.extraBcc.add(group);
+            }
+            return this;
+        }
+
+        public MessageBuilder bcc(String... bcc) {
+            for (String group : bcc) {
+                this.extraBcc.add(group);
+            }
+            return this;
+        }
+
+        public MessageBuilder replyToSystem() {
+            this.replyTo.addAll(sender.getConcreteReplyTos());
+            return this;
+        }
+
+        public MessageBuilder replyTo(Set<? extends ReplyTo> replyTo) {
+            this.replyTo.addAll(replyTo);
+            return this;
+        }
+
+        public MessageBuilder replyTo(ReplyTo... replyTo) {
+            for (ReplyTo reply : replyTo) {
+                this.replyTo.add(reply);
+            }
+            return this;
+        }
+
+        public MessageBuilder replyTo(String... emails) {
+            for (String email : emails) {
+                this.replyTo.add(new ConcreteReplyTo(email));
+            }
+            return this;
+        }
+
+        public Message send() {
+            return new Message(sender, subject, body, htmlBody, to, cc, bcc, extraBcc, replyTo);
+        }
+    }
 
     static final public Comparator<Message> COMPARATOR_BY_CREATED_DATE_OLDER_FIRST = new Comparator<Message>() {
         @Override

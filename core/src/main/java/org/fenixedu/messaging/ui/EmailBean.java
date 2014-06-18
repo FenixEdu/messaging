@@ -26,7 +26,6 @@ package org.fenixedu.messaging.ui;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -199,10 +198,10 @@ public class EmailBean implements Serializable {
 
     @Atomic
     public Message send() {
-        Set<String> extraBccs = Stream.of(getBccs().split(",")).map(bcc -> bcc.trim()).collect(Collectors.toSet());
-        Set<Group> recipientSet = new HashSet<Group>(recipients);
-        return getSender().send(getSubject(), getMessage(), getHtmlMessage(), Collections.emptySet(), Collections.emptySet(),
-                recipientSet, extraBccs, getReplyTos());
+        String[] extraBccs =
+                Stream.of(getBccs().split(",")).map(bcc -> bcc.trim()).collect(Collectors.toSet()).toArray(new String[0]);
+        return getSender().message(getSubject(), getMessage()).htmlBody(getHtmlMessage()).bcc(recipients.toArray(new Group[0]))
+                .bcc(extraBccs).replyTo(getReplyTos()).send();
     }
 
     private static boolean isValidEmailAddress(String email) {

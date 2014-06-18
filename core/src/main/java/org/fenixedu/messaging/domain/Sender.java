@@ -31,13 +31,13 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 import org.fenixedu.bennu.core.groups.DynamicGroup;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
+import org.fenixedu.messaging.domain.Message.MessageBuilder;
 import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
@@ -146,14 +146,8 @@ public class Sender extends Sender_Base {
         getPolicy().pruneSender(this);
     }
 
-    public Message send(String subject, String body, String htmlBody, Set<Group> to, Set<Group> cc, Set<Group> bcc,
-            Set<String> extraBccs) {
-        return new Message(this, subject, body, htmlBody, to, cc, bcc, extraBccs, getConcreteReplyTos());
-    }
-
-    public Message send(String subject, String body, String htmlBody, Set<Group> to, Set<Group> cc, Set<Group> bcc,
-            Set<String> extraBccs, Set<ReplyTo> replyTos) {
-        return new Message(this, subject, body, htmlBody, to, cc, bcc, extraBccs, replyTos);
+    public MessageBuilder message(String subject, String body) {
+        return new MessageBuilder(this, subject, body);
     }
 
     public static boolean userHasRecipients() {
@@ -179,7 +173,7 @@ public class Sender extends Sender_Base {
         return senders;
     }
 
-    public static Stream<Sender> all() {
-        return MessagingSystem.getInstance().getSenderSet().stream();
+    public static Set<Sender> all() {
+        return MessagingSystem.getInstance().getSenderSet();
     }
 }
