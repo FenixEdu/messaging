@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 
 import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
-import org.fenixedu.bennu.core.groups.DynamicGroup;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.messaging.domain.Message.MessageBuilder;
@@ -94,14 +93,6 @@ public class Sender extends Sender_Base {
         super.setMemberGroup(members.toPersistentGroup());
     }
 
-    public boolean isMember(final User user) {
-        return getMembers().isMember(user) || DynamicGroup.get("managers").isMember(user);
-    }
-
-    public boolean isMember(User user, DateTime when) {
-        return getMembers().isMember(user, when) || DynamicGroup.get("managers").isMember(user, when);
-    }
-
     public Set<Group> getRecipients() {
         return getRecipientSet().stream().map(g -> g.toGroup()).collect(Collectors.toSet());
     }
@@ -159,7 +150,7 @@ public class Sender extends Sender_Base {
     public static boolean userHasRecipients() {
         final User user = Authenticate.getUser();
         for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-            if (sender.isMember(user) && !sender.getRecipientSet().isEmpty()) {
+            if (sender.getMembers().isMember(user) && !sender.getRecipientSet().isEmpty()) {
                 return true;
             }
         }
@@ -171,7 +162,7 @@ public class Sender extends Sender_Base {
 
         final SortedSet<Sender> senders = new TreeSet<Sender>(Sender.COMPARATOR_BY_FROM_NAME);
         for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-            if (sender.isMember(user)) {
+            if (sender.getMembers().isMember(user)) {
                 senders.add(sender);
             }
         }

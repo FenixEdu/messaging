@@ -79,7 +79,8 @@ public class SenderGroup extends CustomGroup {
     @Override
     public boolean isMember(User user) {
         for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-            if (sender.isMember(user)) {
+            final User user1 = user;
+            if (sender.getMembers().isMember(user1)) {
                 return true;
             }
         }
@@ -89,7 +90,7 @@ public class SenderGroup extends CustomGroup {
     @Override
     public boolean isMember(User user, DateTime when) {
         for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-            if (sender.isMember(user, when)) {
+            if (sender.getMembers().isMember(user, when)) {
                 return true;
             }
         }
