@@ -30,20 +30,23 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 
 import org.apache.commons.lang.StringUtils;
 import org.fenixedu.bennu.core.groups.Group;
+import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.messaging.domain.Message;
+import org.fenixedu.messaging.domain.Message.MessageBuilder;
 import org.fenixedu.messaging.domain.ReplyTo;
 import org.fenixedu.messaging.domain.Sender;
 import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
+
+import com.google.common.base.Strings;
 
 /**
  *
@@ -184,10 +187,33 @@ public class EmailBean implements Serializable {
 
     @Atomic
     public Message send() {
-        String[] extraBccs =
-                Stream.of(getBccs().split(",")).map(bcc -> bcc.trim()).collect(Collectors.toSet()).toArray(new String[0]);
-        return getSender().message(getSubject(), getMessage()).htmlBody(getHtmlMessage()).bcc(recipients.toArray(new Group[0]))
-                .bcc(extraBccs).replyTo(getReplyTos().toArray(new String[0])).send();
+        String fullBody = null;
+        if (!Strings.isNullOrEmpty(getMessage())) {
+            fullBody =
+                    BundleUtil.getString("resources.MessagingResources", "message.email.footer", getMessage(), getSender()
+                            .getFromName(),
+                            getRecipients().stream().map(r -> r.getPresentationName()).collect(Collectors.joining("\n\t")));
+        }
+        MessageBuilder builder = getSender().message(getSubject(), fullBody);
+        if (!Strings.isNullOrEmpty(htmlMessage)) {
+            builder = builder.htmlBody(htmlMessage);
+        }
+        for (Group recipient : recipients) {
+            builder = builder.bcc(recipient);
+        }
+        if (!Strings.isNullOrEmpty(bccs)) {
+            for (String bcc : bccs.split(",")) {
+                if (!Strings.isNullOrEmpty(bcc.trim())) {
+                    builder = builder.bcc(bcc.trim());
+                }
+            }
+        }
+        if (replyTos != null) {
+            for (ReplyTo replyTo : replyTos) {
+                builder = builder.replyTo(replyTo);
+            }
+        }
+        return builder.send();
     }
 
     private static boolean isValidEmailAddress(String email) {

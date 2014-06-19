@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 import org.fenixedu.bennu.core.groups.Group;
-import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.joda.time.DateTime;
 
@@ -41,7 +40,6 @@ import pt.ist.fenixframework.Atomic;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Sets;
 
 /**
@@ -234,28 +232,6 @@ public final class Message extends Message_Base implements Comparable<Message> {
         deleteDomainObject();
     }
 
-    @Override
-    public void setBody(final String body) {
-        if (body != null) {
-            final StringBuilder message = new StringBuilder();
-            if (!body.trim().isEmpty()) {
-                message.append(body);
-                message.append("\n\n---\n");
-                message.append(BundleUtil.getString("resources.MessagingResources", "message.email.footer.prefix"));
-                message.append(" ");
-                message.append(getSender().getFromName());
-                message.append(BundleUtil.getString("resources.MessagingResources", "message.email.footer.prefix.suffix"));
-                message.append(Joiner.on("\n\t").join(recipientsToName(getToSet())));
-                message.append(Joiner.on("\n\t").join(recipientsToName(getCcSet())));
-                message.append(Joiner.on("\n\t").join(recipientsToName(getBccSet())));
-                message.append("\n");
-            }
-            super.setBody(message.toString());
-        } else {
-            super.setBody(body);
-        }
-    }
-
     public Set<Group> getToGroup() {
         return getToSet().stream().map(g -> g.toGroup()).collect(Collectors.toSet());
     }
@@ -293,11 +269,6 @@ public final class Message extends Message_Base implements Comparable<Message> {
     private Set<String> recipientsToEmails(Set<PersistentGroup> recipients) {
         return recipients.stream().map(g -> g.toGroup()).flatMap(g -> g.getMembers().stream()).distinct()
                 .filter(user -> !Strings.isNullOrEmpty(user.getEmail())).map(user -> user.getEmail()).collect(Collectors.toSet());
-    }
-
-    private Iterable<String> recipientsToName(final Set<PersistentGroup> recipients) {
-        return FluentIterable.from(recipients).transform(PersistentGroup.persistentGroupToGroup)
-                .transform(Group.groupToGroupName);
     }
 
     @Override
