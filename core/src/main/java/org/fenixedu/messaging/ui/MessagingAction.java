@@ -34,16 +34,16 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
-import org.fenixedu.bennu.core.presentationTier.actions.BaseAction;
-import org.fenixedu.bennu.portal.EntryPoint;
-import org.fenixedu.bennu.portal.StrutsApplication;
-import org.fenixedu.bennu.portal.StrutsFunctionality;
+import org.fenixedu.bennu.struts.annotations.Mapping;
+import org.fenixedu.bennu.struts.base.BaseAction;
+import org.fenixedu.bennu.struts.portal.EntryPoint;
+import org.fenixedu.bennu.struts.portal.StrutsApplication;
+import org.fenixedu.bennu.struts.portal.StrutsFunctionality;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.messaging.domain.Message;
 import org.fenixedu.messaging.domain.Sender;
 
 import pt.ist.fenixWebFramework.renderers.utils.RenderUtils;
-import pt.ist.fenixWebFramework.struts.annotations.Mapping;
 
 /**
  *

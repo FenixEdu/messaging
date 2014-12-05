@@ -98,7 +98,8 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
                 setHeader("Message-ID", getMessageID());
             }
         };
-        message.setFrom(getFrom());
+        InternetAddress fromAddr = new InternetAddress(getFrom());
+        message.setFrom(fromAddr);
         message.setSubject(getReport().getMessage().getSubject());
 
         List<Address> replyTos = new ArrayList<>();
