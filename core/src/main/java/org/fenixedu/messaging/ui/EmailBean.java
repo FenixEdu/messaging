@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 
-import org.apache.commons.lang.StringUtils;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.I18N;
@@ -150,11 +149,11 @@ public class EmailBean implements Serializable {
         final ResourceBundle resourceBundle = ResourceBundle.getBundle("resources.MessagingResources", I18N.getLocale());
 
         String bccs = getBccs();
-        if (getRecipients().isEmpty() && StringUtils.isEmpty(bccs)) {
+        if (getRecipients().isEmpty() && Strings.isNullOrEmpty(bccs)) {
             return resourceBundle.getString("error.email.validation.no.recipients");
         }
 
-        if (!StringUtils.isEmpty(bccs)) {
+        if (!Strings.isNullOrEmpty(bccs)) {
             String[] emails = bccs.split(",");
             for (String emailString : emails) {
                 final String email = emailString.trim();
@@ -166,11 +165,11 @@ public class EmailBean implements Serializable {
             }
         }
 
-        if (StringUtils.isEmpty(getSubject())) {
+        if (Strings.isNullOrEmpty(getSubject())) {
             return resourceBundle.getString("error.email.validation.subject.empty");
         }
 
-        if (StringUtils.isEmpty(getMessage()) && StringUtils.isEmpty(getHtmlMessage())) {
+        if (Strings.isNullOrEmpty(getMessage()) && Strings.isNullOrEmpty(getHtmlMessage())) {
             return resourceBundle.getString("error.email.validation.message.empty");
         }
 

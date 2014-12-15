@@ -20,7 +20,6 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMessage.RecipientType;
 import javax.mail.internet.MimeMultipart;
 
-import org.apache.commons.lang.StringUtils;
 import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration;
 import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration.ConfigurationProperties;
 import org.joda.time.DateTime;
@@ -29,6 +28,7 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -66,7 +66,7 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
     public String getFrom() {
         String name = getReport().getMessage().getSender().getFromName();
         String from = getReport().getMessage().getSender().getFromAddress();
-        return StringUtils.isNotEmpty(name) ? name.replace(',', ' ').trim() + " <" + from + ">" : from;
+        return Strings.isNullOrEmpty(name) ? from : name.replace(',', ' ').trim() + " <" + from + ">";
     }
 
     public Set<String> getTos() {
