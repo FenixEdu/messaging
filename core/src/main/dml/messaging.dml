@@ -64,7 +64,7 @@ relation MessagingSystemSender {
 
 relation MessagingSystemSystemSender {
     protected MessagingSystem playsRole rootForSystemSender {
-        multiplicity 1..1;
+        multiplicity 0..1;
     }
     public Sender playsRole systemSender {
         multiplicity 0..1;
