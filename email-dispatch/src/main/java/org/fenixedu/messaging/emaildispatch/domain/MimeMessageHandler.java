@@ -110,7 +110,7 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
 
         final MimeMultipart mimeMultipart = new MimeMultipart();
 
-        final String htmlBody = getReport().getMessage().getBody();
+        final String htmlBody = getReport().getMessage().getHtmlBody();
         if (htmlBody != null && !htmlBody.trim().isEmpty()) {
             final BodyPart bodyPart = new MimeBodyPart();
 //            bodyPart.setContent(htmlBody, "text/html; charset='utf-8'");
