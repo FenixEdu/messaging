@@ -45,7 +45,8 @@ public class EmailBlacklist extends EmailBlacklist_Base {
 
     @Override
     protected JsonArray getBlacklist() {
-        return super.getBlacklist().isJsonNull() ? new JsonArray() : super.getBlacklist().getAsJsonArray();
+        return super.getBlacklist() == null || super.getBlacklist().isJsonNull() ? new JsonArray() : super.getBlacklist()
+                .getAsJsonArray();
     }
 
     public void addInvalidAddress(String invalid) {
