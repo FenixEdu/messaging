@@ -96,6 +96,7 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
             @Override
             protected void updateMessageID() throws MessagingException {
                 setHeader("Message-ID", getMessageID());
+                setHeader("Date", getReport().getMessage().getCreated().toString());
             }
         };
         InternetAddress fromAddr = new InternetAddress(getFrom());
