@@ -24,9 +24,12 @@
  */
 package org.fenixedu.messaging.ui;
 
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -34,6 +37,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
+import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.struts.annotations.Mapping;
 import org.fenixedu.bennu.struts.base.BaseAction;
 import org.fenixedu.bennu.struts.portal.EntryPoint;
@@ -44,6 +49,7 @@ import org.fenixedu.messaging.domain.Message;
 import org.fenixedu.messaging.domain.Sender;
 
 import pt.ist.fenixWebFramework.renderers.utils.RenderUtils;
+import pt.ist.fenixframework.FenixFramework;
 
 /**
  *
@@ -86,6 +92,11 @@ public class MessagingAction extends BaseAction {
         if (emailBean == null) {
             emailBean = new EmailBean();
 
+            Boolean automaticFooter = (Boolean) request.getAttribute("automaticFooter");
+            if (automaticFooter != null) {
+                emailBean.setAutomaticFooter(automaticFooter);
+            }
+
             final Sender sender = getDomainObject(request, "senderId");
             if (sender != null) {
                 emailBean.setSender(sender);
@@ -95,6 +106,16 @@ public class MessagingAction extends BaseAction {
                     emailBean.setSender(availableSenders.iterator().next());
                 }
             }
+
+            String[] recipientsParameter = request.getParameterValues("recipientIds");
+            if (recipientsParameter != null) {
+                List<Group> recipients =
+                        Stream.of(recipientsParameter)
+                                .map(recipientExternalId -> ((PersistentGroup) FenixFramework
+                                        .getDomainObject(recipientExternalId)).toGroup()).collect(Collectors.toList());
+                emailBean.setRecipients(recipients);
+            }
+
         }
         RenderUtils.invalidateViewState();
 
