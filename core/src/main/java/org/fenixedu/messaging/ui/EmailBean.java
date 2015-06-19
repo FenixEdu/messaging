@@ -55,6 +55,7 @@ import com.google.common.base.Strings;
 public class EmailBean implements Serializable {
     private static final long serialVersionUID = -2004655177098978589L;
 
+    private boolean automaticFooter = true;
     private Sender sender;
     private List<Group> recipients = new ArrayList<>();
     private String tos, ccs, bccs;
@@ -71,6 +72,14 @@ public class EmailBean implements Serializable {
         this.htmlMessage = message.getHtmlBody();
         this.bccs = message.getExtraBccs();
         this.createdDate = message.getCreated();
+    }
+
+    public boolean isAutomaticFooter() {
+        return automaticFooter;
+    }
+
+    public void setAutomaticFooter(boolean automaticFooter) {
+        this.automaticFooter = automaticFooter;
     }
 
     public Sender getSender() {
@@ -188,10 +197,14 @@ public class EmailBean implements Serializable {
     public Message send() {
         String fullBody = null;
         if (!Strings.isNullOrEmpty(getMessage())) {
-            fullBody =
-                    BundleUtil.getString("resources.MessagingResources", "message.email.footer", getMessage(), getSender()
-                            .getFromName(),
-                            getRecipients().stream().map(r -> r.getPresentationName()).collect(Collectors.joining("\n\t")));
+            if(isAutomaticFooter()) {
+                fullBody =
+                        BundleUtil.getString("resources.MessagingResources", "message.email.footer", getMessage(), getSender()
+                                .getFromName(),
+                                getRecipients().stream().map(r -> r.getPresentationName()).collect(Collectors.joining("\n\t")));
+            } else {
+                fullBody = getMessage();
+            }
         }
         MessageBuilder builder = getSender().message(getSubject(), fullBody);
         if (!Strings.isNullOrEmpty(htmlMessage)) {
