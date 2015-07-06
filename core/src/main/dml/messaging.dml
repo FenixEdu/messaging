@@ -18,6 +18,7 @@ class MessagingSystem {
 }
 
 class Sender {
+    boolean htmlSender;
 	String fromName;
 	String fromAddress;
 	protected ReplyTos replyToArray (REQUIRED);
@@ -36,13 +37,11 @@ class Message {
 class MessageDispatchReport {
     public DateTime startedDelivery;
     public DateTime finishedDelivery;
-    public Integer totalCount;
-    public Integer deliveredCount;
-    public Integer invalidCount;
-    public Integer failedCount;
+    public int totalCount;
+    public int deliveredCount;
+    public int invalidCount;
+    public int failedCount;
 }
-
-class PersistentSenderGroup extends .org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 
 relation MessagingSystemRoot {
     protected .org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
@@ -159,13 +158,4 @@ relation MessageUser {
 	protected .org.fenixedu.bennu.core.domain.User playsRole user {
 		multiplicity 1..1;
 	}
-}
-
-relation MessagingSystemPersistentSenderGroup {
-    protected PersistentSenderGroup playsRole persistentSenderGroup {
-        multiplicity 1..1;
-    }
-    protected MessagingSystem playsRole messagingSystem {
-        multiplicity 1..1;
-    }
 }

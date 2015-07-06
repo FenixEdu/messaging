@@ -71,16 +71,18 @@ public class MessageDeletionPolicy implements Serializable {
         return "-1";
     }
 
+    private static final String BUNDLE = "MessagingResources";
+
     @Override
     public String toString() {
         if (keepPeriod != null) {
-            return BundleUtil.getString("resources.MessagingResources", "label.messaging.MessageDeletionPolicy.keepPeriod",
+            return BundleUtil.getString(BUNDLE, "name.deletion.policy.period",
                     PeriodFormat.wordBased(I18N.getLocale()).print(keepPeriod));
         }
         if (keepMessages != null) {
-            return BundleUtil.getString("resources.MessagingResources", "label.messaging.MessageDeletionPolicy.keepMessages",
+            return BundleUtil.getString(BUNDLE, "name.deletion.policy.messages",
                     Integer.toString(keepMessages));
         }
-        return BundleUtil.getString("resources.MessagingResources", "label.messaging.MessageDeletionPolicy.unlimited");
+        return BundleUtil.getString(BUNDLE, "name.deletion.policy.unlimited");
     }
 }
