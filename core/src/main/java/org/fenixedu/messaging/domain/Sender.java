@@ -69,7 +69,7 @@ public class Sender extends Sender_Base {
 
     @Override
     public Set<Message> getMessageSet() {
-        // TODO remove when framework supports read-only relations
+        // FIXME remove when framework supports read-only relations
         return Collections.unmodifiableSet(super.getMessageSet());
     }
 

@@ -16,7 +16,6 @@ ${portal.toolkit()}
 	</div>
 </c:if>
 
-<br/>
 <spring:eval expression="T(org.fenixedu.messaging.domain.Sender).getAvailableSenders()" var="senders"/>
 <form:form modelAttribute="messageBean" role="form" class="form-horizontal" action="${pageContext.request.contextPath}/messaging/message" method="post">
 	<div class="form-group">

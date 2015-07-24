@@ -257,13 +257,13 @@ public final class Message extends Message_Base implements Comparable<Message> {
 
     @Override
     public User getUser() {
-        // TODO remove when the framework supports read-only properties
+        // FIXME remove when the framework supports read-only properties
         return super.getUser();
     }
 
     @Override
     public MessageDispatchReport getDispatchReport() {
-        // TODO remove when the framework supports read-only properties
+        // FIXME remove when the framework supports read-only properties
         return super.getDispatchReport();
     }
 
@@ -389,7 +389,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
 
     private Set<String> recipientsToEmails(Set<PersistentGroup> recipients) {
         return recipients.stream().map(g -> g.toGroup()).flatMap(g -> g.getMembers().stream()).distinct()
-                .filter(user -> !Strings.isNullOrEmpty(user.getEmail())).map(user -> user.getEmail()).collect(Collectors.toSet());
+                .map(user -> user.getProfile().getEmail()).filter(Strings::isNullOrEmpty).collect(Collectors.toSet());
     }
 
     @Override

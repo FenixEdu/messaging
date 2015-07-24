@@ -8,7 +8,7 @@
 	<tbody>
 		<tr>
 			<th class="col-md-2" scope="row">
-				<spring:message code="label.bootstrapper.systemsender.name"/>
+				<spring:message code="label.sender.name"/>
 			</th>
 			<td>
 				${sender.fromName}
@@ -16,7 +16,7 @@
 		</tr>
 		<tr>
 			<th class="col-md-2" scope="row">
-				<spring:message code="label.bootstrapper.systemsender.address"/>
+				<spring:message code="label.sender.address"/>
 			</th>
 			<td>
 				<code>${sender.fromAddress}</code>

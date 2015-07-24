@@ -24,15 +24,15 @@
  */
 package org.fenixedu.messaging.ui;
 
-import static pt.ist.fenixframework.FenixFramework.atomic;
-
-import java.io.Serializable;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -42,33 +42,29 @@ import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.messaging.annotation.MessageTemplate;
 import org.fenixedu.messaging.domain.Message;
 import org.fenixedu.messaging.domain.Message.MessageBuilder;
+import org.fenixedu.messaging.domain.MessagingSystem;
 import org.fenixedu.messaging.domain.ReplyTo;
 import org.fenixedu.messaging.domain.Sender;
+import org.fenixedu.messaging.exception.InvalidMessageException;
+import org.springframework.util.StringUtils;
+
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
 
 import com.google.common.base.Strings;
 
-public class MessageBean implements Serializable {
+@MessageTemplate(id = "org.fenixedu.messaging.footer", name = "message.template.footer.name",
+        description = "message.template.footer.description", subject = "message.template.footer.name",
+        body = "message.template.footer.body", footer = false, bundle = "MessagingResources")
+public class MessageBean extends MessageContentBean {
     private static final long serialVersionUID = -2004655177098978589L;
-    private static final String BUNDLE = "MessagingResources";
-    private static final String FOOTER = "message.footer";
 
-    private boolean automaticFooter = true;
     private Sender sender;
-    private String bccs;
-    private LocalizedString subject, body, htmlBody;
+    private Set<String> bccs, recipients, replyTos;
     private Locale extraBccsLocale = I18N.getLocale();
-
-    private Set<String> errors, recipients, replyTos;
-
-    public boolean isAutomaticFooter() {
-        return automaticFooter;
-    }
-
-    public void setAutomaticFooter(boolean automaticFooter) {
-        this.automaticFooter = automaticFooter;
-    }
 
     public Sender getSender() {
         return sender;
@@ -138,45 +134,29 @@ public class MessageBean implements Serializable {
     }
 
     public String getBccs() {
-        return bccs;
+        if (bccs != null) {
+            return StringUtils.collectionToCommaDelimitedString(bccs);
+        }
+        return null;
     }
 
     public void setBccs(String bccs) {
+        if (bccs != null) {
+            this.bccs = Stream.of(bccs.split("\\s*,\\s*")).filter(String::isEmpty).collect(Collectors.toSet());
+        } else {
+            this.bccs = null;
+        }
+    }
+
+    public Set<String> getBccsSet() {
+        return bccs;
+    }
+
+    public void setBccsSet(Set<String> bccs) {
         this.bccs = bccs;
     }
 
-    public LocalizedString getSubject() {
-        return subject;
-    }
-
-    public void setSubject(LocalizedString subject) {
-        this.subject = subject;
-    }
-
-    public LocalizedString getBody() {
-        return body;
-    }
-
-    public void setBody(final LocalizedString body) {
-        this.body = body;
-    }
-
-    public LocalizedString getHtmlBody() {
-        return htmlBody;
-    }
-
-    public void setHtmlBody(final LocalizedString htmlBody) {
-        this.htmlBody = htmlBody;
-    }
-
-    public Set<String> getErrors() {
-        return errors;
-    }
-
-    public void setErrors(Set<String> errors) {
-        this.errors = errors;
-    }
-
+    @Override
     public Set<String> validate() {
         Set<String> errors = new HashSet<String>();
         if (getSender() == null) {
@@ -210,32 +190,29 @@ public class MessageBean implements Serializable {
             }
         }
 
-        LocalizedString subject = getSubject(), body = getBody(), htmlBody = getHtmlBody();
-        if (subject == null || subject.isEmpty()) {
-            errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.subject.empty"));
-        }
+        errors.addAll(super.validate());
 
-        if ((body == null || body.isEmpty()) && (htmlBody == null || htmlBody.isEmpty())) {
-            errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.message.empty"));
-        }
-
+        LocalizedString htmlBody = getHtmlBody();
         if (htmlBody != null && !htmlBody.isEmpty() && !sender.getHtmlSender()) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.html.forbidden"));
         }
 
-        this.errors = errors;
+        setErrors(errors);
         return errors;
     }
 
     public Message send() throws Exception {
-        Set<String> validate = validate();
-        if (validate.isEmpty()) {
+        Set<String> errors = validate();
+        if (errors.isEmpty()) {
             Sender sender = getSender();
             Set<Group> recipients = getRecipientGroups();
             LocalizedString body = getBody();
             if (body != null && !body.isEmpty() && isAutomaticFooter() && recipients != null && !recipients.isEmpty()) {
+                Map<String, Object> context = new HashMap<>();
+                context.put("sender", sender.getFromName());
+                context.put("recipients", presentRecients(recipients));
                 LocalizedString footer =
-                        BundleUtil.getLocalizedString(BUNDLE, FOOTER, sender.getFromName(), presentRecients(recipients));
+                        MessagingSystem.getTemplateById("org.fenixedu.messaging.footer").compile(context).getBody();
                 LocalizedString union = new LocalizedString();
                 Set<Locale> locales = new HashSet<>();
                 locales.addAll(footer.getLocales());
@@ -253,24 +230,20 @@ public class MessageBean implements Serializable {
             for (Group recipient : recipients) {
                 builder.bcc(recipient);
             }
-            String bccs = getBccs();
-            if (!Strings.isNullOrEmpty(bccs)) {
-                for (String bcc : bccs.split(",")) {
-                    if (!Strings.isNullOrEmpty(bcc.trim())) {
-                        builder.bcc(bcc.trim());
-                    }
-                }
-            }
+            builder.bcc(getBccsSet());
             builder.bccLocale(getExtraBccsLocale());
-            Set<String> replyTos = getReplyTos();
+            Set<ReplyTo> replyTos = getReplyToObjects();
             if (replyTos != null) {
-                for (String replyTo : replyTos) {
-                    builder.replyTo(replyTo);
-                }
+                builder.replyTo(replyTos);
             }
-            return atomic(() -> builder.send());
+            return send(builder);
         }
-        return null;
+        throw new InvalidMessageException(errors);
+    }
+
+    @Atomic(mode = TxMode.WRITE)
+    private static Message send(MessageBuilder builder) {
+        return builder.send();
     }
 
     private String getContent(LocalizedString ls, Locale l) {
