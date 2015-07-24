@@ -1,6 +1,7 @@
 package org.fenixedu.messaging.domain;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,15 +16,23 @@ public class ReplyTos implements Serializable {
     private final ImmutableSet<ReplyTo> replyTos;
 
     public ReplyTos(ImmutableSet<ReplyTo> replyTos) {
-        this.replyTos = replyTos;
+        if (replyTos == null) {
+            this.replyTos = ImmutableSet.of();
+        } else {
+            this.replyTos = replyTos;
+        }
     }
 
     public ReplyTos(Set<ReplyTo> replyTos) {
-        this.replyTos = ImmutableSet.copyOf(replyTos);
+        if (replyTos == null) {
+            this.replyTos = ImmutableSet.of();
+        } else {
+            this.replyTos = ImmutableSet.copyOf(replyTos);
+        }
     }
 
     public ReplyTos(String... replyTos) {
-        this.replyTos = ImmutableSet.of();
+        this.replyTos = ImmutableSet.copyOf(Arrays.stream(replyTos).map(rt -> ReplyTo.parse(rt)).collect(Collectors.toSet()));
     }
 
     public ReplyTos add(ReplyTo replyTo) {

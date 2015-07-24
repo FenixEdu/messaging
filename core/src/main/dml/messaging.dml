@@ -1,24 +1,24 @@
 package org.fenixedu.messaging.domain;
 
 valueType org.fenixedu.messaging.domain.MessageDeletionPolicy as MessageDeletionPolicy {
-    externalizeWith {
-        String serialize();
-    }
-    internalizeWith internalize();
+	externalizeWith {
+		String serialize();
+	}
+	internalizeWith internalize();
 }
 
 valueType org.fenixedu.messaging.domain.ReplyTos as ReplyTos {
-    externalizeWith {
-        String serialize();
-    }
-    internalizeWith internalize();
+	externalizeWith {
+		String serialize();
+	}
+	internalizeWith internalize();
 }
 
 class MessagingSystem {
 }
 
 class Sender {
-    boolean htmlSender;
+	boolean htmlSender;
 	String fromName;
 	String fromAddress;
 	protected ReplyTos replyToArray (REQUIRED);
@@ -31,25 +31,40 @@ class Message {
 	LocalizedString htmlBody;
 	Locale extraBccsLocale;
 	DateTime created;
-    protected ReplyTos replyToArray (REQUIRED);
+	protected ReplyTos replyToArray (REQUIRED);
 	String extraBccs;
 }
 
+class MessageTemplate {
+	String id;
+	LocalizedString textBody;
+	LocalizedString htmlBody;
+}
+
 class MessageDispatchReport {
-    public DateTime startedDelivery;
-    public DateTime finishedDelivery;
-    public int totalCount;
-    public int deliveredCount;
-    public int invalidCount;
-    public int failedCount;
+	public DateTime startedDelivery;
+	public DateTime finishedDelivery;
+	public int totalCount;
+	public int deliveredCount;
+	public int invalidCount;
+	public int failedCount;
 }
 
 relation MessagingSystemRoot {
-    protected .org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
-        multiplicity 1..1;
-    }
+	protected .org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
+		multiplicity 1..1;
+	}
 	public MessagingSystem playsRole messagingSystem {
-        multiplicity 0..1;
+		multiplicity 0..1;
+	}
+}
+
+relation MessagingSystemTemplate {
+	protected MessagingSystem playsRole messagingSystem {
+		multiplicity 1..1;
+	}
+	protected MessageTemplate playsRole template {
+		multiplicity *;
 	}
 }
 
@@ -63,12 +78,12 @@ relation MessagingSystemSender {
 }
 
 relation MessagingSystemSystemSender {
-    protected MessagingSystem playsRole rootForSystemSender {
-        multiplicity 0..1;
-    }
-    public Sender playsRole systemSender {
-        multiplicity 0..1;
-    }
+	protected MessagingSystem playsRole rootForSystemSender {
+		multiplicity 0..1;
+	}
+	public Sender playsRole systemSender {
+		multiplicity 0..1;
+	}
 }
 
 relation MessagingSystemMessage {
@@ -82,20 +97,20 @@ relation MessagingSystemMessage {
 
 relation MessagingSystemMessagePending {
 	protected MessagingSystem playsRole messagingSystemFromPendingDispatch {
-        multiplicity 0..1;
-    }
+		multiplicity 0..1;
+	}
 	protected Message playsRole messagePendingDispatch {
 		multiplicity *;
 	}
 }
 
 relation MessageDispatchReports {
-    protected Message playsRole message {
-        multiplicity 1..1;
-    }
-    protected MessageDispatchReport playsRole dispatchReport {
-        multiplicity 0..1;
-    }
+	protected Message playsRole message {
+		multiplicity 1..1;
+	}
+	protected MessageDispatchReport playsRole dispatchReport {
+		multiplicity 0..1;
+	}
 }
 
 relation SenderPersistentGroupMembers {

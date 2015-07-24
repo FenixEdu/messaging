@@ -24,7 +24,17 @@
  */
 package org.fenixedu.messaging.domain;
 
+import static pt.ist.fenixframework.FenixFramework.atomic;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.fenixedu.bennu.core.domain.Bennu;
+import org.fenixedu.messaging.exception.MessagingDomainException;
+import org.fenixedu.messaging.template.MessageTemplateDeclaration;
+import org.fenixedu.messaging.template.annotation.DeclareMessageTemplate;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
@@ -35,6 +45,10 @@ import pt.ist.fenixframework.Atomic.TxMode;
  *
  */
 public class MessagingSystem extends MessagingSystem_Base {
+    private static Map<String, DeclareMessageTemplate> declarations = new HashMap<>();
+    private static Map<String, MessageTemplateDeclaration> templates = null;
+    private static Set<MessageTemplate> undeclared = null;
+
     private MessagingSystem() {
         super();
         setBennu(Bennu.getInstance());
@@ -78,5 +92,65 @@ public class MessagingSystem extends MessagingSystem_Base {
 
     public static Sender systemSender() {
         return getInstance().getSystemSender();
+    }
+
+    public static MessageTemplateDeclaration getTemplateDeclaration(String id) {
+        MessageTemplateDeclaration declaration = getTemplateDeclarations().get(id);
+        if (declaration == null) {
+            throw MessagingDomainException.missingTemplate(id);
+        }
+        return declaration;
+    }
+
+    static MessageTemplate getTemplate(String id) {
+        MessageTemplateDeclaration declaration = getTemplateDeclaration(id);
+        if (declaration.getTemplate() == null) {
+            throw MessagingDomainException.missingTemplate(id);
+        }
+        return declaration.getTemplate();
+    }
+
+    public static void declareTemplate(DeclareMessageTemplate decl) {
+        if (declarations != null) {
+            declarations.put(decl.id(), decl);
+        }
+    }
+
+    public static Map<String, MessageTemplateDeclaration> getTemplateDeclarations() {
+        if (templates == null) {
+            initializeTemplates();
+        }
+        return templates;
+    }
+
+    public static Set<MessageTemplate> getUndeclaredTemplates() {
+        if (undeclared == null) {
+            initializeTemplates();
+        }
+        return undeclared;
+    }
+
+    private static void initializeTemplates() {
+        templates = new HashMap<>();
+        Set<MessageTemplate> existing = getInstance().getTemplateSet();
+        undeclared = new HashSet<>();
+        existing.forEach(t -> {
+            DeclareMessageTemplate declare = declarations.get(t.getId());
+            if (declare == null) {
+                undeclared.add(t);
+            } else {
+                templates.put(t.getId(), new MessageTemplateDeclaration(t, declare));
+                declarations.remove(t.getId());
+            }
+        });
+        declarations.values().forEach(declare -> atomic(() -> {
+            MessageTemplate template = new MessageTemplate();
+            template.setId(declare.id());
+            MessageTemplateDeclaration declaration = new MessageTemplateDeclaration(template, declare);
+            template.setHtmlBody(declaration.getDefaultHtmlBody());
+            template.setTextBody(declaration.getDefaultTextBody());
+            templates.put(declare.id(), declaration);
+        }));
+        declarations = null;
     }
 }

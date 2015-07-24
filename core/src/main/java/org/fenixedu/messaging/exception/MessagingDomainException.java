@@ -33,11 +33,36 @@ public class MessagingDomainException extends DomainException {
     private static final long serialVersionUID = -8622024813103819898L;
     protected static final String BUNDLE = "MessagingResources";
 
+    protected MessagingDomainException(String bundle, String key, String... args) {
+        super(bundle, key, args);
+    }
+
     protected MessagingDomainException(Response.Status status, String bundle, String key, String... args) {
         super(status, bundle, key, args);
+    }
+
+    protected MessagingDomainException(Throwable cause, String bundle, String key, String... args) {
+        super(cause, bundle, key, args);
+    }
+
+    protected MessagingDomainException(Throwable cause, Response.Status status, String bundle, String key, String... args) {
+        super(cause, status, bundle, key, args);
+    }
+
+    public static MessagingDomainException malformedTemplate(Exception e, String key) {
+        return new MessagingDomainException(e, BUNDLE, "error.template.malformed", key);
+    }
+
+    public static MessagingDomainException nullSender() {
+        return new MessagingDomainException(BUNDLE, "error.message.null.sender");
     }
 
     public static MessagingDomainException forbidden() {
         return new MessagingDomainException(Response.Status.FORBIDDEN, BUNDLE, "error.not.authorized");
     }
+
+    public static MessagingDomainException missingTemplate(String key) {
+        return new MessagingDomainException(Response.Status.NOT_FOUND, BUNDLE, "error.template.missing", key);
+    }
+
 }
