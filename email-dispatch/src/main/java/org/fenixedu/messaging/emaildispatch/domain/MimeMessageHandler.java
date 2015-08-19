@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -20,6 +22,9 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMessage.RecipientType;
 import javax.mail.internet.MimeMultipart;
 
+import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.messaging.domain.Message;
+import org.fenixedu.messaging.domain.Sender;
 import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration;
 import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration.ConfigurationProperties;
 import org.joda.time.DateTime;
@@ -50,8 +55,9 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
         return SESSION;
     }
 
-    protected MimeMessageHandler(List<String> tos, List<String> ccs, List<String> bccs) {
+    protected MimeMessageHandler(Locale locale, List<String> tos, List<String> ccs, List<String> bccs) {
         super();
+        setLocale(locale);
         if (tos != null) {
             setToAddresses(Joiner.on(", ").join(tos));
         }
@@ -64,8 +70,9 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
     }
 
     public String getFrom() {
-        String name = getReport().getMessage().getSender().getFromName();
-        String from = getReport().getMessage().getSender().getFromAddress();
+        Sender sender = getReport().getMessage().getSender();
+        String name = sender.getFromName();
+        String from = sender.getFromAddress();
         return Strings.isNullOrEmpty(name) ? from : name.replace(',', ' ').trim() + " <" + from + ">";
     }
 
@@ -82,7 +89,9 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
     }
 
     public MimeMessage mimeMessage() throws AddressException, MessagingException {
-        MimeMessage message = new MimeMessage(session()) {
+        Message message = getReport().getMessage();
+        Locale locale = getLocale();
+        MimeMessage mimeMessage = new MimeMessage(session()) {
             private String fenixMessageId = null;
 
             @Override
@@ -96,22 +105,23 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
             @Override
             protected void updateMessageID() throws MessagingException {
                 setHeader("Message-ID", getMessageID());
-                setHeader("Date", getReport().getMessage().getCreated().toString());
+                setHeader("Date", message.getCreated().toString());
             }
         };
+
         InternetAddress fromAddr = new InternetAddress(getFrom());
-        message.setFrom(fromAddr);
-        message.setSubject(getReport().getMessage().getSubject());
+        mimeMessage.setFrom(fromAddr);
+        mimeMessage.setSubject(getContent(message.getSubject(), locale));
 
         List<Address> replyTos = new ArrayList<>();
-        for (String replyTo : getReport().getMessage().getReplyTos()) {
+        for (String replyTo : message.getReplyTos()) {
             replyTos.add(new InternetAddress(replyTo));
         }
-        message.setReplyTo(replyTos.toArray(new Address[0]));
+        mimeMessage.setReplyTo(replyTos.toArray(new Address[0]));
 
         final MimeMultipart mimeMultipart = new MimeMultipart();
 
-        final String htmlBody = getReport().getMessage().getHtmlBody();
+        final String htmlBody = getContent(message.getHtmlBody(), locale);
         if (htmlBody != null && !htmlBody.trim().isEmpty()) {
             final BodyPart bodyPart = new MimeBodyPart();
 //            bodyPart.setContent(htmlBody, "text/html; charset='utf-8'");
@@ -119,37 +129,69 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
             mimeMultipart.addBodyPart(bodyPart);
         }
 
-        final String body = getReport().getMessage().getBody();
+        final String body = getContent(message.getBody(), locale);
         if (body != null && !body.trim().isEmpty()) {
             final BodyPart bodyPart = new MimeBodyPart();
             bodyPart.setText(body);
             mimeMultipart.addBodyPart(bodyPart);
         }
 
-        message.setContent(mimeMultipart);
+        mimeMessage.setContent(mimeMultipart);
 
         for (String email : getTos()) {
-            message.addRecipient(RecipientType.TO, new InternetAddress(email));
+            mimeMessage.addRecipient(RecipientType.TO, new InternetAddress(email));
         }
         for (String email : getCcs()) {
-            message.addRecipient(RecipientType.CC, new InternetAddress(email));
+            mimeMessage.addRecipient(RecipientType.CC, new InternetAddress(email));
         }
         for (String email : getBccs()) {
-            message.addRecipient(RecipientType.BCC, new InternetAddress(email));
+            mimeMessage.addRecipient(RecipientType.BCC, new InternetAddress(email));
         }
-        return message;
+        return mimeMessage;
     }
 
-    public static Set<MimeMessageHandler> create(List<String> tos, List<String> ccs, List<String> bccs) {
+    private String getContent(LocalizedString ls, Locale l) {
+        if (ls != null) {
+            String s = ls.getContent(l);
+            if (s == null) {
+                return ls.getContent();
+            }
+            return s;
+        }
+        return null;
+    }
+
+    public static Set<MimeMessageHandler> create(Map<Locale, Set<String>> tos, Map<Locale, Set<String>> ccs,
+            Map<Locale, Set<String>> bccs) {
+        Set<MimeMessageHandler> handlers = new HashSet<>();
+        for (Map.Entry<Locale, Set<String>> entry : tos.entrySet()) {
+            for (List<String> toChunk : Lists.partition(new ArrayList<String>(entry.getValue()), MAX_RECIPIENTS)) {
+                handlers.add(new MimeMessageHandler(entry.getKey(), toChunk, null, null));
+            }
+        }
+        for (Map.Entry<Locale, Set<String>> entry : ccs.entrySet()) {
+            for (List<String> ccChunk : Lists.partition(new ArrayList<String>(entry.getValue()), MAX_RECIPIENTS)) {
+                handlers.add(new MimeMessageHandler(entry.getKey(), null, ccChunk, null));
+            }
+        }
+        for (Map.Entry<Locale, Set<String>> entry : bccs.entrySet()) {
+            for (List<String> bccChunk : Lists.partition(new ArrayList<String>(entry.getValue()), MAX_RECIPIENTS)) {
+                handlers.add(new MimeMessageHandler(entry.getKey(), null, null, bccChunk));
+            }
+        }
+        return handlers;
+    }
+
+    public static Set<MimeMessageHandler> create(Locale locale, List<String> tos, List<String> ccs, List<String> bccs) {
         Set<MimeMessageHandler> handlers = new HashSet<>();
         for (List<String> toChunk : Lists.partition(tos, MAX_RECIPIENTS)) {
-            handlers.add(new MimeMessageHandler(toChunk, null, null));
+            handlers.add(new MimeMessageHandler(locale, toChunk, null, null));
         }
         for (List<String> ccChunk : Lists.partition(ccs, MAX_RECIPIENTS)) {
-            handlers.add(new MimeMessageHandler(null, ccChunk, null));
+            handlers.add(new MimeMessageHandler(locale, null, ccChunk, null));
         }
         for (List<String> bccChunk : Lists.partition(bccs, MAX_RECIPIENTS)) {
-            handlers.add(new MimeMessageHandler(null, null, bccChunk));
+            handlers.add(new MimeMessageHandler(locale, null, null, bccChunk));
         }
         return handlers;
     }
@@ -195,7 +237,7 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
                 bccs.add(email.toString());
             }
         }
-        for (MimeMessageHandler handler : MimeMessageHandler.create(tos, ccs, bccs)) {
+        for (MimeMessageHandler handler : MimeMessageHandler.create(getLocale(), tos, ccs, bccs)) {
             getReport().addHandler(handler);
         }
     }
