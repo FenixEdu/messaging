@@ -1,9 +1,11 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 
 import javax.mail.MessagingException;
 
@@ -69,21 +71,21 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
     }
 
     public static LocalEmailMessageDispatchReport dispatch(Message message) {
-        Set<String> invalids = new HashSet<String>();
-        List<String> tos = message.getTos().stream().filter(email -> isValid(email, invalids)).collect(Collectors.toList());
-        List<String> ccs = message.getCcs().stream().filter(email -> isValid(email, invalids)).collect(Collectors.toList());
-        List<String> bccs = message.getBccs().stream().filter(email -> isValid(email, invalids)).collect(Collectors.toList());
-        return new LocalEmailMessageDispatchReport(MimeMessageHandler.create(tos, ccs, bccs), tos.size() + ccs.size()
-                + bccs.size(), invalids.size());
-    }
-
-    private static boolean isValid(String email, Set<String> invalids) {
-        if (!isValid(email)) {
+        List<String> invalids = new ArrayList<String>();
+        Predicate<String> countingBlackListValidator = email -> {
+            if (isValid(email)) {
+                return true;
+            }
             invalids.add(email);
             EmailBlacklist.getInstance().addInvalidAddress(email);
             return false;
-        }
-        return true;
+        };
+        Map<Locale, Set<String>> tos = message.getTosByLocale(countingBlackListValidator);
+        Map<Locale, Set<String>> ccs = message.getCcsByLocale(countingBlackListValidator);
+        Map<Locale, Set<String>> bccs = message.getBccsByLocale(countingBlackListValidator);
+
+        return new LocalEmailMessageDispatchReport(MimeMessageHandler.create(tos, ccs, bccs), tos.size() + ccs.size()
+                + bccs.size(), invalids.size());
     }
 
     private static boolean isValid(String email) {
