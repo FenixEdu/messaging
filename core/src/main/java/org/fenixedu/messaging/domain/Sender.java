@@ -36,7 +36,6 @@ import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.messaging.domain.Message.MessageBuilder;
-import org.joda.time.DateTime;
 
 /**
  *

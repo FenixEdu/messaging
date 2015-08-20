@@ -15,7 +15,11 @@ public abstract class MessageDispatchReport extends MessageDispatchReport_Base {
     }
 
     public boolean isFinished() {
-        return getTotalCount() == getFailedCount() + getInvalidCount() + getDeliveredCount();
+        return getTotalCount() == getResolvedCount();
+    }
+
+    public int getResolvedCount() {
+        return getFailedCount() + getInvalidCount() + getDeliveredCount();
     }
 
     public void delete() {

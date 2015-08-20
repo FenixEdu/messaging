@@ -1,5 +1,5 @@
 /*
- * @(#)EmailReplyTosProvider.java
+ * @(#)MessagingDomainException.java
  *
  * Copyright 2012 Instituto Superior Tecnico
  * Founding Authors: Luis Cruz
@@ -22,38 +22,22 @@
  *   along with the Messaging Module. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package org.fenixedu.messaging.ui;
+package org.fenixedu.messaging.exception;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.ws.rs.core.Response;
 
-import org.fenixedu.messaging.domain.ReplyTo;
-import org.fenixedu.messaging.domain.Sender;
+import org.fenixedu.bennu.core.domain.exceptions.DomainException;
 
-import pt.ist.fenixWebFramework.renderers.DataProvider;
-import pt.ist.fenixWebFramework.renderers.components.converters.Converter;
+public class MessagingDomainException extends DomainException {
 
-/**
- *
- * @author Luis Cruz
- *
- */
-public class EmailReplyTosProvider implements DataProvider {
+    private static final long serialVersionUID = -8622024813103819898L;
+    protected static final String BUNDLE = "MessagingResources";
 
-    @Override
-    public Object provide(final Object source, final Object currentValue) {
-        final EmailBean emailBean = (EmailBean) source;
-        final Sender sender = emailBean.getSender();
-        final Set<ReplyTo> replyTos = new HashSet<>();
-        if (sender != null) {
-            replyTos.addAll(sender.getReplyTos());
-        }
-        return replyTos;
+    protected MessagingDomainException(Response.Status status, String bundle, String key, String... args) {
+        super(status, bundle, key, args);
     }
 
-    @Override
-    public Converter getConverter() {
-        return null;
+    public static MessagingDomainException forbidden() {
+        return new MessagingDomainException(Response.Status.FORBIDDEN, BUNDLE, "error.not.authorized");
     }
-
 }

@@ -38,7 +38,6 @@ public class MessagingSystem extends MessagingSystem_Base {
     private MessagingSystem() {
         super();
         setBennu(Bennu.getInstance());
-        setPersistentSenderGroup(new PersistentSenderGroup());
     }
 
     public static MessagingSystem getInstance() {
