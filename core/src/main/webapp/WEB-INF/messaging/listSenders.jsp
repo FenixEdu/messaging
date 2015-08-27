@@ -19,14 +19,14 @@
 		<tbody>
 		<c:forEach items="${senders}" var="sender">
 			<tr onClick="location.href='${pageContext.request.contextPath}/messaging/sender/${sender.externalId}'">
-				<td class="col-xs-5">
+				<td class="col-sm-5">
 					${sender.fromName}
 				</td>
-				<td class="col-xs-4">
-					<span class="label label-default">${sender.fromAddress}</span>
+				<td class="col-sm-4">
+					<code>${sender.fromAddress}</code>
 				</td>
-				<td class="col-xs-3">
-					<div class="btn-group pull-right">
+				<td class="col-sm-3">
+					<div class="btn-group btn-group-xs pull-right">
 						<a class="btn btn-primary" href="${pageContext.request.contextPath}/messaging/message?sender=${sender.externalId}">
 							<spring:message code="action.message.new"/>
 						</a>

@@ -26,9 +26,10 @@ class Sender {
 }
 
 class Message {
-	String subject;
-	String body;
-	String htmlBody;
+	LocalizedString subject;
+	LocalizedString body;
+	LocalizedString htmlBody;
+	Locale extraBccsLocale;
 	DateTime created;
     protected ReplyTos replyToArray (REQUIRED);
 	String extraBccs;

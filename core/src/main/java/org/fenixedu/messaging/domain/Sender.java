@@ -35,7 +35,6 @@ import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
-import org.fenixedu.messaging.domain.Message.MessageBuilder;
 
 /**
  *
@@ -140,10 +139,6 @@ public class Sender extends Sender_Base {
 
     public void pruneOldMessages() {
         getPolicy().pruneSender(this);
-    }
-
-    public MessageBuilder message(String subject, String body) {
-        return new MessageBuilder(this, subject, body);
     }
 
     public static boolean userHasRecipients() {
