@@ -31,6 +31,8 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -157,8 +159,8 @@ public class MessageBean extends MessageContentBean {
     }
 
     @Override
-    public Set<String> validate() {
-        Set<String> errors = new HashSet<String>();
+    public SortedSet<String> validate() {
+        SortedSet<String> errors = new TreeSet<String>();
         if (getSender() == null) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.sender.empty"));
         }

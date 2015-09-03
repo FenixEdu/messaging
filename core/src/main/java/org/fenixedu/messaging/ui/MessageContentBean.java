@@ -1,8 +1,9 @@
 package org.fenixedu.messaging.ui;
 
 import java.io.Serializable;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.LocalizedString;
@@ -55,8 +56,8 @@ public class MessageContentBean implements Serializable {
         this.errors = errors;
     }
 
-    public Set<String> validate() {
-        Set<String> errors = new HashSet<String>();
+    public SortedSet<String> validate() {
+        SortedSet<String> errors = new TreeSet<String>();
 
         LocalizedString subject = getSubject(), body = getBody(), htmlBody = getHtmlBody();
         if (subject == null || subject.isEmpty()) {

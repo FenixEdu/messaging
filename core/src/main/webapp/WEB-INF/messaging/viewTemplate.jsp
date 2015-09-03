@@ -20,8 +20,8 @@ ${portal.toolkit()}
 </c:when>
 </c:choose>
 
-<a class="btn btn-primary" href="${pageContext.request.contextPath}/messaging/templates/${template.code}/edit">
-	<spring:message code="action.template.edit"/>
+<a class="btn btn-primary" href="${pageContext.request.contextPath}/messaging/config/templates/${template.code}/edit">
+	<spring:message code="action.edit"/>
 </a>
 <table class="table table-condensed">
 	<tbody>

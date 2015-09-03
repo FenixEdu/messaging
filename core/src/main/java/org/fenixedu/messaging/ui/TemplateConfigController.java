@@ -23,15 +23,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 @SpringFunctionality(app = MessagingController.class, title = "title.messaging.templates", accessGroup = "#managers")
-@RequestMapping("/messaging/templates")
+@RequestMapping("/messaging/config/templates")
 public class TemplateConfigController {
 
-    @RequestMapping
+    @RequestMapping(value = { "", "/" })
     public String listTemplates(Model model, @RequestParam(value = "page", defaultValue = "1") int page, @RequestParam(
             value = "items", defaultValue = "10") int items) {
         List<MessageTemplate> templates =
                 MessagingSystem.getTemplates().stream().sorted(MessageTemplate.COMPARATOR_BY_ID).collect(Collectors.toList());
-        PaginationUtils.paginate(model, "templates", templates, items, page);
+        PaginationUtils.paginate(model, "messaging/config/templates", "templates", templates, items, page);
         return "messaging/listTemplates";
     }
 

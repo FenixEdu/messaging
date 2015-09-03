@@ -2,8 +2,27 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 
-<h2><spring:message code="title.senders"/></h2>
+
+<c:choose>
+	<c:when test="${configure}">
+		<h2><spring:message code="title.senders.config"/></h2>
+		<c:set var="sender" value="${systemSender}" scope="request" />
+		<c:set var="recipients" value="${systemRecipients}" scope="request" />
+		<c:set var="replyTos" value="${systemReplyTos}" scope="request" />
+		<c:set var="system" value="${true}" scope="request"/>
+		<%@ include file="viewSender.jsp" %>
+	</c:when>
+	<c:otherwise>
+		<h2><spring:message code="title.senders"/></h2>
+	</c:otherwise>
+</c:choose>
 <c:if test="${not empty senders}">
+	<c:if test="${configure}">
+		<h3><spring:message code="title.senders.others"/></h3>
+		<a class="btn btn-primary" href="${pageContext.request.contextPath}/messaging/config/senders/new">
+			<spring:message code="action.new"/>
+		</a>
+	</c:if>
 	<table class="table table-hover table-condensed">
 		<thead>
 			<tr>
@@ -18,7 +37,7 @@
 		</thead>
 		<tbody>
 		<c:forEach items="${senders}" var="sender">
-			<tr onClick="location.href='${pageContext.request.contextPath}/messaging/sender/${sender.externalId}'">
+			<tr onClick="location.href='${pageContext.request.contextPath}/messaging/${path}/${sender.externalId}'">
 				<td class="col-sm-5">
 					${sender.fromName}
 				</td>
@@ -27,41 +46,32 @@
 				</td>
 				<td class="col-sm-3">
 					<div class="btn-group btn-group-xs pull-right">
+						<c:choose>
+						<c:when test="${configure}">
+						<a class="btn btn-primary" href="${pageContext.request.contextPath}/messaging/config/senders/${sender.externalId}/edit">
+							<spring:message code="action.configure"/>
+						</a>
+						</c:when>
+						<c:otherwise>
 						<a class="btn btn-primary" href="${pageContext.request.contextPath}/messaging/message?sender=${sender.externalId}">
 							<spring:message code="action.message.new"/>
 						</a>
-						<a class="btn btn-default" href="${pageContext.request.contextPath}/messaging/sender/${sender.externalId}">
-							<spring:message code="action.view.details"/>
+						</c:otherwise>
+						</c:choose>
+						<a class="btn btn-default" href="${pageContext.request.contextPath}/messaging/${path}/${sender.externalId}">
+							<spring:message code="action.view"/>
 						</a>
 					</div>
 				</td>
 			</tr>
 		</c:forEach>
 		</tbody>
-		<c:if test="${pages>1}">
-			<tfoot>
-				<tr>
-					<td colspan="4" style="text-align: center;">
-						<nav style="display:inline-block;">
-							<ul class="pagination">
-								<c:if test="${page == 1}"><li class="disabled"></c:if>
-								<c:if test="${page > 1}"><li></c:if>
-									<a href="${pageContext.request.contextPath}/messaging?page=${page-1}&items=${items}"><span>&laquo;</span></a>
-								</li>
-								<c:forEach begin="1" end="${pages}" var="p" >
-									<c:if test="${p == page}"><li class="active"></c:if>
-									<c:if test="${p != page}"><li></c:if>
-								<a href="${pageContext.request.contextPath}/messaging?page=${p}&items=${items}">${p}</a></li>
-								</c:forEach>
-								<c:if test="${page == pages}"><li class="disabled"></c:if>
-								<c:if test="${page < pages}"><li></c:if>
-									<a href="${pageContext.request.contextPath}/messaging?page=${page+1}&items=${items}"><span>&raquo;</span></a>
-								</li>
-							</ul>
-						</nav>
-					</td>
-				</tr>
-			</tfoot>
-		</c:if>
+		<tfoot>
+			<tr>
+				<td colspan="3">
+					<%@ include file="pagination.jsp" %>
+				</td>
+			</tr>
+		</tfoot>
 	</table>
 </c:if>

@@ -114,7 +114,7 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
         mimeMessage.setSubject(getContent(message.getSubject(), locale));
 
         List<Address> replyTos = new ArrayList<>();
-        for (String replyTo : message.getReplyTos()) {
+        for (String replyTo : message.getReplyToAddresses()) {
             replyTos.add(new InternetAddress(replyTo));
         }
         mimeMessage.setReplyTo(replyTos.toArray(new Address[0]));

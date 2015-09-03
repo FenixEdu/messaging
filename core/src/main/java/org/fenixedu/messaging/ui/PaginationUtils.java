@@ -12,7 +12,7 @@ public class PaginationUtils {
     private PaginationUtils() {
     }
 
-    public static <T> List<T> paginate(Model model, String property, List<T> list, int items, int page) {
+    public static <T> List<T> paginate(Model model, String path, String property, List<T> list, int items, int page) {
         if (list == null || list.isEmpty()) {
             return null;
         }
@@ -24,6 +24,7 @@ public class PaginationUtils {
             if (!Strings.isNullOrEmpty(property)) {
                 model.addAttribute(property, selected);
             }
+            model.addAttribute("path", path);
             model.addAttribute("page", page);
             model.addAttribute("items", items);
             model.addAttribute("pages", pages.size());

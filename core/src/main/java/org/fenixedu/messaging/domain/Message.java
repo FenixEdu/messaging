@@ -41,6 +41,7 @@ import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.messaging.domain.ReplyTo.CurrentUserReplyTo;
 import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
@@ -230,7 +231,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
             }
         }
         if (replyTos != null) {
-            setReplyToArray(new ReplyTos(replyTos));
+            setReplyToArray(new ReplyTos(replyTos.stream().map(Message::staticReplyTo).collect(Collectors.toSet())));
         }
         setExtraBccs(Joiner.on(", ").join(extraBccs));
         setSubject(subject);
@@ -253,6 +254,10 @@ public final class Message extends Message_Base implements Comparable<Message> {
     Message(Sender sender, String subject, String body, String htmlBody, Set<Group> to, Set<Group> cc, Set<Group> bcc,
             Set<String> extraBccs, Set<ReplyTo> replyTos) {
         this(sender, subject, body, htmlBody, to, cc, bcc, extraBccs, replyTos, I18N.getLocale());
+    }
+
+    private static ReplyTo staticReplyTo(ReplyTo rt) {
+        return rt instanceof CurrentUserReplyTo ? ReplyTo.user(Authenticate.getUser()) : rt;
     }
 
     @Override
@@ -383,8 +388,12 @@ public final class Message extends Message_Base implements Comparable<Message> {
         return bccs;
     }
 
-    public Set<String> getReplyTos() {
+    public Set<String> getReplyToAddresses() {
         return getReplyToArray().addresses();
+    }
+
+    public Set<ReplyTo> getReplyTos() {
+        return getReplyToArray().replyTos();
     }
 
     private Set<String> recipientsToEmails(Set<PersistentGroup> recipients) {

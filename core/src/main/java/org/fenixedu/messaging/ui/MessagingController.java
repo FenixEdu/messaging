@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.fenixedu.bennu.core.groups.Group;
@@ -57,23 +58,27 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
 @SpringApplication(path = "messaging", title = "title.messaging", group = "logged", hint = "Messaging")
 @SpringFunctionality(app = MessagingController.class, title = "title.messaging.sending")
 @RequestMapping("/messaging")
 public class MessagingController {
 
-    @RequestMapping
+    @RequestMapping(value = { "", "/" })
+    public RedirectView redirectToSending() {
+        return new RedirectView("/messaging/senders", true);
+    }
+
+    @RequestMapping(value = { "/senders", "/senders/" })
     public String listSenders(Model model, @RequestParam(value = "page", defaultValue = "1") int page, @RequestParam(
             value = "items", defaultValue = "10") int items) {
         List<Sender> senders =
                 Sender.getAvailableSenders().stream().sorted(Sender.COMPARATOR_BY_FROM_NAME).collect(Collectors.toList());
-        PaginationUtils.paginate(model, "senders", senders, items, page);
+        PaginationUtils.paginate(model, "messaging/senders", "senders", senders, items, page);
         return "/messaging/listSenders";
     }
 
-    @RequestMapping(value = "/sender/{sender}", method = RequestMethod.GET)
+    @RequestMapping(value = "/senders/{sender}", method = RequestMethod.GET)
     public String viewSender(@PathVariable Sender sender, Model model,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "items", defaultValue = "10") int items) {
@@ -84,11 +89,17 @@ public class MessagingController {
         List<Message> messages =
                 sender.getMessageSet().stream().sorted(Message.COMPARATOR_BY_CREATED_DATE_OLDER_LAST)
                         .collect(Collectors.toList());
-        PaginationUtils.paginate(model, "messages", messages, items, page);
+        TreeSet<ReplyTo> replyTos = new TreeSet<ReplyTo>(ReplyTo.COMPARATOR_BY_NAME);
+        replyTos.addAll(sender.getReplyTos());
+        model.addAttribute("replyTos", replyTos);
+        TreeSet<Group> recipients = new TreeSet<Group>(Sender.RECIPIENT_COMPARATOR_BY_NAME);
+        recipients.addAll(sender.getRecipients());
+        model.addAttribute("recipients", recipients);
+        PaginationUtils.paginate(model, "messaging/senders/" + sender.getExternalId(), "messages", messages, items, page);
         return "/messaging/viewSender";
     }
 
-    @RequestMapping(value = "/sender/{sender}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/senders/{sender}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody ResponseEntity<String> viewSenderInfo(@PathVariable Sender sender) {
         if (!allowedSender(sender)) {
             throw MessagingDomainException.forbidden();
@@ -106,7 +117,10 @@ public class MessagingController {
         info.add("recipients", array);
         array = new JsonArray();
         for (ReplyTo rt : sender.getReplyTos()) {
-            array.add(new JsonPrimitive(rt.getAddress()));
+            JsonObject replyTo = new JsonObject();
+            replyTo.addProperty("name", rt.toString());
+            replyTo.addProperty("expression", rt.serialize());
+            array.add(replyTo);
         }
         info.add("replyTos", array);
         info.addProperty("html", sender.getHtmlSender());
@@ -139,7 +153,7 @@ public class MessagingController {
                 try {
                     Message message = messageBean.send();
                     redirectAttributes.addFlashAttribute("justCreated", true);
-                    return new ModelAndView(new RedirectView("/messaging/message/" + message.getExternalId(), true));
+                    return new ModelAndView(new RedirectView("/messaging/messages/" + message.getExternalId(), true));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -150,7 +164,7 @@ public class MessagingController {
         return new ModelAndView(newMessage(model, messageBean));
     }
 
-    @RequestMapping(value = "/message/{message}", method = RequestMethod.GET)
+    @RequestMapping(value = "/messages/{message}", method = RequestMethod.GET)
     public String viewMessage(Model model, @PathVariable Message message, boolean created) {
         if (!allowedSender(message.getSender())) {
             throw MessagingDomainException.forbidden();
@@ -172,7 +186,7 @@ public class MessagingController {
         return "/messaging/viewMessage";
     }
 
-    @RequestMapping(value = "/message/{message}/delete", method = RequestMethod.POST)
+    @RequestMapping(value = "/messages/{message}/delete", method = RequestMethod.POST)
     public String deleteMessage(@PathVariable Message message, Model model) {
         if (!isCreator(message)) {
             throw MessagingDomainException.forbidden();

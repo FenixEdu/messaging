@@ -100,9 +100,11 @@ ${portal.toolkit()}
 					<spring:message code="label.message.replyTos"/>
 				</th>
 				<td>
+					<div style="overflow-y:auto; max-height:85px; display:block;">
 					<c:forEach items="${message.replyTos}" var="replyTo">
-						<code>${replyTo}</code>
+						<code style="display: inline-block; margin: 2px;">${replyTo}</code>
 					</c:forEach>
+					</div>
 				</td>
 			</tr>
 		</c:if>
@@ -111,10 +113,12 @@ ${portal.toolkit()}
 				<th class="col-md-2" scope="row">
 					<spring:message code="label.message.tos"/>
 				</th>
-				<td class="form-inline">
+				<td>
+					<div style="overflow-y:auto; max-height:85px; display:block;">
 					<c:forEach items="${message.toGroup}" var="to">
-						<label class="form-control input-sm">${to.presentationName}</label>
+						<code style="display: inline-block; margin: 2px;">${to.presentationName}</code>
 					</c:forEach>
+					</div>
 				</td>
 			</tr>
 		</c:if>
@@ -123,10 +127,12 @@ ${portal.toolkit()}
 				<th class="col-md-2" scope="row">
 					<spring:message code="label.message.ccs"/>
 				</th>
-				<td class="form-inline">
+				<td>
+					<div style="overflow-y:auto; max-height:85px; display:block;">
 					<c:forEach items="${message.ccGroup}" var="cc">
-						<label class="form-control input-sm">${cc.presentationName}</label>
+						<code style="display: inline-block; margin: 2px;">${cc.presentationName}</code>
 					</c:forEach>
+					</div>
 				</td>
 			</tr>
 		</c:if>
@@ -135,10 +141,12 @@ ${portal.toolkit()}
 				<th class="col-md-2" scope="row">
 					<spring:message code="label.message.bccs"/>
 				</th>
-				<td class="form-inline">
+				<td>
+					<div style="overflow-y:auto; max-height:85px; display:block;">
 					<c:forEach items="${message.bccGroup}" var="bcc">
-						<label class="form-control input-sm">${bcc.presentationName}</label>
+						<code style="display: inline-block; margin: 2px;">${bcc.presentationName}</code>
 					</c:forEach>
+					</div>
 				</td>
 			</tr>
 		</c:if>
@@ -218,8 +226,8 @@ ${portal.toolkit()}
 			<tr>
 				<th></th>
 				<td>
-					<form action="${pageContext.request.contextPath}/messaging/message/${message.externalId}/delete" method="post">
-						<button class="btn btn-danger" type="submit"><spring:message code="action.message.delete"/></button>
+					<form action="${pageContext.request.contextPath}/messaging/messages/${message.externalId}/delete" method="post">
+						<button class="btn btn-danger" type="submit"><spring:message code="action.delete"/></button>
 					</form>
 				</td>
 			</tr>

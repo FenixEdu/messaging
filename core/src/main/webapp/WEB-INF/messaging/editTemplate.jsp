@@ -50,18 +50,17 @@ ${portal.toolkit()}
 	</div>
 	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-10">
-			<button class="btn btn-primary" type="submit"><spring:message code="action.template.save"/></button>
+			<button class="btn btn-primary" type="submit"><spring:message code="action.save"/></button>
 		</div>
 	</div>
 </form:form>
-
-	<script>
-	(function(){
-		var switches = $('label.footer-switch');
-		switches.click(function(event){
-			if(!$(event.target).hasClass('active')){
-				switches.toggleClass('btn-primary btn-default active');
-			}
-		});
-	})();
-	</script>
+<script>
+(function(){
+	var switches = $('label.footer-switch');
+	switches.click(function(event){
+		if(!$(event.target).hasClass('active')){
+			switches.toggleClass('btn-primary btn-default active');
+		}
+	});
+})();
+</script>

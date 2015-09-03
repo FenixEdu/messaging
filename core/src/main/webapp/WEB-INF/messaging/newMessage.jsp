@@ -48,7 +48,7 @@ ${portal.toolkit()}
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="bccs"><spring:message code="label.message.bccs.extra"/>:</label>
 		<div class="col-sm-10">
-			<spring:message code="hint.extra.bccs" var="placeholder"/>
+			<spring:message code="hint.email.list" var="placeholder"/>
 			<form:input type="email" multiple="multiple" class="form-control" id="bccs" path="bccs" placeholder="${placeholder}"/>
 		</div>
 	</div>
@@ -108,8 +108,8 @@ ${portal.toolkit()}
 	}
 
 	function appendCheckbox(element, checked, name, label, id){
-		var labelEl = $('<label style="margin-right: 5px;" class="input-group input-group-sm" for="'+id+'"></label>');
-		var checkboxEl = $('<input/>', { type: 'checkbox', id: id, value: id, name: name, checked: checked.indexOf(id) >= 0 });
+		var labelEl = $('<label style="margin-right: 5px;" class="input-group input-group-sm" for="'+name+'-'+id+'"></label>');
+		var checkboxEl = $('<input/>', { type: 'checkbox', id: name+'-'+id, value: id, name: name, checked: checked.indexOf(id) >= 0 });
 		var addonEl = $('<span class="input-group-addon"></span>');
 		var spanEl = $('<span class="form-control">'+label+'</span>');
 		addonEl.append(checkboxEl);
@@ -132,8 +132,8 @@ ${portal.toolkit()}
 
 	function senderUpdate(sender){
 		if(sender){
-			$.getJSON('sender/' + sender, function(info){
-				populateCheckboxes(info, 'replyTos', $('#replyTos'), null, null, null);
+			$.getJSON('senders/' + sender, function(info){
+				populateCheckboxes(info, 'replyTos', $('#replyTos'), 'name', 'name', 'expression');
 				populateCheckboxes(info, 'recipients', $('#recipients'), 'name', 'name', 'expression');
 				if(info.html){
 					$('#htmlMessage').show();
