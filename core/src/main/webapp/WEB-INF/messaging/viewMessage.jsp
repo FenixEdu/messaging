@@ -1,7 +1,10 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
+
+${portal.toolkit()}
 
 <h2><spring:message code="title.message"/></h2>
 
@@ -80,7 +83,7 @@
 				<spring:message code="label.message.sender.address"/>
 			</th>
 			<td>
-				<span class="label label-default">${message.sender.fromAddress}</span>
+				<code>${message.sender.fromAddress}</code>
 			</td>
 		</tr>
 		<tr>
@@ -88,7 +91,7 @@
 				<spring:message code="label.message.sent.by"/>
 			</th>
 			<td>
-				${message.user.presentationName}
+				${message.user.profile.displayName}
 			</td>
 		</tr>
 		<c:if test="${not empty message.replyTos}">
@@ -97,9 +100,11 @@
 					<spring:message code="label.message.replyTos"/>
 				</th>
 				<td>
+					<div style="overflow-y:auto; max-height:85px; display:block;">
 					<c:forEach items="${message.replyTos}" var="replyTo">
-						<span class="label label-default">${replyTo}</span>
+						<code style="display: inline-block; margin: 2px;">${replyTo}</code>
 					</c:forEach>
+					</div>
 				</td>
 			</tr>
 		</c:if>
@@ -109,9 +114,11 @@
 					<spring:message code="label.message.tos"/>
 				</th>
 				<td>
+					<div style="overflow-y:auto; max-height:85px; display:block;">
 					<c:forEach items="${message.toGroup}" var="to">
-						<span class="label label-default">${to.presentationName}</span>
+						<code style="display: inline-block; margin: 2px;">${to.presentationName}</code>
 					</c:forEach>
+					</div>
 				</td>
 			</tr>
 		</c:if>
@@ -121,9 +128,11 @@
 					<spring:message code="label.message.ccs"/>
 				</th>
 				<td>
+					<div style="overflow-y:auto; max-height:85px; display:block;">
 					<c:forEach items="${message.ccGroup}" var="cc">
-						<span class="label label-default">${cc.presentationName}</span>
+						<code style="display: inline-block; margin: 2px;">${cc.presentationName}</code>
 					</c:forEach>
+					</div>
 				</td>
 			</tr>
 		</c:if>
@@ -133,9 +142,11 @@
 					<spring:message code="label.message.bccs"/>
 				</th>
 				<td>
+					<div style="overflow-y:auto; max-height:85px; display:block;">
 					<c:forEach items="${message.bccGroup}" var="bcc">
-						<span class="label label-default">${bcc.presentationName}</span>
+						<code style="display: inline-block; margin: 2px;">${bcc.presentationName}</code>
 					</c:forEach>
+					</div>
 				</td>
 			</tr>
 		</c:if>
@@ -146,17 +157,41 @@
 				</th>
 				<td>
 					<c:forEach items="${message.extraBccs}" var="bcc">
-						<span class="label label-default">${bcc}</span>
+						<code>${bcc}</code>
 					</c:forEach>
+				</td>
+			</tr>
+			<tr>
+				<th class="col-md-2" scope="row">
+					<spring:message code="label.message.bccs.extra.locale"/>
+				</th>
+				<td>
+					${message.extraBccsLocale.getDisplayName(message.extraBccsLocale)}
 				</td>
 			</tr>
 		</c:if>
 		<tr>
 			<th class="col-md-2" scope="row">
+				<spring:message code="label.message.locale"/>
+			</th>
+			<td>
+				<ul class="nav nav-pills">
+				<c:forEach items="${messageLocales}" var="locale">
+					<li><a class="btn-sm localized" id="locale-${locale}">${locale.getDisplayName(locale)}</a></li>
+				</c:forEach>
+				</ul>
+			</td>
+		</tr>
+		<tr>
+			<th class="col-md-2" scope="row">
 				<spring:message code="label.message.subject"/>
 			</th>
 			<td>
-				<c:out value="${message.subject}"/>
+			<c:forEach items="${messageLocales}" var="locale">
+				<div class="panel panel-default localized locale-${locale}" style="margin:0;">
+					<div style="white-space: pre-wrap;" class="panel-heading"><c:out value="${message.subject.getContent(locale)}" default="${message.subject.getContent()}"/></div>
+				</div>
+			</c:forEach>
 			</td>
 		</tr>
 		<c:if test="${not empty message.body}">
@@ -165,9 +200,11 @@
 				<spring:message code="label.message.body"/>
 			</th>
 			<td>
-				<div class="panel panel-default">
-					<div style="white-space: pre-wrap;" class="panel-body"><c:out value="${message.body}"/></div>
+			<c:forEach items="${messageLocales}" var="locale">
+				<div class="panel panel-default localized locale-${locale}" style="margin:0;">
+					<div style="white-space: pre-wrap;" class="panel-heading"><c:out value="${message.body.getContent(locale)}" default="${message.body.getContent()}"/></div>
 				</div>
+			</c:forEach>
 			</td>
 		</tr>
 		</c:if>
@@ -177,9 +214,11 @@
 				<spring:message code="label.message.body.html"/>
 			</th>
 			<td>
-				<div class="panel panel-default">
-					<div style="white-space: pre-wrap;" class="panel-body"><c:out value="${message.htmlBody}"/></div>
+			<c:forEach items="${messageLocales}" var="locale">
+				<div class="panel panel-default localized locale-${locale}" style="margin:0;">
+					<div style="white-space: pre-wrap;" class="panel-heading"><c:out value="${message.htmlBody.getContent(locale)}" default="${message.htmlBody.getContent()}" escapeXml="false"/></div>
 				</div>
+			</c:forEach>
 			</td>
 		</tr>
 		</c:if>
@@ -187,11 +226,28 @@
 			<tr>
 				<th></th>
 				<td>
-					<form action="${pageContext.request.contextPath}/messaging/message/${message.externalId}/delete" method="post">
-						<button class="btn btn-danger" type="submit"><spring:message code="action.message.delete"/></button>
+					<form action="${pageContext.request.contextPath}/messaging/messages/${message.externalId}/delete" method="post">
+						<button class="btn btn-danger" type="submit"><spring:message code="action.delete"/></button>
 					</form>
 				</td>
 			</tr>
 		</c:if>
 	</tbody>
 </table>
+<script>
+(function() {
+	var pills=$("a.localized");
+	var content=$("div.localized");
+	function selectLocale(locale){
+		pills.parent().removeClass("active");
+		$("#"+locale).parent().addClass("active");
+		content.hide();
+		$("div."+locale).show();
+	}
+	pills.click(function(event){
+		selectLocale($(event.target).attr('id'));
+	})
+	var firstLocale="<c:forEach items="${messageLocales}" var="locale" end="0">locale-<c:out value="${locale}"/></c:forEach>";
+	selectLocale(firstLocale);
+})();
+</script>

@@ -40,4 +40,9 @@ public class MessagingDomainException extends DomainException {
     public static MessagingDomainException forbidden() {
         return new MessagingDomainException(Response.Status.FORBIDDEN, BUNDLE, "error.not.authorized");
     }
+
+    public static MessagingDomainException missingTemplate(String id) {
+        return new MessagingDomainException(Response.Status.NOT_FOUND, BUNDLE, "error.template.missing", id);
+    }
+
 }

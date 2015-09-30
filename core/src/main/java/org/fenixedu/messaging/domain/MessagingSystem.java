@@ -24,7 +24,14 @@
  */
 package org.fenixedu.messaging.domain;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.fenixedu.bennu.core.domain.Bennu;
+import org.fenixedu.messaging.template.MessageTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
@@ -35,6 +42,10 @@ import pt.ist.fenixframework.Atomic.TxMode;
  *
  */
 public class MessagingSystem extends MessagingSystem_Base {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MessagingSystem.class);
+    private static final Map<String, MessageTemplate> templates = new HashMap<>();
+
     private MessagingSystem() {
         super();
         setBennu(Bennu.getInstance());
@@ -79,4 +90,23 @@ public class MessagingSystem extends MessagingSystem_Base {
     public static Sender systemSender() {
         return getInstance().getSystemSender();
     }
+
+    public static void addTemplate(org.fenixedu.messaging.annotation.MessageTemplate template) {
+        MessageTemplate t = new MessageTemplate(template);
+        templates.put(t.getCode(), t);
+        LOG.info("Registered Template : {} with name {}", t.getId(), t.getName().getContent());
+    }
+
+    public static MessageTemplate getTemplateByCode(String code) {
+        return templates.get(code);
+    }
+
+    public static MessageTemplate getTemplateById(String id) {
+        return templates.get(MessageTemplate.encodeId(id));
+    }
+
+    public static Collection<MessageTemplate> getTemplates() {
+        return templates.values();
+    }
+
 }

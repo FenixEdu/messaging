@@ -35,7 +35,6 @@ import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
-import org.fenixedu.messaging.domain.Message.MessageBuilder;
 
 /**
  *
@@ -44,6 +43,14 @@ import org.fenixedu.messaging.domain.Message.MessageBuilder;
  */
 public class Sender extends Sender_Base {
 
+    public static final Comparator<Group> RECIPIENT_COMPARATOR_BY_NAME = new Comparator<Group>() {
+
+        @Override
+        public int compare(final Group group1, final Group group2) {
+            return group1.getPresentationName().compareTo(group2.getPresentationName());
+        }
+
+    };
     public static Comparator<Sender> COMPARATOR_BY_FROM_NAME = new Comparator<Sender>() {
 
         @Override
@@ -70,7 +77,7 @@ public class Sender extends Sender_Base {
 
     @Override
     public Set<Message> getMessageSet() {
-        // TODO remove when framework supports read-only relations
+        // FIXME remove when framework supports read-only relations
         return Collections.unmodifiableSet(super.getMessageSet());
     }
 
@@ -94,6 +101,11 @@ public class Sender extends Sender_Base {
 
     public Set<Group> getRecipients() {
         return getRecipientSet().stream().map(g -> g.toGroup()).collect(Collectors.toSet());
+    }
+
+    public void setRecipients(Set<Group> recipients) {
+        getRecipientSet().clear();
+        recipients.stream().forEach(r -> addRecipient(r.toPersistentGroup()));
     }
 
     public void addRecipient(Group recipient) {
@@ -140,10 +152,6 @@ public class Sender extends Sender_Base {
 
     public void pruneOldMessages() {
         getPolicy().pruneSender(this);
-    }
-
-    public MessageBuilder message(String subject, String body) {
-        return new MessageBuilder(this, subject, body);
     }
 
     public static boolean userHasRecipients() {
