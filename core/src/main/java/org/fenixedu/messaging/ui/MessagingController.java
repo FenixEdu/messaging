@@ -24,21 +24,21 @@
  */
 package org.fenixedu.messaging.ui;
 
-import static pt.ist.fenixframework.FenixFramework.atomic;
-
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.fenixedu.bennu.core.domain.exceptions.DomainException;
 import org.fenixedu.bennu.core.groups.Group;
-import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.bennu.core.security.Authenticate;
+import org.fenixedu.bennu.core.util.CoreConfiguration;
 import org.fenixedu.bennu.spring.portal.SpringApplication;
 import org.fenixedu.bennu.spring.portal.SpringFunctionality;
+import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.domain.Message;
-import org.fenixedu.messaging.domain.Message.MessageBuilder;
 import org.fenixedu.messaging.domain.ReplyTo;
 import org.fenixedu.messaging.domain.Sender;
 import org.fenixedu.messaging.exception.MessagingDomainException;
@@ -117,7 +117,7 @@ public class MessagingController {
     }
 
     @RequestMapping(value = "/message", method = RequestMethod.GET)
-    public ModelAndView newMessage(@ModelAttribute("messageBean") MessageBean messageBean) {
+    public String newMessage(Model model, @ModelAttribute("messageBean") MessageBean messageBean) {
         if (messageBean != null && messageBean.getSender() != null && !allowedSender(messageBean.getSender())) {
             throw MessagingDomainException.forbidden();
         }
@@ -129,15 +129,18 @@ public class MessagingController {
                 messageBean.setSender(availableSenders.iterator().next());
             }
         }
-        return new ModelAndView("/messaging/newMessage", "messageBean", messageBean);
+        model.addAttribute("supportedLocales", CoreConfiguration.supportedLocales());
+        model.addAttribute("messageBean", messageBean);
+        return "/messaging/newMessage";
     }
 
     @RequestMapping(value = "/message", method = RequestMethod.POST)
-    public ModelAndView sendMessage(@ModelAttribute("messageBean") MessageBean messageBean, RedirectAttributes redirectAttributes)
-            throws Exception {
+    public ModelAndView sendMessage(Model model, @ModelAttribute("messageBean") MessageBean messageBean,
+            RedirectAttributes redirectAttributes) throws Exception {
         if (messageBean != null) {
             if (allowedSender(messageBean.getSender())) {
-                Message message = send(messageBean);
+                messageBean.setAutomaticFooter(true);
+                Message message = messageBean.send();
                 if (message != null) {
                     redirectAttributes.addFlashAttribute("justCreated", true);
                     return new ModelAndView(new RedirectView("/messaging/message/" + message.getExternalId(), true));
@@ -146,16 +149,29 @@ public class MessagingController {
                 throw MessagingDomainException.forbidden();
             }
         }
-        return newMessage(messageBean);
+        return new ModelAndView(newMessage(model, messageBean));
     }
 
     @RequestMapping(value = "/message/{message}", method = RequestMethod.GET)
-    public ModelAndView viewMessage(@PathVariable Message message, boolean created) {
+    public String viewMessage(Model model, @PathVariable Message message, boolean created) {
         if (!allowedSender(message.getSender())) {
             throw MessagingDomainException.forbidden();
         }
-
-        return new ModelAndView("/messaging/viewMessage", "message", message);
+        Set<Locale> locales = new HashSet<Locale>();
+        locales.addAll(CoreConfiguration.supportedLocales());
+        locales.addAll(message.getSubject().getLocales());
+        LocalizedString content = message.getBody();
+        if (content != null) {
+            locales.addAll(content.getLocales());
+        }
+        content = message.getHtmlBody();
+        if (content != null) {
+            locales.addAll(content.getLocales());
+        }
+        locales.add(message.getExtraBccsLocale());
+        model.addAttribute("messageLocales", locales);
+        model.addAttribute("message", message);
+        return "/messaging/viewMessage";
     }
 
     @RequestMapping(value = "/message/{message}/delete", method = RequestMethod.POST)
@@ -175,57 +191,6 @@ public class MessagingController {
 
     private boolean isCreator(Message message) {
         return message.getUser().equals(Authenticate.getUser());
-    }
-
-    private Message send(MessageBean bean) throws Exception {
-        Set<String> validate = bean.validate();
-        if (!validate.isEmpty()) {
-            bean.setErrors(validate);
-            return null;
-        } else {
-            Base64.Decoder decoder = Base64.getDecoder();
-            String fullBody = null;
-            Sender sender = bean.getSender();
-            Set<String> recipientExpressions = bean.getRecipients();
-            List<Group> recipients = null;
-            if (recipientExpressions != null) {
-                recipients =
-                        recipientExpressions.stream().map(e -> Group.parse(new String(decoder.decode(e))))
-                                .collect(Collectors.toList());
-            }
-            if (!Strings.isNullOrEmpty(bean.getMessage())) {
-                if (bean.isAutomaticFooter() && recipients != null && !recipients.isEmpty()) {
-                    fullBody =
-                            BundleUtil.getString("MessagingResources", "message.footer", bean.getMessage(), sender.getFromName(),
-                                    recipients.stream().map(r -> r.getPresentationName()).collect(Collectors.joining("\n\t")));
-                } else {
-                    fullBody = bean.getMessage();
-                }
-            }
-            final MessageBuilder builder = new MessageBuilder(sender, bean.getSubject(), fullBody);
-            String htmlMessage = bean.getHtmlMessage();
-            if (!Strings.isNullOrEmpty(htmlMessage)) {
-                builder.htmlBody(htmlMessage);
-            }
-            for (Group recipient : recipients) {
-                builder.bcc(recipient);
-            }
-            String bccs = bean.getBccs();
-            if (!Strings.isNullOrEmpty(bccs)) {
-                for (String bcc : bccs.split(",")) {
-                    if (!Strings.isNullOrEmpty(bcc.trim())) {
-                        builder.bcc(bcc.trim());
-                    }
-                }
-            }
-            Set<String> replyTos = bean.getReplyTos();
-            if (replyTos != null) {
-                for (String replyTo : replyTos) {
-                    builder.replyTo(replyTo);
-                }
-            }
-            return atomic(() -> builder.send());
-        }
     }
 
     private <T> List<T> paginate(Model model, String property, List<T> list, int items, int page) {

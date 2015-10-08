@@ -19,7 +19,7 @@
 				<spring:message code="label.bootstrapper.systemsender.address"/>
 			</th>
 			<td>
-				<span class="label label-default">${sender.fromAddress}</span>
+				<code>${sender.fromAddress}</code>
 			</td>
 		</tr>
 		<c:if test="${not empty sender.replyTos}">
@@ -29,7 +29,7 @@
 				</th>
 				<td>
 					<c:forEach items="${sender.replyTos}" var="replyTo">
-						<span class="label label-default">${replyTo.address}</span>
+						<code>${replyTo.address}</code>
 					</c:forEach>
 				</td>
 			</tr>
@@ -70,9 +70,9 @@
 		<tbody>
 		<c:forEach items="${messages}" var="message">
 			<tr onClick="location.href='${pageContext.request.contextPath}/messaging/message/${message.externalId}'">
-				<td class="col-xs-2">${message.created.toString("dd-MM-yyyy HH:mm:ss")}</td>
-				<td class="col-xs-6">${message.subject}</td>
-				<td class="col-xs-3">
+				<td class="col-sm-2">${message.created.toString("dd-MM-yyyy HH:mm:ss")}</td>
+				<td class="col-sm-6"><c:out value="${message.subject.content}"/></td>
+				<td class="col-sm-3">
 					<c:choose>
 						<c:when test="${not empty message.sent}">
 							${message.sent.toString("dd-MM-yyyy HH:mm:ss")}
@@ -106,8 +106,8 @@
 						</c:otherwise>
 					</c:choose>
 				</td>
-				<td class="col-xs-1">
-					<a class="btn btn-default pull-right" href="${pageContext.request.contextPath}/messaging/message/${message.externalId}">
+				<td class="col-sm-1">
+					<a class="btn btn-xs btn-default pull-right" href="${pageContext.request.contextPath}/messaging/message/${message.externalId}">
 						<spring:message code="action.view.details"/>
 					</a>
 				</td>
