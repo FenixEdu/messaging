@@ -41,6 +41,7 @@ import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.messaging.domain.ReplyTo.CurrentUserReplyTo;
 import org.fenixedu.messaging.exception.MessagingDomainException;
 import org.joda.time.DateTime;
 
@@ -172,7 +173,9 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder to(Set<Group> to) {
-            to.forEach(this.to::add);
+            if (to != null) {
+                this.to.addAll(to);
+            }
             return this;
         }
 
@@ -184,7 +187,9 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder cc(Set<Group> cc) {
-            cc.forEach(this.cc::add);
+            if (cc != null) {
+                this.cc.addAll(cc);
+            }
             return this;
         }
 
@@ -196,7 +201,9 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder bcc(Set<Group> bcc) {
-            bcc.forEach(this.bcc::add);
+            if (bcc != null) {
+                this.bcc.addAll(bcc);
+            }
             return this;
         }
 
@@ -220,7 +227,9 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder replyTo(Set<ReplyTo> replyTos) {
-            this.replyTo.addAll(replyTos);
+            if (replyTos != null) {
+                this.replyTo.addAll(replyTos);
+            }
             return this;
         }
 
@@ -294,6 +303,55 @@ public final class Message extends Message_Base implements Comparable<Message> {
         setCreated(new DateTime());
         setUser(Authenticate.getUser());
         setExtraBccsLocale(I18N.getLocale());
+    }
+
+    Message(Sender sender, LocalizedString subject, LocalizedString body, LocalizedString htmlBody, Set<Group> to, Set<Group> cc,
+            Set<Group> bcc, Set<String> extraBccs, Set<ReplyTo> replyTos) {
+        this();
+        setSender(sender);
+        if (to != null) {
+            for (Group group : to) {
+                addTo(group.toPersistentGroup());
+            }
+        }
+        if (cc != null) {
+            for (Group group : cc) {
+                addCc(group.toPersistentGroup());
+            }
+        }
+        if (bcc != null) {
+            for (Group group : bcc) {
+                addBcc(group.toPersistentGroup());
+            }
+        }
+        if (replyTos != null) {
+            setReplyToArray(new ReplyTos(replyTos.stream().map(Message::staticReplyTo).collect(Collectors.toSet())));
+        }
+        setExtraBccs(Joiner.on(", ").join(extraBccs));
+        setSubject(subject);
+        setBody(body);
+        setHtmlBody(htmlBody);
+    }
+
+    Message(Sender sender, LocalizedString subject, LocalizedString body, LocalizedString htmlBody, Set<Group> to, Set<Group> cc,
+            Set<Group> bcc, Set<String> extraBccs, Set<ReplyTo> replyTos, Locale extraBccsLocale) {
+        this(sender, subject, body, htmlBody, to, cc, bcc, extraBccs, replyTos);
+        setExtraBccsLocale(extraBccsLocale);
+    }
+
+    Message(Sender sender, String subject, String body, String htmlBody, Set<Group> to, Set<Group> cc, Set<Group> bcc,
+            Set<String> extraBccs, Set<ReplyTo> replyTos, Locale locale) {
+        this(sender, new LocalizedString(locale, subject), new LocalizedString(locale, body), new LocalizedString(locale,
+                htmlBody), to, cc, bcc, extraBccs, replyTos);
+    }
+
+    Message(Sender sender, String subject, String body, String htmlBody, Set<Group> to, Set<Group> cc, Set<Group> bcc,
+            Set<String> extraBccs, Set<ReplyTo> replyTos) {
+        this(sender, subject, body, htmlBody, to, cc, bcc, extraBccs, replyTos, I18N.getLocale());
+    }
+
+    private static ReplyTo staticReplyTo(ReplyTo rt) {
+        return rt instanceof CurrentUserReplyTo ? ReplyTo.user(Authenticate.getUser()) : rt;
     }
 
     @Override
@@ -414,13 +472,21 @@ public final class Message extends Message_Base implements Comparable<Message> {
         return bccs;
     }
 
-    public Set<String> getReplyTos() {
+    public Set<String> getReplyToAddresses() {
         return getReplyToArray().addresses();
+    }
+
+    public Set<ReplyTo> getReplyTos() {
+        return getReplyToArray().replyTos();
     }
 
     private Set<String> recipientsToEmails(Set<PersistentGroup> recipients) {
         return recipients.stream().map(g -> g.toGroup()).flatMap(g -> g.getMembers().stream()).distinct()
                 .map(user -> user.getProfile().getEmail()).filter(Strings::isNullOrEmpty).collect(Collectors.toSet());
+    }
+
+    public boolean isLoggedUserCreator() {
+        return getUser().equals(Authenticate.getUser());
     }
 
     @Override

@@ -42,7 +42,14 @@ import org.fenixedu.bennu.core.security.Authenticate;
  *
  */
 public class Sender extends Sender_Base {
+    public static final Comparator<Group> RECIPIENT_COMPARATOR_BY_NAME = new Comparator<Group>() {
 
+        @Override
+        public int compare(final Group group1, final Group group2) {
+            return group1.getPresentationName().compareTo(group2.getPresentationName());
+        }
+
+    };
     public static Comparator<Sender> COMPARATOR_BY_FROM_NAME = new Comparator<Sender>() {
 
         @Override

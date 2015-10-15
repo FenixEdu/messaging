@@ -9,7 +9,7 @@ ${portal.toolkit()}
 <h2><spring:message code="title.message"/></h2>
 
 <c:if test="${justCreated}">
-	<p class="alert alert-success"><spring:message code="notification.message.sent"/></p>
+<p class="alert alert-success"><spring:message code="notification.message.sent"/></p>
 </c:if>
 
 <table class="table table-condensed">
@@ -24,50 +24,50 @@ ${portal.toolkit()}
 		</tr>
 		<tr>
 			<th class="col-md-2" scope="row">
-				<c:choose>
-					<c:when test="${not empty message.sent}">
-						<spring:message code="label.message.status.sent"/>
-					</c:when>
-					<c:otherwise>
-						<spring:message code="label.message.status"/>
-					</c:otherwise>
-				</c:choose>
+			<c:choose>
+			<c:when test="${not empty message.sent}">
+				<spring:message code="label.message.status.sent"/>
+			</c:when>
+			<c:otherwise>
+				<spring:message code="label.message.status"/>
+			</c:otherwise>
+			</c:choose>
 			</th>
 			<td>
-				<c:choose>
-					<c:when test="${not empty message.sent}">
-						${message.sent.toString("dd-MM-yyyy HH:mm:ss")}
-					</c:when>
-					<c:when test="${not empty message.dispatchReport.startedDelivery}">
-						<spring:message code="label.message.status.dispatching"/>
-					</c:when>
-					<c:otherwise>
-						<spring:message code="label.message.status.queued"/>
-					</c:otherwise>
-				</c:choose>
-				<c:if test="${not empty message.dispatchReport.startedDelivery}">
-					<c:set var="invalid" value="${message.dispatchReport.invalidCount}"/>
-					<c:set var="failed" value="${message.dispatchReport.failedCount}"/>
-					<c:set var="delivered" value="${message.dispatchReport.deliveredCount}"/>
-					<c:set var="total" value="${message.dispatchReport.totalCount}"/>
-					<c:set var="pInvalid" value="${100 *message.dispatchReport.invalidCount/total}"/>
-					<c:set var="pFailed" value="${100 *message.dispatchReport.failedCount/total}"/>
-					<c:set var="pDelivered" value="${100 * message.dispatchReport.deliveredCount/total}"/>
-					<div class="progress" style="margin: 0;">
-						<div class="progress-bar progress-bar-danger" style="width: ${pFailed}%" data-toggle="tooltip" data-placement="bottom" title="${failed} failed messages">
-							<fmt:formatNumber type="number" maxFractionDigits="1" value="${pFailed}"/>%
-						</div>
-						<div class="progress-bar progress-bar-warning" style="width: ${pInvalid}%" data-toggle="tooltip" data-placement="bottom" title="${invalid} invalid messages">
-							<fmt:formatNumber type="number" maxFractionDigits="1" value="${pInvalid}"/>%
-						</div>
-						<div class="progress-bar progress-bar-success" style="width: ${pDelivered}%" data-toggle="tooltip" data-placement="bottom"  title="${delivered} delivered messages">
-							<fmt:formatNumber type="number" maxFractionDigits="1" value="${pDelivered}"/>%
-						</div>
-					</div>
-					<script type="text/javascript">
-						$(".progress-bar").tooltip();
-					</script>
-				</c:if>
+			<c:choose>
+			<c:when test="${not empty message.sent}">
+				${message.sent.toString("dd-MM-yyyy HH:mm:ss")}
+			</c:when>
+			<c:when test="${not empty message.dispatchReport.startedDelivery}">
+				<spring:message code="label.message.status.dispatching"/>
+			</c:when>
+			<c:otherwise>
+				<spring:message code="label.message.status.queued"/>
+			</c:otherwise>
+			</c:choose>
+			<c:if test="${not empty message.dispatchReport.startedDelivery}">
+			<c:set var="invalid" value="${message.dispatchReport.invalidCount}"/>
+			<c:set var="failed" value="${message.dispatchReport.failedCount}"/>
+			<c:set var="delivered" value="${message.dispatchReport.deliveredCount}"/>
+			<c:set var="total" value="${message.dispatchReport.totalCount}"/>
+			<c:set var="pInvalid" value="${100 *message.dispatchReport.invalidCount/total}"/>
+			<c:set var="pFailed" value="${100 *message.dispatchReport.failedCount/total}"/>
+			<c:set var="pDelivered" value="${100 * message.dispatchReport.deliveredCount/total}"/>
+			<div class="progress" style="margin: 0;">
+				<div class="progress-bar progress-bar-danger" style="width: ${pFailed}%" data-toggle="tooltip" data-placement="bottom" title="${failed} failed messages">
+					<fmt:formatNumber type="number" maxFractionDigits="1" value="${pFailed}"/>%
+				</div>
+				<div class="progress-bar progress-bar-warning" style="width: ${pInvalid}%" data-toggle="tooltip" data-placement="bottom" title="${invalid} invalid messages">
+					<fmt:formatNumber type="number" maxFractionDigits="1" value="${pInvalid}"/>%
+				</div>
+				<div class="progress-bar progress-bar-success" style="width: ${pDelivered}%" data-toggle="tooltip" data-placement="bottom"  title="${delivered} delivered messages">
+					<fmt:formatNumber type="number" maxFractionDigits="1" value="${pDelivered}"/>%
+				</div>
+			</div>
+			<script type="text/javascript">
+				$(".progress-bar").tooltip();
+			</script>
+			</c:if>
 			</td>
 		</tr>
 		<tr>
@@ -100,9 +100,11 @@ ${portal.toolkit()}
 					<spring:message code="label.message.replyTos"/>
 				</th>
 				<td>
+					<div style="overflow-y:auto; max-height:85px; display:block;">
 					<c:forEach items="${message.replyTos}" var="replyTo">
-						<code>${replyTo}</code>
+						<code style="display: inline-block; margin: 2px;">${replyTo}</code>
 					</c:forEach>
+					</div>
 				</td>
 			</tr>
 		</c:if>
@@ -111,10 +113,12 @@ ${portal.toolkit()}
 				<th class="col-md-2" scope="row">
 					<spring:message code="label.message.tos"/>
 				</th>
-				<td class="form-inline">
+				<td>
+					<div style="overflow-y:auto; max-height:85px; display:block;">
 					<c:forEach items="${message.toGroup}" var="to">
-						<label class="form-control input-sm">${to.presentationName}</label>
+						<code style="display: inline-block; margin: 2px;">${to.presentationName}</code>
 					</c:forEach>
+					</div>
 				</td>
 			</tr>
 		</c:if>
@@ -123,10 +127,12 @@ ${portal.toolkit()}
 				<th class="col-md-2" scope="row">
 					<spring:message code="label.message.ccs"/>
 				</th>
-				<td class="form-inline">
+				<td>
+					<div style="overflow-y:auto; max-height:85px; display:block;">
 					<c:forEach items="${message.ccGroup}" var="cc">
-						<label class="form-control input-sm">${cc.presentationName}</label>
+						<code style="display: inline-block; margin: 2px;">${cc.presentationName}</code>
 					</c:forEach>
+					</div>
 				</td>
 			</tr>
 		</c:if>
@@ -135,10 +141,12 @@ ${portal.toolkit()}
 				<th class="col-md-2" scope="row">
 					<spring:message code="label.message.bccs"/>
 				</th>
-				<td class="form-inline">
+				<td>
+					<div style="overflow-y:auto; max-height:85px; display:block;">
 					<c:forEach items="${message.bccGroup}" var="bcc">
-						<label class="form-control input-sm">${bcc.presentationName}</label>
+						<code style="display: inline-block; margin: 2px;">${bcc.presentationName}</code>
 					</c:forEach>
+					</div>
 				</td>
 			</tr>
 		</c:if>
@@ -148,9 +156,9 @@ ${portal.toolkit()}
 					<spring:message code="label.message.bccs.extra"/>
 				</th>
 				<td>
-					<c:forEach items="${message.extraBccs}" var="bcc">
-						<code>${bcc}</code>
-					</c:forEach>
+				<c:forEach items="${message.extraBccs}" var="bcc">
+					<code>${bcc}</code>
+				</c:forEach>
 				</td>
 			</tr>
 			<tr>
@@ -186,7 +194,7 @@ ${portal.toolkit()}
 			</c:forEach>
 			</td>
 		</tr>
-		<c:if test="${not empty message.body}">
+		<c:if test="${not message.body.isEmpty()}">
 		<tr>
 			<th class="col-md-2" scope="row">
 				<spring:message code="label.message.body"/>
@@ -200,7 +208,7 @@ ${portal.toolkit()}
 			</td>
 		</tr>
 		</c:if>
-		<c:if test="${not empty message.htmlBody}">
+		<c:if test="${not message.htmlBody.isEmpty()}">
 		<tr>
 			<th class="col-md-2" scope="row">
 				<spring:message code="label.message.body.html"/>
@@ -214,15 +222,15 @@ ${portal.toolkit()}
 			</td>
 		</tr>
 		</c:if>
-		<c:if test="${empty message.dispatchReport}">
-			<tr>
-				<th></th>
-				<td>
-					<form action="${pageContext.request.contextPath}/messaging/message/${message.externalId}/delete" method="post">
-						<button class="btn btn-danger" type="submit"><spring:message code="action.message.delete"/></button>
-					</form>
-				</td>
-			</tr>
+		<c:if test="${empty message.dispatchReport and message.loggedUserCreator}">
+		<tr>
+			<th></th>
+			<td>
+				<form action="${pageContext.request.contextPath}/messaging/messages/${message.externalId}/delete" method="post">
+					<button class="btn btn-danger" type="submit"><spring:message code="action.message.delete"/></button>
+				</form>
+			</td>
+		</tr>
 		</c:if>
 	</tbody>
 </table>

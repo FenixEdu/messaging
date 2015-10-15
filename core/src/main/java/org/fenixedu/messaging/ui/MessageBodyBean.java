@@ -3,8 +3,9 @@ package org.fenixedu.messaging.ui;
 import static pt.ist.fenixframework.FenixFramework.atomic;
 
 import java.io.Serializable;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.LocalizedString;
@@ -33,7 +34,7 @@ public class MessageBodyBean implements Serializable {
     }
 
     Set<String> validate() {
-        Set<String> errors = new HashSet<String>();
+        SortedSet<String> errors = new TreeSet<String>();
         if ((textBody == null || textBody.isEmpty()) && (htmlBody == null || htmlBody.isEmpty())) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.message.empty"));
         }

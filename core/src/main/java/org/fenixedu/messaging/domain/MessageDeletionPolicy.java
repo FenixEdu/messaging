@@ -10,9 +10,8 @@ import org.joda.time.format.PeriodFormat;
 
 public class MessageDeletionPolicy implements Serializable {
     private static final long serialVersionUID = 1535994777149570075L;
-
+    private static final String BUNDLE = "MessagingResources";
     private Period keepPeriod = null;
-
     private Integer keepMessages = null;
 
     protected MessageDeletionPolicy() {
@@ -71,8 +70,6 @@ public class MessageDeletionPolicy implements Serializable {
         return "-1";
     }
 
-    private static final String BUNDLE = "MessagingResources";
-
     @Override
     public String toString() {
         if (keepPeriod != null) {
@@ -80,8 +77,7 @@ public class MessageDeletionPolicy implements Serializable {
                     PeriodFormat.wordBased(I18N.getLocale()).print(keepPeriod));
         }
         if (keepMessages != null) {
-            return BundleUtil.getString(BUNDLE, "name.deletion.policy.messages",
-                    Integer.toString(keepMessages));
+            return BundleUtil.getString(BUNDLE, "name.deletion.policy.messages", Integer.toString(keepMessages));
         }
         return BundleUtil.getString(BUNDLE, "name.deletion.policy.unlimited");
     }

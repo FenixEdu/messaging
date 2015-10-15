@@ -24,41 +24,41 @@ ${portal.toolkit()}
 			<form:select class="form-control" id="senderSelect" path="sender" required="true">
 				<form:option class="form-control" value=""><spring:message code="hint.sender.select"/></form:option>
 				<c:forEach  var="sender" items="${senders}">
-					<form:option class="form-control" value="${sender.externalId}">${sender.fromName} (${sender.fromAddress})</form:option>
+				<form:option class="form-control" value="${sender.externalId}">${sender.fromName} (${sender.fromAddress})</form:option>
 				</c:forEach>
 			</form:select>
 		</div>
 	</div>
-	<div class="form-group">
+	<div id="replyTos-container" class="form-group">
 		<label class="control-label col-sm-2"><spring:message code="label.message.replyTos"/>:</label>
 		<div id="replyTos" class="form-inline col-sm-10">
-			<c:forEach  var="replyTo" items="${messageBean.replyTos}">
-				<input style="display:none;" type="checkbox" value="${replyTo}" checked/>
-			</c:forEach>
+		<c:forEach  var="replyTo" items="${messageBean.replyTos}">
+			<input style="display:none;" type="checkbox" value="${replyTo}" checked/>
+		</c:forEach>
 		</div>
 	</div>
-	<div class="form-group">
+	<div id="recipients-container" class="form-group">
 		<label class="control-label col-sm-2"><spring:message code="label.message.bccs"/>:</label>
 		<div id="recipients" class="form-inline col-sm-10">
-			<c:forEach  var="recipient" items="${messageBean.recipients}">
-				<input style="display:none;" type="checkbox" value="${recipient}" checked/>
-			</c:forEach>
+		<c:forEach  var="recipient" items="${messageBean.recipients}">
+			<input style="display:none;" type="checkbox" value="${recipient}" checked/>
+		</c:forEach>
 		</div>
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="bccs"><spring:message code="label.message.bccs.extra"/>:</label>
 		<div class="col-sm-10">
-			<spring:message code="hint.extra.bccs" var="placeholder"/>
-			<form:input type="email" multiple="multiple" class="form-control" id="bccs" path="bccs" placeholder="${placeholder}"/>
+			<spring:message code="hint.email.list" var="placeholder"/>
+			<input type="email" multiple="multiple" class="form-control" id="bccs" name="bccs" placeholder="${placeholder}" value="${messageBean.bccs}"/>
 		</div>
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2" for=extraBccsLocale><spring:message code="label.message.bccs.extra.locale"/>:</label>
 		<div class="col-sm-10">
 			<form:select class="form-control" id="extraBccsLocale" path="extraBccsLocale">
-				<c:forEach items="${supportedLocales}" var="locale">
-					<form:option value="locale">${locale.getDisplayName(locale)}</form:option>
-				</c:forEach>
+			<c:forEach items="${supportedLocales}" var="locale">
+				<form:option value="${locale}">${locale.getDisplayName(locale)}</form:option>
+			</c:forEach>
 			</form:select>
 		</div>
 	</div>
@@ -107,40 +107,50 @@ ${portal.toolkit()}
 		return 0;
 	}
 
-	function appendCheckbox(element, checked, name, label, id){
-		var labelEl = $('<label style="margin-right: 5px;" class="input-group input-group-sm" for="'+id+'"></label>');
-		var checkboxEl = $('<input/>', { type: 'checkbox', id: id, value: id, name: name, checked: checked.indexOf(id) >= 0 });
-		var addonEl = $('<span class="input-group-addon"></span>');
-		var spanEl = $('<span class="form-control">'+label+'</span>');
+	function appendCheckbox(element, checked, name, label, value){
+		var id = name + '-' + value,
+			labelEl = $('<label style="margin-right: 5px;" class="input-group input-group-sm" for="'+id+'"></label>'),
+			checkboxEl = $('<input/>', { type: 'checkbox', id: id, value: value, name: name, checked: checked.indexOf(value) >= 0 }),
+			addonEl = $('<span class="input-group-addon"></span>'),
+			spanEl = $('<span class="form-control">'+label+'</span>');
 		addonEl.append(checkboxEl);
 		labelEl.append(addonEl);
 		labelEl.append(spanEl);
 		element.append(labelEl);
 	}
 
-	function populateCheckboxes(info, path, element, sortProperty, labelProperty, idProperty) {
+	function populateCheckboxes(info, path, element) {
 		element.parent().hide();
 		var checked = recallCheckboxes(element),
 			data = info[path];
 		if(data.length !== 0) {
 			element.parent().show();
-			data.sort(caseInsensitiveCompare.bind(undefined, sortProperty)).forEach(function(item){
-				appendCheckbox(element, checked, path, labelProperty ? item[labelProperty] : item, idProperty ? item[idProperty] : item);
+			data.sort(caseInsensitiveCompare.bind(undefined, 'name')).forEach(function(item){
+				appendCheckbox(element, checked, path, item.name, item.expression);
 			});
 		}
 	}
 
 	function senderUpdate(sender){
 		if(sender){
-			$.getJSON('sender/' + sender, function(info){
-				populateCheckboxes(info, 'replyTos', $('#replyTos'), null, null, null);
-				populateCheckboxes(info, 'recipients', $('#recipients'), 'name', 'name', 'expression');
+			$.getJSON('senders/' + sender, function(info){
+				populateCheckboxes(info, 'replyTos', $('#replyTos'));
+				populateCheckboxes(info, 'recipients', $('#recipients'));
+				if(!$('#replyTos').is(':empty')){
+					$('#replyTos-container').show();
+				}
+				if(!$('#recipients').is(':empty')){
+					$('#recipients-container').show();
+				}
 				if(info.html){
 					$('#htmlMessage').show();
 				} else {
 					$('#htmlMessage').hide();
 				}
 			});
+		} else {
+			$('#replyTos-container').hide();
+			$('#recipients-container').hide();
 		}
 	}
 

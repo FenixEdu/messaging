@@ -8,12 +8,12 @@ ${portal.toolkit()}
 <h2><spring:message code="title.template.edit"/></h2>
 
 <c:if test="${not empty templateBean.errors}">
-	<div class="alert alert-danger">
-		<span><spring:message code="error.template.not.saved"/></span>
-		<c:forEach items="${templateBean.errors}" var="error">
-			<br/><span style="padding-left: 2em;">${error}</span>
-		</c:forEach>
-	</div>
+<div class="alert alert-danger">
+	<span><spring:message code="error.template.not.saved"/></span>
+	<c:forEach items="${templateBean.errors}" var="error">
+		<br/><span style="padding-left: 2em;">${error}</span>
+	</c:forEach>
+</div>
 </c:if>
 
 <form:form modelAttribute="templateBean" role="form" class="form-horizontal" action="${pageContext.request.contextPath}/messaging/config/templates/${template.externalId}/edit" method="post">
