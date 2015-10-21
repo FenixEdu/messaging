@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.fenixedu.bennu.core.groups.Group;
@@ -89,12 +88,6 @@ public class MessagingController {
         List<Message> messages =
                 sender.getMessageSet().stream().sorted(Message.COMPARATOR_BY_CREATED_DATE_OLDER_LAST)
                         .collect(Collectors.toList());
-        TreeSet<ReplyTo> replyTos = new TreeSet<ReplyTo>(ReplyTo.COMPARATOR_BY_NAME);
-        replyTos.addAll(sender.getReplyTos());
-        model.addAttribute("replyTos", replyTos);
-        TreeSet<Group> recipients = new TreeSet<Group>(Sender.RECIPIENT_COMPARATOR_BY_NAME);
-        recipients.addAll(sender.getRecipients());
-        model.addAttribute("recipients", recipients);
         PaginationUtils.paginate(model, "messaging/senders/" + sender.getExternalId(), "messages", messages, items, page);
         return "/messaging/viewSender";
     }

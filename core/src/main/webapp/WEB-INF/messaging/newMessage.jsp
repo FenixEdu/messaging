@@ -82,7 +82,7 @@ ${portal.toolkit()}
 	</div>
 	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-10">
-			<button class="btn btn-primary" type="submit"><spring:message code="action.message.send"/></button>
+			<button class="btn btn-primary" type="submit"><spring:message code="action.send.message"/></button>
 		</div>
 	</div>
 </form:form>

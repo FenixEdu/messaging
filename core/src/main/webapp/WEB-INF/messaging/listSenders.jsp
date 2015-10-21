@@ -2,8 +2,23 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 
+<c:choose>
+<c:when test="${configure}">
+<h2><spring:message code="title.senders.config"/></h2>
+<%@ include file="viewSender.jsp" %>
+</c:when>
+<c:otherwise>
 <h2><spring:message code="title.senders"/></h2>
+</c:otherwise>
+</c:choose>
+
 <c:if test="${not empty senders}">
+<c:if test="${configure}">
+<h3><spring:message code="title.senders.others"/></h3>
+<a class="btn btn-primary" href="${pageContext.request.contextPath}/messaging/config/senders/new">
+	<spring:message code="action.new.sender"/>
+</a>
+</c:if>
 <table class="table table-hover table-condensed">
 	<thead>
 		<tr>
@@ -18,7 +33,7 @@
 	</thead>
 	<tbody>
 	<c:forEach items="${senders}" var="sender">
-		<tr onClick="location.href='${pageContext.request.contextPath}/messaging/senders/${sender.externalId}'">
+		<tr onClick="location.href='${pageContext.request.contextPath}/${path}/${sender.externalId}'">
 			<td class="col-sm-5">
 				${sender.fromName}
 			</td>
@@ -27,11 +42,20 @@
 			</td>
 			<td class="col-sm-3">
 				<div class="btn-group btn-group-xs pull-right">
-					<a class="btn btn-primary" href="${pageContext.request.contextPath}/messaging/message?sender=${sender.externalId}">
-						<spring:message code="action.message.new"/>
+					<c:choose>
+					<c:when test="${configure}">
+					<a class="btn btn-primary" href="${pageContext.request.contextPath}/messaging/config/senders/${sender.externalId}/edit">
+						<spring:message code="action.configure"/>
 					</a>
-					<a class="btn btn-default" href="${pageContext.request.contextPath}/messaging/senders/${sender.externalId}">
-						<spring:message code="action.view.details"/>
+					</c:when>
+					<c:otherwise>
+					<a class="btn btn-primary" href="${pageContext.request.contextPath}/messaging/message?sender=${sender.externalId}">
+						<spring:message code="action.new.message"/>
+					</a>
+					</c:otherwise>
+					</c:choose>
+					<a class="btn btn-default" href="${pageContext.request.contextPath}/${path}/${sender.externalId}">
+						<spring:message code="action.view"/>
 					</a>
 				</div>
 			</td>

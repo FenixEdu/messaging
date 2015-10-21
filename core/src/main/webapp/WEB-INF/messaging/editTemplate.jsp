@@ -55,16 +55,16 @@ ${portal.toolkit()}
 	</div>
 	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-10 btn-group">
-				<button class="btn btn-primary" type="submit"><spring:message code="action.template.save"/></button>
+				<button class="btn btn-primary" type="submit"><spring:message code="action.save"/></button>
 				<div class="btn-group">
 					<button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
 						<spring:message code="label.actions"/>
 						<span class="caret"></span>
 					</button>
 					<ul class="dropdown-menu dropdown-menu-right">
-						<li><a href="reset"><spring:message code="action.template.reset"/></a></li>
-						<li id="showInfo"><a data-toggle="collapse" href=".template-info"><spring:message code="action.template.info.show"/></a></li>
-						<li id="hideInfo"><a data-toggle="collapse" href=".template-info"><spring:message code="action.template.info.hide"/></a></li>
+						<li><a href="reset"><spring:message code="action.reset.template"/></a></li>
+						<li id="showInfo"><a data-toggle="collapse" href=".template-info"><spring:message code="action.show.template.info"/></a></li>
+						<li id="hideInfo"><a data-toggle="collapse" href=".template-info"><spring:message code="action.hide.template.info"/></a></li>
 					</ul>
 				</div>
 			</div>

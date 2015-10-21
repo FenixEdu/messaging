@@ -72,7 +72,7 @@ relation MessagingSystemSender {
 	protected MessagingSystem playsRole messagingSystem {
 		multiplicity 1..1;
 	}
-	protected Sender playsRole sender {
+	public Sender playsRole sender {
 		multiplicity *;
 	}
 }
