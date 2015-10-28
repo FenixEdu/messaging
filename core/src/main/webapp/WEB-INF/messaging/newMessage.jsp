@@ -16,7 +16,6 @@ ${portal.toolkit()}
 	</div>
 </c:if>
 
-<br/>
 <spring:eval expression="T(org.fenixedu.messaging.domain.Sender).getAvailableSenders()" var="senders"/>
 <form:form modelAttribute="messageBean" role="form" class="form-horizontal" action="${pageContext.request.contextPath}/messaging/message" method="post">
 	<div class="form-group">
@@ -72,7 +71,7 @@ ${portal.toolkit()}
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="body"><spring:message code="label.message.body"/>:</label>
 		<div class="col-sm-10">
-			<textarea class="form-control" id="body" name="body" bennu-localized-string>${messageBean.body.json()}</textarea>
+			<textarea class="form-control" id="body" name="textBody" bennu-localized-string>${messageBean.textBody.json()}</textarea>
 		</div>
 	</div>
 	<div id="htmlMessage" class="form-group">

@@ -41,9 +41,11 @@ import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.messaging.exception.MessagingDomainException;
 import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
@@ -55,26 +57,40 @@ import com.google.common.collect.Sets;
  *
  */
 public final class Message extends Message_Base implements Comparable<Message> {
+    public static class TemplateMessageBuilder {
+
+        private MessageBuilder messageBuilder;
+        private String key;
+        private final Map<String, Object> params = new HashMap<>();
+
+        public TemplateMessageBuilder(String key, MessageBuilder messageBuilder) {
+            this.key = key;
+            this.messageBuilder = messageBuilder;
+        }
+
+        public TemplateMessageBuilder parameter(String s, Object e) {
+            params.put(s, e);
+            return this;
+        }
+
+        public MessageBuilder and() {
+            messageBuilder.body(MessagingSystem.getTemplate(key).getCompiledTextBody(params));
+            messageBuilder.htmlBody(MessagingSystem.getTemplate(key).getCompiledHtmlBody(params));
+            return messageBuilder;
+        }
+    }
+
     public static final class MessageBuilder implements Serializable {
         private static final long serialVersionUID = 525424959825814582L;
-
         private Sender sender;
-        private LocalizedString subject, body, htmlBody;
-        private Locale extraBccsLocale = I18N.getLocale();
+        private LocalizedString subject = new LocalizedString(), body = new LocalizedString(), htmlBody = new LocalizedString();
+        private Locale extraBccLocale = I18N.getLocale();
         private Set<Group> to = new HashSet<>(), cc = new HashSet<>(), bcc = new HashSet<>();
         private Set<String> extraBcc = new HashSet<>();
         private Set<ReplyTo> replyTo = new HashSet<>();
 
-        public MessageBuilder(Sender sender, LocalizedString subject, LocalizedString body) {
+        private MessageBuilder(Sender sender) {
             this.sender = sender;
-            this.subject = subject;
-            this.body = body;
-        }
-
-        public MessageBuilder(Sender sender, String subject, String body, Locale locale) {
-            this.sender = sender;
-            this.subject = new LocalizedString(locale, subject);
-            this.body = new LocalizedString(locale, body);
         }
 
         public MessageBuilder subject(LocalizedString subject) {
@@ -82,8 +98,13 @@ public final class Message extends Message_Base implements Comparable<Message> {
             return this;
         }
 
-        public MessageBuilder subjectLocale(Locale locale, String subject) {
+        public MessageBuilder subject(String subject, Locale locale) {
             this.subject = this.subject.with(locale, subject);
+            return this;
+        }
+
+        public MessageBuilder subject(String subject) {
+            this.subject = this.subject.with(I18N.getLocale(), subject);
             return this;
         }
 
@@ -92,19 +113,13 @@ public final class Message extends Message_Base implements Comparable<Message> {
             return this;
         }
 
-        public MessageBuilder bccLocale(Locale extraBccsLocale) {
-            this.extraBccsLocale = extraBccsLocale;
-            return this;
-        }
-
-        public MessageBuilder bodyLocale(Locale locale, String body) {
+        public MessageBuilder body(String body, Locale locale) {
             this.body = this.body.with(locale, body);
             return this;
         }
 
-        public MessageBuilder contentLocale(Locale locale, String subject, String body) {
-            this.subject = this.subject.with(locale, subject);
-            this.body = this.body.with(locale, body);
+        public MessageBuilder body(String body) {
+            this.body = this.body.with(I18N.getLocale(), body);
             return this;
         }
 
@@ -113,12 +128,51 @@ public final class Message extends Message_Base implements Comparable<Message> {
             return this;
         }
 
-        public MessageBuilder htmlBodyLocale(Locale locale, String htmlBody) {
-            if (this.htmlBody != null) {
-                this.htmlBody = this.htmlBody.with(locale, htmlBody);
-            } else {
-                this.htmlBody = new LocalizedString(locale, htmlBody);
-            }
+        public MessageBuilder htmlBody(String htmlBody, Locale locale) {
+            this.htmlBody = this.htmlBody.with(locale, htmlBody);
+            return this;
+        }
+
+        public MessageBuilder htmlBody(String htmlBody) {
+            this.htmlBody = this.htmlBody.with(I18N.getLocale(), htmlBody);
+            return this;
+        }
+
+        public TemplateMessageBuilder template(String key) {
+            return new TemplateMessageBuilder(key, this);
+        }
+
+        public MessageBuilder template(String key, Map<String, Object> parameters) {
+            this.body = MessagingSystem.getTemplate(key).getCompiledTextBody(parameters);
+            this.htmlBody = MessagingSystem.getTemplate(key).getCompiledHtmlBody(parameters);
+            return this;
+        }
+
+        public MessageBuilder extraBccLocale(Locale extraBccsLocale) {
+            this.extraBccLocale = extraBccsLocale;
+            return this;
+        }
+
+        public MessageBuilder content(String subject, String body, String htmlBody, Locale locale) {
+            this.subject = this.subject.with(locale, subject);
+            this.body = this.body.with(locale, body);
+            this.htmlBody = this.htmlBody.with(locale, htmlBody);
+            return this;
+        }
+
+        public MessageBuilder content(String subject, String body, String htmlBody) {
+            return content(subject, body, htmlBody, I18N.getLocale());
+        }
+
+        public MessageBuilder content(LocalizedString subject, LocalizedString body, LocalizedString htmlBody) {
+            this.subject = subject;
+            this.body = body;
+            this.htmlBody = htmlBody;
+            return this;
+        }
+
+        public MessageBuilder to(Set<Group> to) {
+            to.forEach(this.to::add);
             return this;
         }
 
@@ -129,6 +183,11 @@ public final class Message extends Message_Base implements Comparable<Message> {
             return this;
         }
 
+        public MessageBuilder cc(Set<Group> cc) {
+            cc.forEach(this.cc::add);
+            return this;
+        }
+
         public MessageBuilder cc(Group... cc) {
             for (Group group : cc) {
                 this.cc.add(group);
@@ -136,16 +195,14 @@ public final class Message extends Message_Base implements Comparable<Message> {
             return this;
         }
 
-        public MessageBuilder bcc(Group... bcc) {
-            for (Group group : bcc) {
-                this.bcc.add(group);
-            }
+        public MessageBuilder bcc(Set<Group> bcc) {
+            bcc.forEach(this.bcc::add);
             return this;
         }
 
-        public MessageBuilder bcc(Set<String> bcc) {
-            for (String group : bcc) {
-                this.extraBcc.add(group);
+        public MessageBuilder bcc(Group... bcc) {
+            for (Group group : bcc) {
+                this.bcc.add(group);
             }
             return this;
         }
@@ -157,7 +214,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
             return this;
         }
 
-        public MessageBuilder replyToSystem() {
+        public MessageBuilder replyToSender() {
             this.replyTo.addAll(sender.getReplyTos());
             return this;
         }
@@ -181,9 +238,38 @@ public final class Message extends Message_Base implements Comparable<Message> {
             return this;
         }
 
+        @Atomic(mode = TxMode.WRITE)
         public Message send() {
-            return new Message(sender, subject, body, htmlBody, to, cc, bcc, extraBcc, replyTo, extraBccsLocale);
+            Message message = new Message();
+            message.setSender(sender);
+            message.setSubject(subject != null ? subject : new LocalizedString());
+            message.setBody(body != null ? body : new LocalizedString());
+            message.setHtmlBody(htmlBody != null ? htmlBody : new LocalizedString());
+            message.setExtraBccsLocale(extraBccLocale != null ? extraBccLocale : I18N.getLocale());
+            if (to != null) {
+                to.stream().map(Group::toPersistentGroup).forEach(message::addTo);
+            }
+            if (cc != null) {
+                cc.stream().map(Group::toPersistentGroup).forEach(message::addCc);
+            }
+            if (bcc != null) {
+                bcc.stream().map(Group::toPersistentGroup).forEach(message::addBcc);
+            }
+            message.setExtraBccs(extraBcc != null ? Joiner.on(", ").join(extraBcc) : "");
+            message.setReplyToArray(new ReplyTos(replyTo));
+            return message;
         }
+    }
+
+    public static MessageBuilder from(Sender sender) {
+        if (sender == null) {
+            throw MessagingDomainException.nullSender();
+        }
+        return new MessageBuilder(sender);
+    }
+
+    public static MessageBuilder fromSystem() {
+        return new MessageBuilder(MessagingSystem.systemSender());
     }
 
     static final public Comparator<Message> COMPARATOR_BY_CREATED_DATE_OLDER_FIRST = new Comparator<Message>() {
@@ -210,60 +296,15 @@ public final class Message extends Message_Base implements Comparable<Message> {
         setExtraBccsLocale(I18N.getLocale());
     }
 
-    Message(Sender sender, LocalizedString subject, LocalizedString body, LocalizedString htmlBody, Set<Group> to, Set<Group> cc,
-            Set<Group> bcc, Set<String> extraBccs, Set<ReplyTo> replyTos) {
-        this();
-        setSender(sender);
-        if (to != null) {
-            for (Group group : to) {
-                addTo(group.toPersistentGroup());
-            }
-        }
-        if (cc != null) {
-            for (Group group : cc) {
-                addCc(group.toPersistentGroup());
-            }
-        }
-        if (bcc != null) {
-            for (Group group : bcc) {
-                addBcc(group.toPersistentGroup());
-            }
-        }
-        if (replyTos != null) {
-            setReplyToArray(new ReplyTos(replyTos));
-        }
-        setExtraBccs(Joiner.on(", ").join(extraBccs));
-        setSubject(subject);
-        setBody(body);
-        setHtmlBody(htmlBody);
-    }
-
-    Message(Sender sender, LocalizedString subject, LocalizedString body, LocalizedString htmlBody, Set<Group> to, Set<Group> cc,
-            Set<Group> bcc, Set<String> extraBccs, Set<ReplyTo> replyTos, Locale extraBccsLocale) {
-        this(sender, subject, body, htmlBody, to, cc, bcc, extraBccs, replyTos);
-        setExtraBccsLocale(extraBccsLocale);
-    }
-
-    Message(Sender sender, String subject, String body, String htmlBody, Set<Group> to, Set<Group> cc, Set<Group> bcc,
-            Set<String> extraBccs, Set<ReplyTo> replyTos, Locale locale) {
-        this(sender, new LocalizedString(locale, subject), new LocalizedString(locale, body), new LocalizedString(locale,
-                htmlBody), to, cc, bcc, extraBccs, replyTos);
-    }
-
-    Message(Sender sender, String subject, String body, String htmlBody, Set<Group> to, Set<Group> cc, Set<Group> bcc,
-            Set<String> extraBccs, Set<ReplyTo> replyTos) {
-        this(sender, subject, body, htmlBody, to, cc, bcc, extraBccs, replyTos, I18N.getLocale());
-    }
-
     @Override
     public User getUser() {
-        // TODO remove when the framework supports read-only properties
+        // FIXME remove when the framework supports read-only properties
         return super.getUser();
     }
 
     @Override
     public MessageDispatchReport getDispatchReport() {
-        // TODO remove when the framework supports read-only properties
+        // FIXME remove when the framework supports read-only properties
         return super.getDispatchReport();
     }
 
@@ -379,7 +420,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
 
     private Set<String> recipientsToEmails(Set<PersistentGroup> recipients) {
         return recipients.stream().map(g -> g.toGroup()).flatMap(g -> g.getMembers().stream()).distinct()
-                .filter(user -> !Strings.isNullOrEmpty(user.getEmail())).map(user -> user.getEmail()).collect(Collectors.toSet());
+                .map(user -> user.getProfile().getEmail()).filter(Strings::isNullOrEmpty).collect(Collectors.toSet());
     }
 
     @Override

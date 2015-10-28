@@ -8,10 +8,10 @@
 		<thead>
 			<tr>
 				<th>
-					<spring:message code="label.bootstrapper.systemsender.name"/>
+					<spring:message code="label.sender.name"/>
 				</th>
 				<th>
-					<spring:message code="label.bootstrapper.systemsender.address"/>
+					<spring:message code="label.sender.address"/>
 				</th>
 				<th></th>
 			</tr>
