@@ -22,7 +22,6 @@ public class MessageTemplateDeclarationInitializer implements ServletContainerIn
     @Override
     public void onStartup(Set<Class<?>> classes, ServletContext ctx) throws ServletException {
         LOG.info("Processing messaging templates.");
-        //TODO
         if (classes != null) {
             classes.stream().forEach(
                     c -> Arrays.stream(c.getAnnotationsByType(DeclareMessageTemplate.class)).forEach(

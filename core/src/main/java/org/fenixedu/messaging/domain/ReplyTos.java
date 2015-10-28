@@ -32,7 +32,7 @@ public class ReplyTos implements Serializable {
     }
 
     public ReplyTos(String... replyTos) {
-        this.replyTos = ImmutableSet.copyOf(Arrays.stream(replyTos).map(rt -> ReplyTo.parse(rt)).collect(Collectors.toSet()));
+        this(Arrays.stream(replyTos).map(rt -> ReplyTo.parse(rt)).collect(Collectors.toSet()));
     }
 
     public ReplyTos add(ReplyTo replyTo) {

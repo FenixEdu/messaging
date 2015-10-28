@@ -22,17 +22,33 @@
 				<code>${sender.fromAddress}</code>
 			</td>
 		</tr>
-		<c:if test="${not empty sender.replyTos}">
-			<tr>
-				<th class="col-md-2" scope="row">
-					<spring:message code="label.sender.replyTos"/>
-				</th>
-				<td>
-					<c:forEach items="${sender.replyTos}" var="replyTo">
-						<code>${replyTo.address}</code>
-					</c:forEach>
-				</td>
-			</tr>
+		<c:if test="${not empty replyTos}">
+		<tr>
+			<th class="col-md-2" scope="row">
+				<spring:message code="label.sender.replyTos"/>
+			</th>
+			<td>
+				<div style="overflow-y:auto; max-height:85px; display:block;">
+				<c:forEach items="${replyTos}" var="replyTo">
+					<code style="display: inline-block; margin: 2px;">${replyTo}</code>
+				</c:forEach>
+				</div>
+			</td>
+		</tr>
+		</c:if>
+		<c:if test="${not empty recipients}">
+		<tr>
+			<th class="col-md-2" scope="row">
+				<spring:message code="label.sender.recipients"/>
+			</th>
+			<td>
+				<div style="overflow-y:auto; max-height:85px; display:block;">
+				<c:forEach items="${recipients}" var="recipient">
+					<code style="display: inline-block; margin: 2px;">${recipient.presentationName}</code>
+				</c:forEach>
+				</div>
+			</td>
+		</tr>
 		</c:if>
 		<tr>
 			<th class="col-md-2" scope="row">
@@ -40,6 +56,21 @@
 			</th>
 			<td>
 				${sender.policy.toString()}
+			</td>
+		</tr>
+		<tr>
+			<th class="col-md-2" scope="row">
+				<spring:message code="label.sender.html"/>
+			</th>
+			<td>
+				<c:choose>
+					<c:when test="${ sender.htmlSender }">
+						<spring:message code="label.yes"/>
+					</c:when>
+					<c:otherwise>
+						<spring:message code="label.no"/>
+					</c:otherwise>
+				</c:choose>
 			</td>
 		</tr>
 	</tbody>
@@ -69,7 +100,7 @@
 		</thead>
 		<tbody>
 		<c:forEach items="${messages}" var="message">
-			<tr onClick="location.href='${pageContext.request.contextPath}/messaging/message/${message.externalId}'">
+			<tr onClick="location.href='${pageContext.request.contextPath}/messaging/messages/${message.externalId}'">
 				<td class="col-sm-2">${message.created.toString("dd-MM-yyyy HH:mm:ss")}</td>
 				<td class="col-sm-6"><c:out value="${message.subject.content}"/></td>
 				<td class="col-sm-3">
@@ -107,37 +138,19 @@
 					</c:choose>
 				</td>
 				<td class="col-sm-1">
-					<a class="btn btn-xs btn-default pull-right" href="${pageContext.request.contextPath}/messaging/message/${message.externalId}">
+					<a class="btn btn-xs btn-default pull-right" href="${pageContext.request.contextPath}/messaging/messages/${message.externalId}">
 						<spring:message code="action.view.details"/>
 					</a>
 				</td>
 			</tr>
 		</c:forEach>
 		</tbody>
-		<c:if test="${pages>1}">
 			<tfoot>
 				<tr>
-					<td colspan="4" style="text-align: center;">
-						<nav style="display:inline-block;">
-							<ul class="pagination">
-								<c:if test="${page == 1}"><li class="disabled"></c:if>
-								<c:if test="${page > 1}"><li></c:if>
-									<a href="${pageContext.request.contextPath}/messaging/sender/${sender.externalId}?page=${page-1}&items=${items}"><span>&laquo;</span></a>
-								</li>
-								<c:forEach begin="1" end="${pages}" var="p" >
-									<c:if test="${p == page}"><li class="active"></c:if>
-									<c:if test="${p != page}"><li></c:if>
-									<a href="${pageContext.request.contextPath}/messaging/sender/${sender.externalId}?page=${p}&items=${items}">${p}</a></li>
-								</c:forEach>
-								<c:if test="${page == pages}"><li class="disabled"></c:if>
-								<c:if test="${page < pages}"><li></c:if>
-									<a href="${pageContext.request.contextPath}/messaging/sender/${sender.externalId}?page=${page+1}&items=${items}"><span>&raquo;</span></a>
-								</li>
-							</ul>
-						</nav>
+					<td colspan="4">
+						<%@ include file="pagination.jsp" %>
 					</td>
 				</tr>
 			</tfoot>
-		</c:if>
 	</table>
 </c:if>

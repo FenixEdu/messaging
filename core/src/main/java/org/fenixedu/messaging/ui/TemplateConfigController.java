@@ -34,7 +34,7 @@ public class TemplateConfigController {
                         .collect(Collectors.toList());
         MessagingSystem.getTemplateDeclarations().values().forEach(d -> templates.add(new MessageTemplateDescriptionBean(d)));
         templates.sort(MessageTemplateDescriptionBean.COMPARATOR_BY_ID);
-        PaginationUtils.paginate(model, "templates", templates, items, page);
+        PaginationUtils.paginate(model, "messaging/config/templates", "templates", templates, items, page);
         return "messaging/listTemplates";
     }
 

@@ -25,9 +25,10 @@
 package org.fenixedu.messaging.ui;
 
 import java.util.Base64;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -143,7 +144,7 @@ public class MessageBean extends MessageBodyBean {
 
     public void setBccs(String bccs) {
         if (bccs != null) {
-            this.bccs = Stream.of(bccs.split("\\s*,\\s*")).filter(String::isEmpty).collect(Collectors.toSet());
+            this.bccs = Stream.of(bccs.split("\\s*,\\s*")).filter(s -> !s.isEmpty()).collect(Collectors.toSet());
         } else {
             this.bccs = null;
         }
@@ -167,7 +168,7 @@ public class MessageBean extends MessageBodyBean {
 
     @Override
     public Set<String> validate() {
-        Set<String> errors = new HashSet<String>();
+        SortedSet<String> errors = new TreeSet<String>();
         if (getSender() == null) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.sender.empty"));
         }
@@ -229,12 +230,13 @@ public class MessageBean extends MessageBodyBean {
         if (errors.isEmpty()) {
             Sender sender = getSender();
             Set<Group> recipients = getRecipientGroups();
+            MessageBuilder messageBuilder = Message.from(sender).extraBccLocale(extraBccsLocale);
             TemplateMessageBuilder templateBuilder =
-                    Message.from(sender).template("org.fenixedu.messaging.message.wrapper")
-                            .parameter("sender", sender.getFromName());
+                    messageBuilder.template("org.fenixedu.messaging.message.wrapper").parameter("sender", sender.getFromName());
             if (recipients != null && !recipients.isEmpty()) {
                 templateBuilder.parameter("recipients",
                         recipients.stream().map(r -> r.getPresentationName()).sorted().collect(Collectors.toList()));
+                messageBuilder.bcc(recipients);
             }
             if (getHtmlBody() != null && !getHtmlBody().isEmpty()) {
                 templateBuilder.parameter("htmlContent", getHtmlBody());
@@ -242,12 +244,15 @@ public class MessageBean extends MessageBodyBean {
             if (getTextBody() != null && !getTextBody().isEmpty()) {
                 templateBuilder.parameter("textContent", getTextBody());
             }
-            MessageBuilder messageBuilder = templateBuilder.and();
-            messageBuilder.subject(subject).bcc(recipients).bcc(bccs.toArray(new String[bccs.size()]))
-                    .extraBccLocale(extraBccsLocale).replyTo(replyTos.stream().map(ReplyTo::parse).collect(Collectors.toSet()));
+            messageBuilder = templateBuilder.and().subject(subject);
+            if (bccs != null) {
+                messageBuilder.bcc(bccs.toArray(new String[bccs.size()]));
+            }
+            if (replyTos != null) {
+                messageBuilder.replyTo(replyTos.stream().map(ReplyTo::parse).collect(Collectors.toSet()));
+            }
             return messageBuilder.send();
         }
         return null;
     }
-
 }
