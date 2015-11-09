@@ -1,20 +1,11 @@
 package org.fenixedu.messaging.domain;
 
-import java.util.Comparator;
-
 import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.bennu.core.security.Authenticate;
 
-public abstract class ReplyTo {
+public abstract class ReplyTo implements Comparable<ReplyTo> {
     private static final String BUNDLE = "MessagingResources";
-
-    static final public Comparator<ReplyTo> COMPARATOR_BY_NAME = new Comparator<ReplyTo>() {
-        @Override
-        public int compare(final ReplyTo o1, final ReplyTo o2) {
-            return o1.toString().compareTo(o2.toString());
-        }
-    };
 
     public abstract String getAddress();
 
@@ -123,5 +114,10 @@ public abstract class ReplyTo {
     @Override
     public String toString() {
         return getAddress();
+    }
+
+    @Override
+    public int compareTo(ReplyTo rt) {
+        return toString().compareTo(rt.toString());
     }
 }

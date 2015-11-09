@@ -39,10 +39,10 @@
 			<td class="col-sm-3">
 				<div class="btn-group btn-group-xs pull-right">
 					<a class="btn btn-primary" href="${pageContext.request.contextPath}/messaging/config/templates/${template.externalId}/edit">
-						<spring:message code="action.template.edit"/>
+						<spring:message code="action.edit"/>
 					</a>
 					<a class="btn btn-default" href="${pageContext.request.contextPath}/messaging/config/templates/${template.externalId}">
-						<spring:message code="action.view.details"/>
+						<spring:message code="action.view"/>
 					</a>
 				</div>
 			</td>

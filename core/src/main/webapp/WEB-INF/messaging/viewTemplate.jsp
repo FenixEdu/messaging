@@ -15,7 +15,7 @@ ${portal.toolkit()}
 </c:choose>
 
 <a class="btn btn-primary" href="${pageContext.request.contextPath}/messaging/config/templates/${template.externalId}/edit">
-	<spring:message code="action.template.edit"/>
+	<spring:message code="action.edit"/>
 </a>
 <table class="table table-condensed">
 	<tbody>

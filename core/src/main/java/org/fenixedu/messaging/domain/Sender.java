@@ -42,14 +42,6 @@ import org.fenixedu.bennu.core.security.Authenticate;
  *
  */
 public class Sender extends Sender_Base {
-    public static final Comparator<Group> RECIPIENT_COMPARATOR_BY_NAME = new Comparator<Group>() {
-
-        @Override
-        public int compare(final Group group1, final Group group2) {
-            return group1.getPresentationName().compareTo(group2.getPresentationName());
-        }
-
-    };
     public static Comparator<Sender> COMPARATOR_BY_FROM_NAME = new Comparator<Sender>() {
 
         @Override
@@ -102,6 +94,11 @@ public class Sender extends Sender_Base {
         return getRecipientSet().stream().map(g -> g.toGroup()).collect(Collectors.toSet());
     }
 
+    public void setRecipients(Set<Group> recipients) {
+        getRecipientSet().clear();
+        recipients.forEach(this::addRecipient);
+    }
+
     public void addRecipient(Group recipient) {
         PersistentGroup group = recipient.toPersistentGroup();
         if (!getRecipientSet().contains(group)) {
@@ -118,6 +115,14 @@ public class Sender extends Sender_Base {
 
     public Set<ReplyTo> getReplyTos() {
         return getReplyToArray() != null ? getReplyToArray().replyTos() : Collections.emptySet();
+    }
+
+    public SortedSet<ReplyTo> getSortedReplyTos() {
+        return new TreeSet<ReplyTo>(getReplyTos());
+    }
+
+    public SortedSet<Group> getSortedRecipients() {
+        return new TreeSet<Group>(getRecipients());
     }
 
     public void setReplyTos(Set<ReplyTo> replyTos) {
