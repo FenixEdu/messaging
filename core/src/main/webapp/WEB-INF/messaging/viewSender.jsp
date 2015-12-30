@@ -34,17 +34,13 @@
 				<code>${sender.fromAddress}</code>
 			</td>
 		</tr>
-		<c:if test="${not empty sender.sortedReplyTos}">
+		<c:if test="${not empty sender.replyTo}">
 		<tr>
 			<th class="col-md-2" scope="row">
-				<spring:message code="label.sender.replyTos"/>
+				<spring:message code="label.sender.replyTo"/>
 			</th>
 			<td>
-				<div style="overflow-y:auto; max-height:85px; display:block;">
-				<c:forEach items="${sender.sortedReplyTos}" var="replyTo">
-					<code style="display: inline-block; margin: 2px;">${replyTo}</code>
-				</c:forEach>
-				</div>
+				<code>${sender.replyTo}</code>
 			</td>
 		</tr>
 		</c:if>

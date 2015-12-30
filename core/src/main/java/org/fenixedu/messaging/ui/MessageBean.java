@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -43,11 +42,10 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.domain.Message;
 import org.fenixedu.messaging.domain.Message.MessageBuilder;
 import org.fenixedu.messaging.domain.Message.TemplateMessageBuilder;
-import org.fenixedu.messaging.domain.ReplyTo;
+import org.fenixedu.messaging.domain.MessagingSystem;
 import org.fenixedu.messaging.domain.Sender;
 import org.fenixedu.messaging.template.annotation.DeclareMessageTemplate;
 import org.fenixedu.messaging.template.annotation.TemplateParameter;
-import org.springframework.util.StringUtils;
 
 import com.google.common.base.Strings;
 
@@ -65,7 +63,8 @@ public class MessageBean extends MessageBodyBean {
 
     private Sender sender;
     private LocalizedString subject;
-    private Set<String> bccs, recipients, replyTos;
+    private String replyTo;
+    private Set<String> bccs, recipients;
     private Locale extraBccsLocale = I18N.getLocale();
 
     public Sender getSender() {
@@ -112,39 +111,16 @@ public class MessageBean extends MessageBodyBean {
         }
     }
 
-    public Set<ReplyTo> getReplyToObjects() {
-        if (replyTos != null) {
-            return replyTos.stream().map(rt -> ReplyTo.parse(rt)).collect(Collectors.toSet());
-        }
-        return null;
-    }
-
-    public void setReplyToObjects(Set<ReplyTo> replyTos) {
-        if (replyTos != null) {
-            this.replyTos = replyTos.stream().map(rt -> rt.serialize()).collect(Collectors.toSet());
-        } else {
-            this.replyTos = null;
-        }
-    }
-
-    public Set<String> getReplyTos() {
-        return replyTos;
-    }
-
-    public void setReplyTos(Set<String> replyTos) {
-        this.replyTos = replyTos;
-    }
-
     public String getBccs() {
         if (bccs != null) {
-            return StringUtils.collectionToCommaDelimitedString(bccs);
+            return MessagingSystem.MAIL_LIST_JOINER.join(bccs);
         }
         return null;
     }
 
     public void setBccs(String bccs) {
         if (bccs != null) {
-            this.bccs = Stream.of(bccs.split("\\s*,\\s*")).filter(s -> !s.isEmpty()).collect(Collectors.toSet());
+            this.bccs = MessagingSystem.toEmailSet(bccs).stream().filter(s -> !s.isEmpty()).collect(Collectors.toSet());
         } else {
             this.bccs = null;
         }
@@ -225,6 +201,14 @@ public class MessageBean extends MessageBodyBean {
         return result;
     }
 
+    public String getReplyTo() {
+        return replyTo;
+    }
+
+    public void setReplyTo(String replyTo) {
+        this.replyTo = replyTo;
+    }
+
     Message send() {
         Set<String> errors = validate();
         if (errors.isEmpty()) {
@@ -248,8 +232,8 @@ public class MessageBean extends MessageBodyBean {
             if (bccs != null) {
                 messageBuilder.bcc(bccs.toArray(new String[bccs.size()]));
             }
-            if (replyTos != null) {
-                messageBuilder.replyTo(replyTos.stream().map(ReplyTo::parse).collect(Collectors.toSet()));
+            if (!Strings.isNullOrEmpty(replyTo)) {
+                messageBuilder.replyTo(replyTo);
             }
             return messageBuilder.send();
         }

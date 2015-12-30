@@ -35,25 +35,10 @@
 		</div>
 	</div>
 	<div class="form-group row">
-		<label class="control-label col-sm-2"><spring:message code="label.sender.replyTos"/>:</label>
+		<label class="control-label col-sm-2"><spring:message code="label.sender.replyTo"/>:</label>
 		<div class="col-sm-10">
-			<div class="input-group form-inline">
-				<input type="hidden" name="replyTos" id="replyTos"/>
-				<span class="input-group-addon" style="text-align: left;">
-					<input type="checkbox" id="replyTo-current" value="-1" ${senderBean.replyToCurrentUser ? "checked" : ""}>&nbsp;
-					<label style="margin: 0;" for="replyTo-current"><spring:message code="label.sender.replyTo.current"/></label>
-				</span>
-				<span class="input-group-addon">
-					<label style="margin: 0;" for="replyTo-user"><spring:message code="label.sender.replyTo.user"/></label>
-				</span>
-				<spring:message code="hint.user.list" var="placeholder"/>
-				<input type="text" class="form-control" id="replyTo-user" value="${senderBean.replyToUsers}" placeholder="${placeholder}"/>
-				<span class="input-group-addon">
-					<label style="margin: 0;" for="replyTo-email"><spring:message code="label.sender.replyTo.email"/></label>
-				</span>
-				<spring:message code="hint.email.list" var="placeholder"/>
-				<input type="text" class="form-control" id="replyTo-email" value="${senderBean.replyToEmails}" placeholder="${placeholder}"/>
-			</div>
+			<spring:message code="hint.email" var="placeholder"/>
+			<form:input type="email" class="form-control" id="replyTo" path="replyTo" value="${senderBean.replyTo}" placeholder="${placeholder}"/>
 		</div>
 	</div>
 	<div class="form-group row">
@@ -145,23 +130,6 @@
 	amountPolicyRadio.change(updateAmountPolicy);
 	amountPolicyRadio.change(periodRequire.bind(undefined, false));
 	amountPolicy.change(updateAmountPolicy).change();
-
-	//reply to list
-	var replyTo = $('#replyTos'),
-		elements = [$('#replyTo-current'), $('#replyTo-user'), $('#replyTo-email')],
-		updateReplyTos = function(){
-			replyTo.val(elements.map(function(e){ return $(e).val()}).filter(function(v){return v;}).join());
-		};
-	elements[0].change(function(){
-		if(elements[0].is(':checked')){
-			elements[0].val("-1");
-		} else {
-			elements[0].val("");
-		}
-	}).change();
-	for(var idx = elements.length; idx--;){
-		elements[idx].change(updateReplyTos).change();
-	}
 
 	//recipients list
 	var recipientAdder = $('#recipient-add'),

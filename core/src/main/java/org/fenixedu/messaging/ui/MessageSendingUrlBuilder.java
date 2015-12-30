@@ -2,7 +2,6 @@ package org.fenixedu.messaging.ui;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Locale;
 import java.util.Set;
@@ -13,8 +12,10 @@ import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.util.CoreConfiguration;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.commons.i18n.LocalizedString;
-import org.fenixedu.messaging.domain.ReplyTo;
+import org.fenixedu.messaging.domain.MessagingSystem;
 import org.fenixedu.messaging.domain.Sender;
+
+import com.google.common.base.Strings;
 
 public class MessageSendingUrlBuilder {
     private final UriBuilder builder = UriBuilder.fromPath(CoreConfiguration.getConfiguration().applicationUrl()
@@ -42,7 +43,10 @@ public class MessageSendingUrlBuilder {
     }
 
     public MessageSendingUrlBuilder bccs(String bccs) {
-        builder.queryParam("bccs", Arrays.stream(bccs.split("\\s*,\\s*")).map(MessageSendingUrlBuilder::encode).toArray());
+        builder.queryParam(
+                "bccs",
+                MessagingSystem.toEmailSet(bccs).stream().filter(s -> !Strings.isNullOrEmpty(s))
+                        .map(MessageSendingUrlBuilder::encode).toArray());
         return this;
     }
 
@@ -86,17 +90,9 @@ public class MessageSendingUrlBuilder {
     }
 
     public MessageSendingUrlBuilder replyTo(String replyTo) {
-        builder.queryParam("replyTos", encode(replyTo));
-        return this;
-    }
-
-    public MessageSendingUrlBuilder replyTo(ReplyTo replyTo) {
-        builder.queryParam("replyTos", encode(replyTo));
-        return this;
-    }
-
-    public MessageSendingUrlBuilder replyTos(Set<ReplyTo> replyTos) {
-        builder.queryParam("replyTos", replyTos.stream().map(MessageSendingUrlBuilder::encode).toArray());
+        if (!Strings.isNullOrEmpty(replyTo)) {
+            builder.queryParam("replyTo", encode(replyTo));
+        }
         return this;
     }
 
@@ -124,10 +120,6 @@ public class MessageSendingUrlBuilder {
 
     private static String encode(LocalizedString ls) {
         return encode(ls.json().toString());
-    }
-
-    private static String encode(ReplyTo replyTo) {
-        return encode(replyTo.serialize());
     }
 
 }

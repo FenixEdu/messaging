@@ -1,20 +1,18 @@
 package org.fenixedu.messaging.ui;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
 
 import org.apache.commons.validator.routines.EmailValidator;
 import org.fenixedu.bennu.core.domain.exceptions.BennuCoreDomainException;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.messaging.domain.MessageDeletionPolicy;
-import org.fenixedu.messaging.domain.ReplyTo;
-import org.fenixedu.messaging.domain.ReplyTo.ConcreteReplyTo;
-import org.fenixedu.messaging.domain.ReplyTo.CurrentUserReplyTo;
-import org.fenixedu.messaging.domain.ReplyTo.UserReplyTo;
 import org.fenixedu.messaging.domain.Sender;
 
 import pt.ist.fenixframework.Atomic;
@@ -24,15 +22,11 @@ import com.google.common.base.Strings;
 
 public class SenderBean {
     protected static final String BUNDLE = "MessagingResources";
-    private static final String USER_REPLY_TO = UserReplyTo.class.getSimpleName();
-    private static final String CURRENT_USER_REPLY_TO = CurrentUserReplyTo.class.getSimpleName();
-    private static final String CONCRETE_REPLY_TO = ConcreteReplyTo.class.getSimpleName();
 
     private Boolean htmlSender, unlimitedPolicy;
-    private String fromName, fromAddress, members, policy, periodPolicy = "";
-    Map<String, String> replyTosByType;
+    private String fromName, fromAddress, members, replyTo, policy, periodPolicy = "";
     private int amountPolicy = -1;
-    private Set<String> recipients, replyTos, errors;
+    private Set<String> recipients, errors;
 
     public Set<String> validate() {
         Set<String> errors = new TreeSet<String>();
@@ -77,12 +71,12 @@ public class SenderBean {
                 }
             }
         }
-        Set<String> replyTos = getReplyTos();
-        if (replyTos != null) {
-            for (String replyTo : replyTos) {
-                if (ReplyTo.parse(replyTo) == null) {
-                    errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.replyTo.invalid", replyTo));
-                }
+        String replyTo = getReplyTo();
+        if (!Strings.isNullOrEmpty(replyTo)) {
+            try {
+                new InternetAddress(replyTo, true);
+            } catch (AddressException e) {
+                errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.replyTo.invalid", replyTo));
             }
         }
         setErrors(errors);
@@ -99,18 +93,6 @@ public class SenderBean {
 
     public int getAmountPolicy() {
         return amountPolicy;
-    }
-
-    public Boolean getReplyToCurrentUser() {
-        return replyTosByType == null ? false : replyTosByType.containsKey(CURRENT_USER_REPLY_TO);
-    }
-
-    public String getReplyToUsers() {
-        return replyTosByType == null ? "" : replyTosByType.get(USER_REPLY_TO);
-    }
-
-    public String getReplyToEmails() {
-        return replyTosByType == null ? "" : replyTosByType.get(CONCRETE_REPLY_TO);
     }
 
     public Boolean getHtmlSender() {
@@ -154,10 +136,6 @@ public class SenderBean {
         return recipients;
     }
 
-    public Set<String> getReplyTos() {
-        return replyTos;
-    }
-
     public Set<String> getErrors() {
         return errors;
     }
@@ -182,13 +160,6 @@ public class SenderBean {
         this.recipients = recipients;
     }
 
-    public void setReplyTos(Set<String> replyTos) {
-        this.replyTos = replyTos;
-        replyTosByType =
-                replyTos.stream().collect(
-                        Collectors.groupingBy(rt -> ReplyTo.parse(rt).getClass().getSimpleName(), Collectors.joining(", ")));
-    }
-
     public void setErrors(Set<String> errors) {
         this.errors = errors;
     }
@@ -201,10 +172,9 @@ public class SenderBean {
                     new Sender(getFromName(), getFromAddress(), Group.parse(getMembers()),
                             MessageDeletionPolicy.internalize(getPolicy()));
             sender.setHtmlSender(getHtmlSender());
-            if (getReplyTos() != null) {
-                sender.setReplyTos(getReplyTos().stream().map(s -> ReplyTo.parse(s)).collect(Collectors.toSet()));
-            } else {
-                sender.setReplyTos(Collections.emptySet());
+            String replyTo = getReplyTo();
+            if (!Strings.isNullOrEmpty(replyTo)) {
+                sender.setReplyTo(replyTo);
             }
             if (getRecipients() != null) {
                 sender.setRecipients(getRecipients().stream().map(e -> Group.parse(e)).collect(Collectors.toSet()));
@@ -233,14 +203,13 @@ public class SenderBean {
             if (getHtmlSender() == null) {
                 setHtmlSender(sender.getHtmlSender());
             }
-            if (getReplyTos() == null) {
-                TreeSet<String> replyTos = new TreeSet<String>();
-                replyTos.addAll(sender.getReplyTos().stream().map(rt -> rt.serialize()).collect(Collectors.toSet()));
-                setReplyTos(replyTos);
+            if (getReplyTo() == null) {
+                setReplyTo(sender.getReplyTo());
             }
             if (getRecipients() == null) {
-                TreeSet<String> recipients = new TreeSet<String>();
-                recipients.addAll(sender.getRecipients().stream().map(r -> r.getExpression()).collect(Collectors.toSet()));
+                TreeSet<String> recipients =
+                        new TreeSet<String>(sender.getRecipients().stream().map(r -> r.getExpression())
+                                .collect(Collectors.toSet()));
                 setRecipients(recipients);
             }
         }
@@ -255,10 +224,10 @@ public class SenderBean {
             sender.setPolicy(MessageDeletionPolicy.internalize(getPolicy()));
             sender.setMembers(Group.parse(getMembers()));
             sender.setHtmlSender(getHtmlSender());
-            if (getReplyTos() != null) {
-                sender.setReplyTos(getReplyTos().stream().map(s -> ReplyTo.parse(s)).collect(Collectors.toSet()));
+            String replyTo = getReplyTo();
+            if (!Strings.isNullOrEmpty(replyTo)) {
+                sender.setReplyTo(replyTo);
             } else {
-                sender.setReplyTos(Collections.emptySet());
             }
             if (getRecipients() != null) {
                 sender.setRecipients(getRecipients().stream().map(e -> Group.parse(e)).collect(Collectors.toSet()));
@@ -267,6 +236,14 @@ public class SenderBean {
             }
         }
         return errors;
+    }
+
+    public String getReplyTo() {
+        return replyTo;
+    }
+
+    public void setReplyTo(String replyTo) {
+        this.replyTo = replyTo;
     }
 
 }

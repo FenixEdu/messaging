@@ -29,12 +29,11 @@ ${portal.toolkit()}
 			</form:select>
 		</div>
 	</div>
-	<div id="replyTos-container" class="form-group">
-		<label class="control-label col-sm-2"><spring:message code="label.message.replyTos"/>:</label>
-		<div id="replyTos" class="form-inline col-sm-10">
-		<c:forEach  var="replyTo" items="${messageBean.replyTos}">
-			<input style="display:none;" type="checkbox" value="${replyTo}" checked/>
-		</c:forEach>
+	<div class="form-group">
+		<label class="control-label col-sm-2"><spring:message code="label.message.replyTo"/>:</label>
+		<div class="col-sm-10">
+			<spring:message code="hint.email" var="placeholder"/>
+			<form:input type="email" class="form-control" id="replyTo" path="replyTo" value="${messageBean.replyTo}" placeholder="${placeholder}"/>
 		</div>
 	</div>
 	<div id="recipients-container" class="form-group">
@@ -97,11 +96,9 @@ ${portal.toolkit()}
 		return checked;
 	}
 
-	function caseInsensitiveCompare(property, a, b) {
-		a = property ? a[property] : a;
-		b = property ? b[property] : b;
-		a = a.toUpperCase();
-		b = b.toUpperCase();
+	function caseInsensitiveNameCompare(a, b) {
+		a = a && a['name'] && a['name'].toUpperCase() || "";
+		b = b && b['name'] && b['name'].toUpperCase() || "";
 		if(a < b) return -1;
 		if(a > b) return 1;
 		return 0;
@@ -119,26 +116,26 @@ ${portal.toolkit()}
 		element.append(labelEl);
 	}
 
-	function populateCheckboxes(info, path, element) {
+	function populateCheckboxes(info, path, element, named) {
 		element.parent().hide();
 		var checked = recallCheckboxes(element),
 			data = info[path];
 		if(data.length !== 0) {
 			element.parent().show();
-			data.sort(caseInsensitiveCompare.bind(undefined, 'name')).forEach(function(item){
-				appendCheckbox(element, checked, path, item.name, item.expression);
-			});
+			data.sort(caseInsensitiveNameCompare)
+				.forEach(function(item){
+					appendCheckbox(element, checked, path, item.name, item.expression);
+				});
 		}
 	}
 
 	function senderUpdate(sender){
 		if(sender){
 			$.getJSON('senders/' + sender, function(info){
-				populateCheckboxes(info, 'replyTos', $('#replyTos'));
-				populateCheckboxes(info, 'recipients', $('#recipients'));
-				if(!$('#replyTos').is(':empty')){
-					$('#replyTos-container').show();
+				if(info.replyTo) {
+					$('#replyTo').val(info.replyTo);
 				}
+				populateCheckboxes(info, 'recipients', $('#recipients'));
 				if(!$('#recipients').is(':empty')){
 					$('#recipients-container').show();
 				}
@@ -149,7 +146,6 @@ ${portal.toolkit()}
 				}
 			});
 		} else {
-			$('#replyTos-container').hide();
 			$('#recipients-container').hide();
 		}
 	}

@@ -94,17 +94,13 @@ ${portal.toolkit()}
 				${message.user.profile.displayName}
 			</td>
 		</tr>
-		<c:if test="${not empty message.replyTos}">
+		<c:if test="${not empty message.replyTo}">
 			<tr>
 				<th class="col-md-2" scope="row">
-					<spring:message code="label.message.replyTos"/>
+					<spring:message code="label.message.replyTo"/>
 				</th>
 				<td>
-					<div style="overflow-y:auto; max-height:85px; display:block;">
-					<c:forEach items="${message.replyTos}" var="replyTo">
-						<code style="display: inline-block; margin: 2px;">${replyTo}</code>
-					</c:forEach>
-					</div>
+					<code>${message.replyTo}</code>
 				</td>
 			</tr>
 		</c:if>

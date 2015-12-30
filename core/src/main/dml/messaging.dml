@@ -7,13 +7,6 @@ valueType org.fenixedu.messaging.domain.MessageDeletionPolicy as MessageDeletion
 	internalizeWith internalize();
 }
 
-valueType org.fenixedu.messaging.domain.ReplyTos as ReplyTos {
-	externalizeWith {
-		String serialize();
-	}
-	internalizeWith internalize();
-}
-
 class MessagingSystem {
 }
 
@@ -21,7 +14,7 @@ class Sender {
 	boolean htmlSender;
 	String fromName;
 	String fromAddress;
-	protected ReplyTos replyToArray (REQUIRED);
+	String replyTo;
 	MessageDeletionPolicy policy;
 }
 
@@ -31,7 +24,7 @@ class Message {
 	LocalizedString htmlBody;
 	Locale extraBccsLocale;
 	DateTime created;
-	protected ReplyTos replyToArray (REQUIRED);
+	String replyTo;
 	String extraBccs;
 }
 
