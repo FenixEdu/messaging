@@ -38,7 +38,6 @@ import org.fenixedu.bennu.core.domain.exceptions.DomainException;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.I18N;
-import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.domain.Message;
 import org.fenixedu.messaging.domain.Message.MessageBuilder;
 import org.fenixedu.messaging.domain.Message.TemplateMessageBuilder;
@@ -50,19 +49,20 @@ import org.fenixedu.messaging.template.annotation.TemplateParameter;
 import com.google.common.base.Strings;
 
 @DeclareMessageTemplate(id = "org.fenixedu.messaging.message.wrapper",
-        description = "message.template.message.wrapper.description", text = "message.template.message.wrapper.text",
-        html = "message.template.message.wrapper.html", parameters = {
+        description = "message.template.message.wrapper.description", subject = "message.template.message.wrapper.subject",
+        text = "message.template.message.wrapper.text", html = "message.template.message.wrapper.html", parameters = {
+                @TemplateParameter(id = "subjectContent",
+                        description = "message.template.message.wrapper.parameter.subjectContent"),
                 @TemplateParameter(id = "textContent", description = "message.template.message.wrapper.parameter.textContent"),
                 @TemplateParameter(id = "htmlContent", description = "message.template.message.wrapper.parameter.htmlContent"),
                 @TemplateParameter(id = "sender", description = "message.template.message.wrapper.parameter.sender"),
                 @TemplateParameter(id = "recipients", description = "message.template.message.wrapper.parameter.recipients") },
         bundle = "MessagingResources")
-public class MessageBean extends MessageBodyBean {
+public class MessageBean extends MessageContentBean {
 
     private static final long serialVersionUID = 336571169494160668L;
 
     private Sender sender;
-    private LocalizedString subject;
     private String replyTo;
     private Set<String> bccs, recipients;
     private Locale extraBccsLocale = I18N.getLocale();
@@ -134,23 +134,11 @@ public class MessageBean extends MessageBodyBean {
         this.bccs = bccs;
     }
 
-    public LocalizedString getSubject() {
-        return subject;
-    }
-
-    public void setSubject(LocalizedString subject) {
-        this.subject = subject;
-    }
-
     @Override
     public Set<String> validate() {
         SortedSet<String> errors = new TreeSet<String>();
         if (getSender() == null) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.sender.empty"));
-        }
-
-        if (subject == null || subject.isEmpty()) {
-            errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.subject.empty"));
         }
 
         errors.addAll(super.validate());
@@ -222,13 +210,16 @@ public class MessageBean extends MessageBodyBean {
                         recipients.stream().map(r -> r.getPresentationName()).sorted().collect(Collectors.toList()));
                 messageBuilder.bcc(recipients);
             }
-            if (getHtmlBody() != null && !getHtmlBody().isEmpty()) {
-                templateBuilder.parameter("htmlContent", getHtmlBody());
+            if (getSubject() != null && !getSubject().isEmpty()) {
+                templateBuilder.parameter("subjectContent", getSubject());
             }
             if (getTextBody() != null && !getTextBody().isEmpty()) {
                 templateBuilder.parameter("textContent", getTextBody());
             }
-            messageBuilder = templateBuilder.and().subject(subject);
+            if (getHtmlBody() != null && !getHtmlBody().isEmpty()) {
+                templateBuilder.parameter("htmlContent", getHtmlBody());
+            }
+            messageBuilder = templateBuilder.and();
             if (bccs != null) {
                 messageBuilder.bcc(bccs.toArray(new String[bccs.size()]));
             }

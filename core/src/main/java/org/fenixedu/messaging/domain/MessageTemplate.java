@@ -23,6 +23,10 @@ public class MessageTemplate extends MessageTemplate_Base {
         setMessagingSystem(MessagingSystem.getInstance());
     }
 
+    public LocalizedString getCompiledSubject(Map<String, Object> context) {
+        return compile(getSubject(), context);
+    }
+
     public LocalizedString getCompiledTextBody(Map<String, Object> context) {
         return compile(getTextBody(), context);
     }

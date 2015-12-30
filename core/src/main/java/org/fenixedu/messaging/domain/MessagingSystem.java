@@ -149,8 +149,9 @@ public class MessagingSystem extends MessagingSystem_Base {
         });
         declarations.values().forEach(declare -> atomic(() -> {
             MessageTemplate template = new MessageTemplate();
-            template.setId(declare.id());
             MessageTemplateDeclaration declaration = new MessageTemplateDeclaration(template, declare);
+            template.setId(declare.id());
+            template.setSubject(declaration.getDefaultSubject());
             template.setHtmlBody(declaration.getDefaultHtmlBody());
             template.setTextBody(declaration.getDefaultTextBody());
             templates.put(declare.id(), declaration);

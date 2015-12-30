@@ -73,9 +73,16 @@ public final class Message extends Message_Base implements Comparable<Message> {
             return this;
         }
 
+        public TemplateMessageBuilder parameters(Map<String, Object> params) {
+            params.putAll(params);
+            return this;
+        }
+
         public MessageBuilder and() {
-            messageBuilder.body(MessagingSystem.getTemplate(key).getCompiledTextBody(params));
-            messageBuilder.htmlBody(MessagingSystem.getTemplate(key).getCompiledHtmlBody(params));
+            MessageTemplate template = MessagingSystem.getTemplate(key);
+            messageBuilder.subject(template.getCompiledSubject(params));
+            messageBuilder.body(template.getCompiledTextBody(params));
+            messageBuilder.htmlBody(template.getCompiledHtmlBody(params));
             return messageBuilder;
         }
     }
@@ -143,9 +150,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder template(String key, Map<String, Object> parameters) {
-            this.body = MessagingSystem.getTemplate(key).getCompiledTextBody(parameters);
-            this.htmlBody = MessagingSystem.getTemplate(key).getCompiledHtmlBody(parameters);
-            return this;
+            return new TemplateMessageBuilder(key, this).parameters(parameters).and();
         }
 
         public MessageBuilder extraBccLocale(Locale extraBccsLocale) {

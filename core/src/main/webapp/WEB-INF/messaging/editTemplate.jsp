@@ -42,6 +42,12 @@ ${portal.toolkit()}
 	</div>
 	</c:if>
 	<div class="form-group">
+		<label class="control-label col-sm-2" for="subject"><spring:message code="label.message.subject"/>:</label>
+		<div class="col-sm-10">
+			<textarea class="form-control" id="subject" name="subject" bennu-localized-string>${templateBean.subject.json()}</textarea>
+		</div>
+	</div>
+	<div class="form-group">
 		<label class="control-label col-sm-2" for="textBody"><spring:message code="label.message.body"/>:</label>
 		<div class="col-sm-10">
 			<textarea class="form-control" id="textBody" name="textBody" bennu-localized-string>${templateBean.textBody.json()}</textarea>

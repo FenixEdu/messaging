@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.util.CoreConfiguration;
 import org.fenixedu.bennu.spring.portal.SpringFunctionality;
-import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.domain.MessageTemplate;
 import org.fenixedu.messaging.domain.MessagingSystem;
 import org.fenixedu.messaging.template.MessageTemplateDeclaration;
@@ -43,21 +43,14 @@ public class TemplateConfigController {
         MessageTemplateDeclaration decl = MessagingSystem.getTemplateDeclaration(template.getId());
 
         Set<Locale> locales = new HashSet<Locale>(CoreConfiguration.supportedLocales());
-        LocalizedString content = template.getTextBody();
-        if (content != null) {
-            locales.addAll(content.getLocales());
-        }
-        content = template.getHtmlBody();
-        if (content != null) {
-            locales.addAll(content.getLocales());
-        }
-
+        Stream.of(template.getSubject(), template.getTextBody(), template.getHtmlBody()).flatMap(ls -> ls.getLocales().stream())
+                .forEach(locales::add);
         return new ModelAndView("messaging/viewTemplate", ImmutableMap.of("templateLocales", locales, "template", decl));
     }
 
     @RequestMapping("/{template}/edit")
     public String editTemplate(Model model, @PathVariable MessageTemplate template,
-            @ModelAttribute("templateBean") MessageBodyBean bean) throws Exception {
+            @ModelAttribute("templateBean") MessageContentBean bean) throws Exception {
         bean.copy(template);
         model.addAttribute("template", MessagingSystem.getTemplateDeclaration(template.getId()));
         model.addAttribute("templateBean", bean);
@@ -68,13 +61,13 @@ public class TemplateConfigController {
     public String resetTemplate(Model model, @PathVariable MessageTemplate template) throws Exception {
         MessageTemplateDeclaration decl = MessagingSystem.getTemplateDeclaration(template.getId());
         model.addAttribute("template", decl);
-        model.addAttribute("templateBean", new MessageBodyBean(decl));
+        model.addAttribute("templateBean", new MessageContentBean(decl));
         return "messaging/editTemplate";
     }
 
     @RequestMapping(value = "/{template}/edit", method = RequestMethod.POST)
     public ModelAndView saveTemplate(Model model, @PathVariable MessageTemplate template,
-            @ModelAttribute("templateBean") MessageBodyBean bean) throws Exception {
+            @ModelAttribute("templateBean") MessageContentBean bean) throws Exception {
         if (bean.edit(template)) {
             return viewTemplate(template);
         }

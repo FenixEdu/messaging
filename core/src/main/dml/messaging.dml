@@ -30,6 +30,7 @@ class Message {
 
 class MessageTemplate {
 	String id;
+	LocalizedString subject;
 	LocalizedString textBody;
 	LocalizedString htmlBody;
 }

@@ -17,7 +17,7 @@ public class MessageTemplateDescriptionBean implements Serializable {
                     return b1.getId().compareTo(b2.getId());
                 }
             };
-    private boolean error;
+    private boolean missingSubject, missingBody;
     private String id, externalId;
     private LocalizedString description;
 
@@ -33,22 +33,24 @@ public class MessageTemplateDescriptionBean implements Serializable {
         return description;
     }
 
-    public boolean getError() {
-        return error;
+    public boolean isMissingSubject() {
+        return missingSubject;
+    }
+
+    public boolean isMissingBody() {
+        return missingBody;
     }
 
     public MessageTemplateDescriptionBean(MessageTemplateDeclaration d) {
-        this.id = d.getId();
+        this(d.getTemplate());
         this.description = d.getDescription();
-        MessageTemplate t = d.getTemplate();
-        this.externalId = t.getExternalId();
-        this.error = t.getHtmlBody().isEmpty() && t.getTextBody().isEmpty();
     }
 
     public MessageTemplateDescriptionBean(MessageTemplate t) {
         this.id = t.getId();
         this.externalId = t.getExternalId();
-        this.error = t.getHtmlBody().isEmpty() && t.getTextBody().isEmpty();
+        this.missingSubject = t.getSubject().isEmpty();
+        this.missingBody = t.getHtmlBody().isEmpty() && t.getTextBody().isEmpty();
     }
 
 }

@@ -9,8 +9,11 @@ ${portal.toolkit()}
 <h2><spring:message code="title.template"/></h2>
 
 <c:choose>
+<c:when test="${template.subject.isEmpty()}">
+	<p class="alert alert-warning"><spring:message code="notification.template.subject.empty"/></p>
+</c:when>
 <c:when test="${template.htmlBody.isEmpty() and template.textBody.isEmpty()}">
-	<p class="alert alert-warning"><spring:message code="notification.template.empty"/></p>
+	<p class="alert alert-warning"><spring:message code="notification.template.body.empty"/></p>
 </c:when>
 </c:choose>
 
@@ -49,7 +52,7 @@ ${portal.toolkit()}
 			</td>
 		</tr>
 		</c:if>
-		<c:if test="${not template.htmlBody.isEmpty() or not template.textBody.isEmpty()}">
+		<c:if test="${not template.subject.isEmpty() or not template.htmlBody.isEmpty() or not template.textBody.isEmpty()}">
 		<tr>
 			<th class="col-md-2" scope="row">
 				<spring:message code="label.message.locale"/>
@@ -60,6 +63,20 @@ ${portal.toolkit()}
 					<li><a class="btn-sm localized" id="locale-${locale}">${locale.getDisplayName(locale)}</a></li>
 				</c:forEach>
 				</ul>
+			</td>
+		</tr>
+		</c:if>
+		<c:if test="${not template.subject.isEmpty()}">
+		<tr>
+			<th class="col-md-2" scope="row">
+				<spring:message code="label.message.subject"/>
+			</th>
+			<td>
+			<c:forEach items="${templateLocales}" var="locale">
+				<div class="panel panel-default localized locale-${locale}" style="margin:0;">
+					<div style="white-space: pre-wrap;" class="panel-heading"><c:out value="${template.subject.getContent(locale)}" default="${template.subject.getContent()}"/></div>
+				</div>
+			</c:forEach>
 			</td>
 		</tr>
 		</c:if>

@@ -14,6 +14,8 @@ public @interface DeclareMessageTemplate {
 
     String description() default "";
 
+    String subject() default "";
+
     String text() default "";
 
     String html() default "";
