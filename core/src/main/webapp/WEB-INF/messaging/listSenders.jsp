@@ -12,13 +12,13 @@
 </c:otherwise>
 </c:choose>
 
-<c:if test="${not empty senders}">
 <c:if test="${configure}">
 <h3><spring:message code="title.senders.others"/></h3>
 <a class="btn btn-primary" href="${pageContext.request.contextPath}/messaging/config/senders/new">
 	<spring:message code="action.new.sender"/>
 </a>
 </c:if>
+<c:if test="${not empty senders}">
 <table class="table table-hover table-condensed">
 	<thead>
 		<tr>
