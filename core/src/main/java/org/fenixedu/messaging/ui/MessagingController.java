@@ -38,7 +38,6 @@ import org.fenixedu.bennu.spring.portal.SpringApplication;
 import org.fenixedu.bennu.spring.portal.SpringFunctionality;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.domain.Message;
-import org.fenixedu.messaging.domain.ReplyTo;
 import org.fenixedu.messaging.domain.Sender;
 import org.fenixedu.messaging.exception.MessagingDomainException;
 import org.springframework.http.HttpStatus;
@@ -55,8 +54,10 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
+import com.google.common.base.Strings;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 @SpringApplication(path = "messaging", title = "title.messaging", group = "logged", hint = "Messaging")
 @SpringFunctionality(app = MessagingController.class, title = "title.messaging.sending")
@@ -108,14 +109,10 @@ public class MessagingController {
             array.add(group);
         }
         info.add("recipients", array);
-        array = new JsonArray();
-        for (ReplyTo rt : sender.getReplyTos()) {
-            JsonObject replyTo = new JsonObject();
-            replyTo.addProperty("name", rt.toString());
-            replyTo.addProperty("expression", rt.serialize());
-            array.add(replyTo);
+        String replyTo = sender.getReplyTo();
+        if (!Strings.isNullOrEmpty(replyTo)) {
+            info.add("replyTo", new JsonPrimitive(replyTo));
         }
-        info.add("replyTos", array);
         info.addProperty("html", sender.getHtmlSender());
         return new ResponseEntity<String>(info.toString(), HttpStatus.OK);
     }

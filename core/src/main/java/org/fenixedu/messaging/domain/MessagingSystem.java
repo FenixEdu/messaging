@@ -39,6 +39,10 @@ import org.fenixedu.messaging.template.annotation.DeclareMessageTemplate;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
+
 /**
  *
  * @author Luis Cruz
@@ -152,5 +156,12 @@ public class MessagingSystem extends MessagingSystem_Base {
             templates.put(declare.id(), declaration);
         }));
         declarations = null;
+    }
+
+    public static final String MAIL_LIST_SEPARATOR = "\\s*,\\s*";
+    public static final Joiner MAIL_LIST_JOINER = Joiner.on(",").skipNulls();
+
+    public static Set<String> toEmailSet(String s) {
+        return Strings.isNullOrEmpty(s) ? Sets.newHashSet() : Sets.newHashSet(s.split(MAIL_LIST_SEPARATOR));
     }
 }

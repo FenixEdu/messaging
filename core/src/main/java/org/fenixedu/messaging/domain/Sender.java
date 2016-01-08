@@ -61,7 +61,6 @@ public class Sender extends Sender_Base {
         this();
         setFromName(fromName);
         setFromAddress(fromAddress);
-        setReplyToArray(new ReplyTos());
         setMembers(members);
         setPolicy(policy);
     }
@@ -113,36 +112,8 @@ public class Sender extends Sender_Base {
         }
     }
 
-    public Set<ReplyTo> getReplyTos() {
-        return getReplyToArray() != null ? getReplyToArray().replyTos() : Collections.emptySet();
-    }
-
-    public SortedSet<ReplyTo> getSortedReplyTos() {
-        return new TreeSet<ReplyTo>(getReplyTos());
-    }
-
     public SortedSet<Group> getSortedRecipients() {
         return new TreeSet<Group>(getRecipients());
-    }
-
-    public void setReplyTos(Set<ReplyTo> replyTos) {
-        setReplyToArray(new ReplyTos(replyTos));
-    }
-
-    public void addReplyTo(String replyTo) {
-        setReplyToArray(getReplyToArray().add(replyTo));
-    }
-
-    public void addReplyTo(ReplyTo replyTo) {
-        setReplyToArray(getReplyToArray().add(replyTo));
-    }
-
-    public void addReplyTo(User user) {
-        setReplyToArray(getReplyToArray().add(user));
-    }
-
-    public void addCurrentUserReplyTo() {
-        setReplyToArray(getReplyToArray().addCurrentLoggedUser());
     }
 
     public String getFromName(final User user) {
