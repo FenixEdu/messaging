@@ -15,9 +15,7 @@ import com.google.common.base.Strings;
 public class MessageTemplateDeclaration {
 
     private MessageTemplate template;
-    private LocalizedString description;
-    private LocalizedString defaultTextBody;
-    private LocalizedString defaultHtmlBody;
+    private LocalizedString description, defaultSubject, defaultTextBody, defaultHtmlBody;
     private Map<String, LocalizedString> parameters;
 
     public MessageTemplate getTemplate() {
@@ -34,6 +32,14 @@ public class MessageTemplateDeclaration {
 
     public LocalizedString getDescription() {
         return description;
+    }
+
+    public LocalizedString getDefaultSubject() {
+        return defaultSubject;
+    }
+
+    public LocalizedString getSubject() {
+        return template.getSubject();
     }
 
     public LocalizedString getDefaultTextBody() {
@@ -63,6 +69,7 @@ public class MessageTemplateDeclaration {
         this.template = template;
         String bundle = decl.bundle();
         this.description = localized(decl.description(), bundle);
+        this.defaultSubject = localized(decl.subject(), bundle);
         this.defaultTextBody = localized(decl.text(), bundle);
         this.defaultHtmlBody = localized(decl.html(), bundle);
         this.parameters =

@@ -23,8 +23,12 @@
 		<spring:message code="error.template.undeclared" var="tooltip"/>
 		<tr class="danger" data-toggle="tooltip" data-placement="left" title="${tooltip}"
 		</c:when>
-		<c:when test="${template.error}">
-		<spring:message code="notification.template.empty" var="tooltip"/>
+		<c:when test="${template.missingSubject}">
+		<spring:message code="notification.template.subject.empty" var="tooltip"/>
+		<tr class="warning" data-toggle="tooltip" data-placement="left" title="${tooltip}"
+		</c:when>
+		<c:when test="${template.missingBody}">
+		<spring:message code="notification.template.body.empty" var="tooltip"/>
 		<tr class="warning" data-toggle="tooltip" data-placement="left" title="${tooltip}"
 		</c:when>
 		<c:otherwise><tr</c:otherwise>

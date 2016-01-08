@@ -12,38 +12,50 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.domain.MessageTemplate;
 import org.fenixedu.messaging.template.MessageTemplateDeclaration;
 
-public class MessageBodyBean implements Serializable {
+public class MessageContentBean implements Serializable {
 
     private static final long serialVersionUID = 7123930613219154850L;
     protected static final String BUNDLE = "MessagingResources";
 
     private Set<String> errors;
-    private LocalizedString textBody, htmlBody;
+    private LocalizedString subject, textBody, htmlBody;
 
-    public MessageBodyBean() {
+    public MessageContentBean() {
     }
 
-    public MessageBodyBean(MessageTemplateDeclaration d) {
+    public MessageContentBean(MessageTemplateDeclaration d) {
+        subject = d.getDefaultSubject();
         textBody = d.getDefaultTextBody();
         htmlBody = d.getDefaultHtmlBody();
     }
 
-    public MessageBodyBean(MessageTemplate t) {
+    public MessageContentBean(MessageTemplate t) {
+        subject = t.getSubject();
         textBody = t.getTextBody();
         htmlBody = t.getHtmlBody();
     }
 
     Set<String> validate() {
         SortedSet<String> errors = new TreeSet<String>();
-        if ((textBody == null || textBody.isEmpty()) && (htmlBody == null || htmlBody.isEmpty())) {
+
+        if (getSubject() == null || getSubject().isEmpty()) {
+            errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.subject.empty"));
+        }
+
+        if ((getTextBody() == null || getTextBody().isEmpty()) && (getHtmlBody() == null || getHtmlBody().isEmpty())) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.message.empty"));
         }
+
         this.errors = errors;
         return errors;
     }
 
     public Set<String> getErrors() {
         return errors;
+    }
+
+    public LocalizedString getSubject() {
+        return subject;
     }
 
     public LocalizedString getTextBody() {
@@ -58,6 +70,10 @@ public class MessageBodyBean implements Serializable {
         this.errors = errors;
     }
 
+    public void setSubject(LocalizedString subject) {
+        this.subject = subject;
+    }
+
     public void setTextBody(LocalizedString textBody) {
         this.textBody = textBody;
     }
@@ -67,20 +83,25 @@ public class MessageBodyBean implements Serializable {
     }
 
     public void copy(MessageTemplate template) {
-        if (textBody == null) {
+        if (getSubject() == null) {
+            subject = template.getSubject();
+        }
+
+        if (getTextBody() == null) {
             textBody = template.getTextBody();
         }
-        if (htmlBody == null) {
+        if (getHtmlBody() == null) {
             htmlBody = template.getHtmlBody();
         }
     }
 
     public boolean edit(MessageTemplate template) {
         validate();
-        if (errors.isEmpty()) {
+        if (getErrors().isEmpty()) {
             atomic(() -> {
-                template.setTextBody(textBody);
-                template.setHtmlBody(htmlBody);
+                template.setSubject(getSubject());
+                template.setTextBody(getTextBody());
+                template.setHtmlBody(getHtmlBody());
             });
             return true;
         }
