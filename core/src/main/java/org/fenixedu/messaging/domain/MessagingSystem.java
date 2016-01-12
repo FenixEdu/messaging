@@ -26,12 +26,20 @@ package org.fenixedu.messaging.domain;
 
 import static pt.ist.fenixframework.FenixFramework.atomic;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.apache.commons.validator.routines.EmailValidator;
 import org.fenixedu.bennu.core.domain.Bennu;
+import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.core.domain.UserProfile;
+import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 import org.fenixedu.messaging.exception.MessagingDomainException;
 import org.fenixedu.messaging.template.MessageTemplateDeclaration;
 import org.fenixedu.messaging.template.annotation.DeclareMessageTemplate;
@@ -159,10 +167,28 @@ public class MessagingSystem extends MessagingSystem_Base {
         declarations = null;
     }
 
-    public static final String MAIL_LIST_SEPARATOR = "\\s*,\\s*";
-    public static final Joiner MAIL_LIST_JOINER = Joiner.on(",").skipNulls();
+    public static final class Util {
 
-    public static Set<String> toEmailSet(String s) {
-        return Strings.isNullOrEmpty(s) ? Sets.newHashSet() : Sets.newHashSet(s.split(MAIL_LIST_SEPARATOR));
+        private static final String MAIL_LIST_SEPARATOR = "\\s*,\\s*";
+        private static final Joiner MAIL_LIST_JOINER = Joiner.on(",").skipNulls();
+
+        public static boolean isValidEmail(String address) {
+            return EmailValidator.getInstance().isValid(address);
+        }
+
+        public static Set<String> toEmailSet(Collection<PersistentGroup> groups) {
+            return groups.stream().flatMap(g -> g.getMembers().stream()).map(User::getProfile).filter(Objects::nonNull)
+                    .map(UserProfile::getEmail).filter(e -> !Strings.isNullOrEmpty(e)).collect(Collectors.toSet());
+        }
+
+        public static Set<String> toEmailSet(String emails) {
+            return Strings.isNullOrEmpty(emails) ? Sets.newHashSet() : Stream.of(emails.split(MAIL_LIST_SEPARATOR))
+                    .filter(s -> !s.isEmpty()).collect(Collectors.toSet());
+        }
+
+        public static String toEmailListString(Collection<String> emails) {
+            return emails == null ? "" : MAIL_LIST_JOINER.join(emails.stream().filter(e -> !Strings.isNullOrEmpty(e))
+                    .collect(Collectors.toSet()));
+        }
     }
 }

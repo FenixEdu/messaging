@@ -104,42 +104,42 @@ ${portal.toolkit()}
 				</td>
 			</tr>
 		</c:if>
-		<c:if test="${not empty message.toGroup}">
+		<c:if test="${not empty message.toGroups}">
 			<tr>
 				<th class="col-md-2" scope="row">
 					<spring:message code="label.message.tos"/>
 				</th>
 				<td>
 					<div style="overflow-y:auto; max-height:85px; display:block;">
-					<c:forEach items="${message.toGroup}" var="to">
+					<c:forEach items="${message.toGroups}" var="to">
 						<code style="display: inline-block; margin: 2px;">${to.presentationName}</code>
 					</c:forEach>
 					</div>
 				</td>
 			</tr>
 		</c:if>
-		<c:if test="${not empty message.ccGroup}">
+		<c:if test="${not empty message.ccGroups}">
 			<tr>
 				<th class="col-md-2" scope="row">
 					<spring:message code="label.message.ccs"/>
 				</th>
 				<td>
 					<div style="overflow-y:auto; max-height:85px; display:block;">
-					<c:forEach items="${message.ccGroup}" var="cc">
+					<c:forEach items="${message.ccGroups}" var="cc">
 						<code style="display: inline-block; margin: 2px;">${cc.presentationName}</code>
 					</c:forEach>
 					</div>
 				</td>
 			</tr>
 		</c:if>
-		<c:if test="${not empty message.bccGroup}">
+		<c:if test="${not empty message.bccGroups}">
 			<tr>
 				<th class="col-md-2" scope="row">
 					<spring:message code="label.message.bccs"/>
 				</th>
 				<td>
 					<div style="overflow-y:auto; max-height:85px; display:block;">
-					<c:forEach items="${message.bccGroup}" var="bcc">
+					<c:forEach items="${message.bccGroups}" var="bcc">
 						<code style="display: inline-block; margin: 2px;">${bcc.presentationName}</code>
 					</c:forEach>
 					</div>

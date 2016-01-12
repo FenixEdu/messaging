@@ -33,8 +33,6 @@ import org.fenixedu.messaging.emaildispatch.domain.LocalEmailMessageDispatchRepo
 public class EmailTask extends CronTask {
     @Override
     public void runTask() throws Exception {
-        for (LocalEmailMessageDispatchReport report : MessagingSystem.getInstance().getUnfinishedReportsSet()) {
-            report.deliver();
-        }
+        MessagingSystem.getInstance().getUnfinishedReportsSet().forEach(LocalEmailMessageDispatchReport::deliver);
     }
 }

@@ -43,10 +43,7 @@ public class MessageSendingUrlBuilder {
     }
 
     public MessageSendingUrlBuilder bccs(String bccs) {
-        builder.queryParam(
-                "bccs",
-                MessagingSystem.toEmailSet(bccs).stream().filter(s -> !Strings.isNullOrEmpty(s))
-                        .map(MessageSendingUrlBuilder::encode).toArray());
+        builder.queryParam("bccs", MessagingSystem.Util.toEmailSet(bccs).stream().map(MessageSendingUrlBuilder::encode).toArray());
         return this;
     }
 

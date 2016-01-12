@@ -31,11 +31,9 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.fenixedu.bennu.core.domain.User;
-import org.fenixedu.bennu.core.domain.UserProfile;
 import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
@@ -46,9 +44,6 @@ import org.joda.time.DateTime;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
-
-import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
 
 /**
  *
@@ -290,7 +285,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
             bcc.stream().map(Group::toPersistentGroup).forEach(this::addBcc);
         }
         setReplyTo(replyTo);
-        setExtraBccs(extraBccs != null ? MessagingSystem.MAIL_LIST_JOINER.join(extraBccs) : "");
+        setExtraBccs(MessagingSystem.Util.toEmailListString(extraBccs));
         setSubject(subject != null ? subject : new LocalizedString());
         setBody(body != null ? body : new LocalizedString());
         setHtmlBody(htmlBody != null ? htmlBody : new LocalizedString());
@@ -334,90 +329,34 @@ public final class Message extends Message_Base implements Comparable<Message> {
         deleteDomainObject();
     }
 
-    public Set<Group> getToGroup() {
-        return getToSet().stream().map(g -> g.toGroup()).collect(Collectors.toSet());
+    public Set<Group> getToGroups() {
+        return getToSet().stream().map(PersistentGroup::toGroup).collect(Collectors.toSet());
     }
 
     public Set<String> getTos() {
-        return recipientsToEmails(getToSet());
+        return MessagingSystem.Util.toEmailSet(getToSet());
     }
 
-    public Set<Group> getCcGroup() {
-        return getCcSet().stream().map(g -> g.toGroup()).collect(Collectors.toSet());
+    public Set<Group> getCcGroups() {
+        return getCcSet().stream().map(PersistentGroup::toGroup).collect(Collectors.toSet());
     }
 
     public Set<String> getCcs() {
-        return recipientsToEmails(getCcSet());
+        return MessagingSystem.Util.toEmailSet(getCcSet());
     }
 
-    public Set<Group> getBccGroup() {
-        return getBccSet().stream().map(g -> g.toGroup()).collect(Collectors.toSet());
+    public Set<Group> getBccGroups() {
+        return getBccSet().stream().map(PersistentGroup::toGroup).collect(Collectors.toSet());
     }
 
     public Set<String> getBccs() {
-        Set<String> base = recipientsToEmails(getBccSet());
-        base.addAll(getExtraBccsSet());
-        return base;
-    }
-
-    public Set<String> getExtraBccsSet() {
-        String extraBccs = getExtraBccs();
-        if (!Strings.isNullOrEmpty(extraBccs)) {
-            return Sets.newHashSet(getExtraBccs().replace(',', ' ').replace(';', ' ').split("\\s+"));
-        } else {
-            return Sets.newHashSet();
-        }
-    }
-
-    private static Map<Locale, Set<String>> emailsByLocale(Set<PersistentGroup> groups, Predicate<String> emailValidator) {
-        Map<Locale, Set<String>> emails = new HashMap<Locale, Set<String>>();
-        Locale defLocale = Locale.getDefault();
-        for (PersistentGroup group : groups) {
-            for (User u : group.getMembers()) {
-                UserProfile profile = u.getProfile();
-                Locale l = profile.getPreferredLocale();
-                if (l == null) {
-                    l = defLocale;
-                }
-                String email = profile.getEmail();
-                if (emailValidator.test(email)) {
-                    emails.computeIfAbsent(l, k -> new HashSet<>()).add(email);
-                }
-            }
-        }
-        return emails;
-    }
-
-    public Map<Locale, Set<String>> getTosByLocale() {
-        return getTosByLocale(e -> true);
-    }
-
-    public Map<Locale, Set<String>> getTosByLocale(Predicate<String> emailValidator) {
-        return emailsByLocale(getToSet(), emailValidator);
-    }
-
-    public Map<Locale, Set<String>> getCcsByLocale() {
-        return getCcsByLocale(e -> true);
-    }
-
-    public Map<Locale, Set<String>> getCcsByLocale(Predicate<String> emailValidator) {
-        return emailsByLocale(getCcSet(), emailValidator);
-    }
-
-    public Map<Locale, Set<String>> getBccsByLocale() {
-        return getCcsByLocale(e -> true);
-    }
-
-    public Map<Locale, Set<String>> getBccsByLocale(Predicate<String> emailValidator) {
-        Map<Locale, Set<String>> bccs = emailsByLocale(getBccSet(), emailValidator);
-        Locale extraBccsLocale = getExtraBccsLocale();
-        bccs.computeIfAbsent(extraBccsLocale, k -> new HashSet<>()).addAll(getExtraBccsSet());
+        Set<String> bccs = MessagingSystem.Util.toEmailSet(getBccSet());
+        bccs.addAll(getExtraBccsSet());
         return bccs;
     }
 
-    private Set<String> recipientsToEmails(Set<PersistentGroup> recipients) {
-        return recipients.stream().map(g -> g.toGroup()).flatMap(g -> g.getMembers().stream()).distinct()
-                .map(user -> user.getProfile().getEmail()).filter(Strings::isNullOrEmpty).collect(Collectors.toSet());
+    public Set<String> getExtraBccsSet() {
+        return MessagingSystem.Util.toEmailSet(getExtraBccs());
     }
 
     public boolean isLoggedUserCreator() {
