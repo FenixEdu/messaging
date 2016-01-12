@@ -31,11 +31,9 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.fenixedu.bennu.core.domain.User;
-import org.fenixedu.bennu.core.domain.UserProfile;
 import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
@@ -367,52 +365,6 @@ public final class Message extends Message_Base implements Comparable<Message> {
         } else {
             return Sets.newHashSet();
         }
-    }
-
-    private static Map<Locale, Set<String>> emailsByLocale(Set<PersistentGroup> groups, Predicate<String> emailValidator) {
-        Map<Locale, Set<String>> emails = new HashMap<Locale, Set<String>>();
-        Locale defLocale = Locale.getDefault();
-        for (PersistentGroup group : groups) {
-            for (User u : group.getMembers()) {
-                UserProfile profile = u.getProfile();
-                Locale l = profile.getPreferredLocale();
-                if (l == null) {
-                    l = defLocale;
-                }
-                String email = profile.getEmail();
-                if (emailValidator.test(email)) {
-                    emails.computeIfAbsent(l, k -> new HashSet<>()).add(email);
-                }
-            }
-        }
-        return emails;
-    }
-
-    public Map<Locale, Set<String>> getTosByLocale() {
-        return getTosByLocale(e -> true);
-    }
-
-    public Map<Locale, Set<String>> getTosByLocale(Predicate<String> emailValidator) {
-        return emailsByLocale(getToSet(), emailValidator);
-    }
-
-    public Map<Locale, Set<String>> getCcsByLocale() {
-        return getCcsByLocale(e -> true);
-    }
-
-    public Map<Locale, Set<String>> getCcsByLocale(Predicate<String> emailValidator) {
-        return emailsByLocale(getCcSet(), emailValidator);
-    }
-
-    public Map<Locale, Set<String>> getBccsByLocale() {
-        return getCcsByLocale(e -> true);
-    }
-
-    public Map<Locale, Set<String>> getBccsByLocale(Predicate<String> emailValidator) {
-        Map<Locale, Set<String>> bccs = emailsByLocale(getBccSet(), emailValidator);
-        Locale extraBccsLocale = getExtraBccsLocale();
-        bccs.computeIfAbsent(extraBccsLocale, k -> new HashSet<>()).addAll(getExtraBccsSet());
-        return bccs;
     }
 
     private Set<String> recipientsToEmails(Set<PersistentGroup> recipients) {

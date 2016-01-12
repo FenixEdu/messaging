@@ -1,14 +1,19 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import javax.mail.MessagingException;
 
+import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.messaging.domain.Message;
 import org.fenixedu.messaging.domain.MessagingSystem;
 import org.joda.time.DateTime;
@@ -70,22 +75,41 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
         super.delete();
     }
 
+    private static Map<Locale, Set<String>> emailsByPreferredLocale(Set<Group> groups, Predicate<String> emailValidator) {
+        Map<Locale, Set<String>> emails = new HashMap<Locale, Set<String>>();
+        Locale defLocale = Locale.getDefault();
+        groups.stream().flatMap(g -> g.getMembers().stream()).map(User::getProfile).distinct()
+                .filter(p -> emailValidator.test(p.getEmail())).forEach(p -> {
+                    Locale l = p.getPreferredLocale();
+                    if (l == null) {
+                        l = defLocale;
+                    }
+                    emails.computeIfAbsent(l, k -> new HashSet<>()).add(p.getEmail());
+                });
+        return emails;
+    }
+
     public static LocalEmailMessageDispatchReport dispatch(Message message) {
         List<String> invalids = new ArrayList<String>();
-        Predicate<String> countingBlackListValidator = email -> {
+        EmailBlacklist blacklist = EmailBlacklist.getInstance();
+        Predicate<String> validator = email -> {
             if (isValid(email)) {
                 return true;
             }
             invalids.add(email);
-            EmailBlacklist.getInstance().addInvalidAddress(email);
             return false;
         };
-        Map<Locale, Set<String>> tos = message.getTosByLocale(countingBlackListValidator);
-        Map<Locale, Set<String>> ccs = message.getCcsByLocale(countingBlackListValidator);
-        Map<Locale, Set<String>> bccs = message.getBccsByLocale(countingBlackListValidator);
 
-        return new LocalEmailMessageDispatchReport(MimeMessageHandler.create(tos, ccs, bccs), tos.size() + ccs.size()
-                + bccs.size(), invalids.size());
+        Map<Locale, Set<String>> tos = emailsByPreferredLocale(message.getToGroup(), validator), ccs =
+                emailsByPreferredLocale(message.getCcGroup(), validator), bccs =
+                emailsByPreferredLocale(message.getBccGroup(), validator);
+        Set<String> extraBccs = bccs.computeIfAbsent(message.getExtraBccsLocale(), k -> new HashSet<>());
+        message.getExtraBccsSet().stream().filter(validator).forEach(extraBccs::add);
+
+        invalids.stream().distinct().forEach(blacklist::addInvalidAddress);
+
+        return new LocalEmailMessageDispatchReport(MimeMessageHandler.create(tos, ccs, bccs), Stream.of(tos, ccs, bccs)
+                .flatMap(m -> m.values().stream()).mapToInt(Set::size).sum(), invalids.size());
     }
 
     private static boolean isValid(String email) {
