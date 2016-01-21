@@ -58,20 +58,20 @@
 		<div class="col-sm-10">
 			<div class="input-group form-inline">
 				<span class="input-group-addon" style="text-align: left;">
-					<input type="radio" name="policy" id="policy-unlimited" value="-1" ${senderBean.unlimitedPolicy ? "checked" : ""}>&nbsp;
+					<input type="checkbox" name="policy" id="policy-unlimited" value="-1" ${senderBean.unlimitedPolicy ? "checked" : ""}>&nbsp;
 					<label style="margin: 0;" for="policy-unlimited"><spring:message code="label.sender.policy.unlimited"/></label>
 				</span>
 				<span class="input-group-addon">
-					<input type="radio" name="policy" id="policy-period" value="" ${senderBean.periodPolicy.isEmpty() ? "" : "checked"}>&nbsp;
+					<input type="checkbox" name="policy" id="policy-period" value="" ${senderBean.periodPolicy.isEmpty() ? "" : "checked"}>&nbsp;
 					<label style="margin: 0;" for="policy-period"><spring:message code="label.sender.policy.period"/></label>
 				</span>
 				<spring:message code="hint.period" var="placeholder"/>
-				<input id="policy-period-value" type="text" class="form-control" value="${senderBean.periodPolicy.isEmpty() ? '' : senderBean.periodPolicy.substring(1)}" placeholder="${placeholder}"/>
+				<input id="policy-period-value" type="text" class="form-control" value="${senderBean.periodPolicy.isEmpty() ? '' : senderBean.periodPolicy}" placeholder="${placeholder}"/>
 				<span class="input-group-addon">
-					<input type="radio" name="policy" id="policy-amount" value="" ${senderBean.amountPolicy >= 0 ? "checked" : ""}>&nbsp;
+					<input type="checkbox"  name="policy" id="policy-amount" value="" ${senderBean.amountPolicy >= 0 ? "checked" : ""}>&nbsp;
 					<label style="margin: 0;" for="policy-amount"><spring:message code="label.sender.policy.amount"/></label>
 				</span>
-				<input id="policy-amount-value" type="number" min="0" class="form-control" value="${senderBean.amountPolicy >= 0 ? senderBean.amountPolicy : 0}"/>
+				<input id="policy-amount-value" type="number" min="0" class="form-control" value="${senderBean.amountPolicy >= 0 ? senderBean.amountPolicy : ''}"/>
 			</div>
 		</div>
 	</div>
@@ -105,31 +105,31 @@
 	});
 
 	//message deletion policy choice
-	var unlimitedPolicyRadio = $('#policy-unlimited'),
-		periodPolicyRadio = $('#policy-period'),
-		amountPolicyRadio = $('#policy-amount'),
-		periodPolicy = $('#policy-period-value'),
-		amountPolicy = $('#policy-amount-value'),
-		updatePeriodPolicy = function(){
-			if(periodPolicyRadio.is(':checked')){
-				periodPolicyRadio.val("P"+periodPolicy.val());
-			}
-		},
-		updateAmountPolicy = function(){
-			if(amountPolicyRadio.is(':checked')){
-				amountPolicyRadio.val("M"+amountPolicy.val());
-			}
-		},
-		periodRequire = function(status){
-			periodPolicy.prop('required',status);
-		};
-	unlimitedPolicyRadio.change(periodRequire.bind(undefined, false))
-	periodPolicyRadio.change(updatePeriodPolicy);
-	periodPolicyRadio.change(periodRequire.bind(undefined, true));
-	periodPolicy.change(updatePeriodPolicy).change();
-	amountPolicyRadio.change(updateAmountPolicy);
-	amountPolicyRadio.change(periodRequire.bind(undefined, false));
-	amountPolicy.change(updateAmountPolicy).change();
+	var nullPolicy = $('#policy-unlimited'),
+		periodPolicy = $('#policy-period').attr('aux-data-mark','P'),
+		amountPolicy = $('#policy-amount').attr('aux-data-mark','M'),
+		policyParts = $([periodPolicy, amountPolicy]).map(function () {return this.toArray();});
+
+	var getCheckbox = function (value) {
+			return $('#'+value.attr('id').match(/(\w+\-\w+)\-value/)[1]);
+	},	getValue = function (checkbox) {
+			return $('#'+checkbox.attr('id')+'-value');
+	},	policyPartValues = policyParts.map(function(){ return getValue($(this)).toArray();});
+
+	nullPolicy.change(function() {
+		var checked = $(this).is(':checked');
+		policyParts.prop('checked', !checked);
+		policyPartValues.prop('required', !checked).prop('disabled', checked);
+	});
+	policyParts.change(function(){
+		nullPolicy.prop('checked', policyParts.filter(function(){;return $(this).is(':checked')}).first().get().length === 0);
+		var checkbox = $(this), checked = checkbox.is(':checked');
+		getValue(checkbox).prop('required', checked).prop('disabled', !checked);
+	}).change();
+	policyPartValues.change(function() {
+		var value = $(this), checkbox = getCheckbox(value);
+		checkbox.val(checkbox.attr('aux-data-mark')+value.val());
+	}).change();
 
 	//recipients list
 	var recipientAdder = $('#recipient-add'),

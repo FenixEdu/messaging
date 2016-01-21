@@ -313,12 +313,6 @@ public final class Message extends Message_Base implements Comparable<Message> {
         return getDispatchReport() != null ? getDispatchReport().getFinishedDelivery() : null;
     }
 
-    public void safeDelete() {
-        if (getDispatchReport() == null) {
-            delete();
-        }
-    }
-
     @Atomic
     public void delete() {
         getToSet().clear();
@@ -418,10 +412,6 @@ public final class Message extends Message_Base implements Comparable<Message> {
     private Set<String> recipientsToEmails(Set<PersistentGroup> recipients) {
         return recipients.stream().map(g -> g.toGroup()).flatMap(g -> g.getMembers().stream()).distinct()
                 .map(user -> user.getProfile().getEmail()).filter(Strings::isNullOrEmpty).collect(Collectors.toSet());
-    }
-
-    public boolean isLoggedUserCreator() {
-        return getUser().equals(Authenticate.getUser());
     }
 
     @Override

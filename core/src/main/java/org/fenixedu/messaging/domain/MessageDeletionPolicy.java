@@ -1,6 +1,9 @@
 package org.fenixedu.messaging.domain;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.I18N;
@@ -8,77 +11,115 @@ import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.joda.time.format.PeriodFormat;
 
+import com.google.common.base.Joiner;
+
 public class MessageDeletionPolicy implements Serializable {
     private static final long serialVersionUID = 1535994777149570075L;
     private static final String BUNDLE = "MessagingResources";
+    private static final Joiner PRESENTATION_JOINER = Joiner.on(", "), SERIALIZATION_JOINER = Joiner.on(",");
     private Period keepPeriod = null;
-    private Integer keepMessages = null;
+    private Integer keepAmount = null;
 
     protected MessageDeletionPolicy() {
     }
 
-    protected MessageDeletionPolicy(Period keepPeriod) {
-        this.keepPeriod = keepPeriod;
+    protected MessageDeletionPolicy(Period period, Integer amount) {
+        this.keepPeriod = period;
+        if (amount != null) {
+            this.keepAmount = amount > 0 ? amount : 0;
+        }
     }
 
-    protected MessageDeletionPolicy(int keepMessages) {
-        this.keepMessages = keepMessages;
+    public static MessageDeletionPolicy keepAmountForDuration(Integer amount, Period period) {
+        return new MessageDeletionPolicy(period, amount);
     }
 
-    public static MessageDeletionPolicy keepForDuration(Period keepPeriod) {
-        return new MessageDeletionPolicy(keepPeriod);
+    public static MessageDeletionPolicy keepForDuration(Period period) {
+        return new MessageDeletionPolicy(period, null);
     }
 
-    public static MessageDeletionPolicy keepAmountOfMessages(Integer keepMessages) {
-        return new MessageDeletionPolicy(keepMessages);
+    public static MessageDeletionPolicy keepAmount(Integer amount) {
+        return new MessageDeletionPolicy(null, amount);
     }
 
     public static MessageDeletionPolicy unlimited() {
-        return new MessageDeletionPolicy();
+        return new MessageDeletionPolicy(null, null);
     }
 
-    void pruneSender(Sender sender) {
+    public Integer getAmount() {
+        return keepAmount;
+    }
+
+    public Period getPeriod() {
+        return keepPeriod;
+    }
+
+    public boolean isUnlimited() {
+        return keepAmount == null && keepPeriod == null;
+    }
+
+    protected void pruneSender(Sender sender) {
+        Stream<Message> messages = sender.getMessageSet().stream().filter(m -> m.getSent() == null);
         if (keepPeriod != null) {
             DateTime cut = DateTime.now().minus(keepPeriod);
-            sender.getMessageSet().stream().filter(m -> m.getSent() != null && !m.getCreated().isBefore(cut))
-                    .forEach(m -> m.delete());
-        } else if (keepMessages != null) {
-            if (sender.getMessageSet().size() > keepMessages) {
-                sender.getMessageSet().stream().filter(m -> m.getSent() != null).sorted().skip(keepMessages)
-                        .forEach(m -> m.delete());
-            }
+            messages = messages.filter(m -> !m.getCreated().isBefore(cut));
         }
+        if (keepAmount != null) {
+            messages = messages.sorted().skip(keepAmount);
+        }
+        messages.forEach(Message::delete);
     }
 
     public static MessageDeletionPolicy internalize(String serialized) {
-        if (serialized.equals("-1")) {
+        if (serialized.contains("-1")) {
             return MessageDeletionPolicy.unlimited();
         }
-        if (serialized.startsWith("M")) {
-            return MessageDeletionPolicy.keepAmountOfMessages(Integer.valueOf(serialized.substring(1)));
+        String[] attrs = serialized.split("\\s*,\\s*");
+        Integer amount = null;
+        Period period = null;
+        for (String attr : attrs) {
+            if (!attr.isEmpty()) {
+                if (attr.startsWith("M")) {
+                    amount = Integer.valueOf(attr.substring(1));
+                } else {
+                    period = Period.parse(attr);
+                }
+            }
         }
-        return MessageDeletionPolicy.keepForDuration(Period.parse(serialized));
+        return new MessageDeletionPolicy(period, amount);
+    }
+
+    public static MessageDeletionPolicy internalize(String[] parts) {
+        return internalize(SERIALIZATION_JOINER.join(parts));
     }
 
     public String serialize() {
+        if (isUnlimited()) {
+            return "-1";
+        }
+        List<String> parts = new ArrayList<>();
         if (keepPeriod != null) {
-            return keepPeriod.toString();
+            parts.add(keepPeriod.toString());
         }
-        if (keepMessages != null) {
-            return "M" + keepMessages;
+        if (keepAmount != null) {
+            parts.add("M" + keepAmount);
         }
-        return "-1";
+        return SERIALIZATION_JOINER.join(parts);
     }
 
     @Override
     public String toString() {
+        if (keepPeriod == null && keepAmount == null) {
+            return BundleUtil.getString(BUNDLE, "name.deletion.policy.unlimited");
+        }
+        List<String> parts = new ArrayList<>();
         if (keepPeriod != null) {
-            return BundleUtil.getString(BUNDLE, "name.deletion.policy.period",
-                    PeriodFormat.wordBased(I18N.getLocale()).print(keepPeriod));
+            parts.add(BundleUtil.getString(BUNDLE, "name.deletion.policy.period",
+                    PeriodFormat.wordBased(I18N.getLocale()).print(keepPeriod)));
         }
-        if (keepMessages != null) {
-            return BundleUtil.getString(BUNDLE, "name.deletion.policy.messages", Integer.toString(keepMessages));
+        if (keepAmount != null) {
+            parts.add(BundleUtil.getString(BUNDLE, "name.deletion.policy.amount", Integer.toString(keepAmount)));
         }
-        return BundleUtil.getString(BUNDLE, "name.deletion.policy.unlimited");
+        return PRESENTATION_JOINER.join(parts);
     }
 }
