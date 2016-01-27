@@ -308,12 +308,6 @@ public final class Message extends Message_Base implements Comparable<Message> {
         return getDispatchReport() != null ? getDispatchReport().getFinishedDelivery() : null;
     }
 
-    public void safeDelete() {
-        if (getDispatchReport() == null) {
-            delete();
-        }
-    }
-
     @Atomic
     public void delete() {
         getToSet().clear();
@@ -357,10 +351,6 @@ public final class Message extends Message_Base implements Comparable<Message> {
 
     public Set<String> getExtraBccsSet() {
         return MessagingSystem.Util.toEmailSet(getExtraBccs());
-    }
-
-    public boolean isLoggedUserCreator() {
-        return getUser().equals(Authenticate.getUser());
     }
 
     @Override

@@ -108,21 +108,19 @@ public class SenderBean {
         return policy;
     }
 
+    public void setPolicy(String[] parts) {
+        setPolicy(MessageDeletionPolicy.internalize(parts));
+    }
+
     public void setPolicy(String policy) {
-        this.policy = policy;
-        if (policy.equals("-1")) {
-            amountPolicy = -1;
-            periodPolicy = "";
-            unlimitedPolicy = true;
-        } else if (policy.startsWith("M")) {
-            unlimitedPolicy = false;
-            periodPolicy = "";
-            amountPolicy = Integer.parseInt(policy.substring(1));
-        } else {
-            unlimitedPolicy = false;
-            amountPolicy = -1;
-            periodPolicy = policy;
-        }
+        setPolicy(MessageDeletionPolicy.internalize(policy));
+    }
+
+    public void setPolicy(MessageDeletionPolicy policy) {
+        this.policy = policy.serialize();
+        unlimitedPolicy = policy.isUnlimited();
+        amountPolicy = policy.getAmount() == null ? -1 : policy.getAmount();
+        periodPolicy = policy.getPeriod() == null ? "" : policy.getPeriod().toString().substring(1);
     }
 
     public Set<String> getRecipients() {
@@ -188,7 +186,7 @@ public class SenderBean {
                 setFromAddress(sender.getFromAddress());
             }
             if (getPolicy() == null) {
-                setPolicy(sender.getPolicy().serialize());
+                setPolicy(sender.getPolicy());
             }
             if (getMembers() == null) {
                 setMembers(sender.getMembers().getExpression());

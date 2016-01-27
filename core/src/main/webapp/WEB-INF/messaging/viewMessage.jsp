@@ -218,7 +218,7 @@ ${portal.toolkit()}
 			</td>
 		</tr>
 		</c:if>
-		<c:if test="${empty message.dispatchReport and message.loggedUserCreator}">
+		<c:if test="${deletable}">
 		<tr>
 			<th></th>
 			<td>
