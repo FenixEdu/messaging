@@ -1,9 +1,10 @@
 package org.fenixedu.messaging.ui;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.domain.exceptions.BennuCoreDomainException;
 import org.fenixedu.bennu.core.groups.Group;
@@ -16,28 +17,30 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 public class SenderBean {
     protected static final String BUNDLE = "MessagingResources";
 
-    private Boolean htmlSender, unlimitedPolicy;
-    private String fromName, fromAddress, members, replyTo, policy, periodPolicy = "";
+    private Boolean htmlEnabled, unlimitedPolicy;
+    private String name, address, members, replyTo, policy, periodPolicy = "";
     private int amountPolicy = -1;
-    private Set<String> recipients, errors;
+    private Collection<String> recipients, errors;
 
-    public Set<String> validate() {
-        Set<String> errors = new TreeSet<String>();
-        String address = getFromAddress();
+    public Collection<String> validate() {
+        Collection<String> errors = Lists.newArrayList();
+        String address = getAddress();
         if (Strings.isNullOrEmpty(address)) {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.address.empty"));
         }
         if (!MessagingSystem.Util.isValidEmail(address)) {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.address.invalid"));
         }
-        if (getHtmlSender() == null) {
+        if (getHtmlEnabled() == null) {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.html.required"));
         }
-        if (Strings.isNullOrEmpty(getFromName())) {
+        if (Strings.isNullOrEmpty(getName())) {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.name.empty"));
         }
         if (Strings.isNullOrEmpty(getPolicy())) {
@@ -88,16 +91,16 @@ public class SenderBean {
         return amountPolicy;
     }
 
-    public Boolean getHtmlSender() {
-        return htmlSender;
+    public Boolean getHtmlEnabled() {
+        return htmlEnabled;
     }
 
-    public String getFromName() {
-        return fromName;
+    public String getName() {
+        return name;
     }
 
-    public String getFromAddress() {
-        return fromAddress;
+    public String getAddress() {
+        return address;
     }
 
     public String getMembers() {
@@ -124,66 +127,64 @@ public class SenderBean {
     }
 
     public Set<String> getRecipients() {
-        return recipients;
+        return recipients == null ? null : Sets.newHashSet(recipients);
     }
 
-    public Set<String> getErrors() {
+    public String getReplyTo() {
+        return replyTo;
+    }
+
+    public Collection<String> getErrors() {
         return errors;
     }
 
-    public void setHtmlSender(boolean htmlSender) {
-        this.htmlSender = htmlSender;
+    public void setHtmlEnabled(boolean htmlEnabled) {
+        this.htmlEnabled = htmlEnabled;
     }
 
-    public void setFromName(String fromName) {
-        this.fromName = fromName;
+    public void setname(String name) {
+        this.name = name;
     }
 
-    public void setFromAddress(String fromAddress) {
-        this.fromAddress = fromAddress;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public void setMembers(String members) {
         this.members = members;
     }
 
-    public void setRecipients(Set<String> recipients) {
+    public void setRecipients(Collection<String> recipients) {
         this.recipients = recipients;
     }
 
-    public void setErrors(Set<String> errors) {
+    public void setReplyTo(String replyTo) {
+        this.replyTo = replyTo;
+    }
+
+    protected void setErrors(Collection<String> errors) {
         this.errors = errors;
     }
 
-    @Atomic(mode = TxMode.WRITE)
     Sender newSender() {
-        Set<String> errors = validate();
-        if (errors.isEmpty()) {
-            Sender sender =
-                    new Sender(getFromName(), getFromAddress(), Group.parse(getMembers()),
-                            MessageDeletionPolicy.internalize(getPolicy()));
-            sender.setHtmlSender(getHtmlSender());
-            String replyTo = getReplyTo();
-            if (!Strings.isNullOrEmpty(replyTo)) {
-                sender.setReplyTo(replyTo);
-            }
-            if (getRecipients() != null) {
-                sender.setRecipients(getRecipients().stream().map(e -> Group.parse(e)).collect(Collectors.toSet()));
-            } else {
-                sender.setRecipients(Collections.emptySet());
-            }
-            return sender;
+        Sender sender = null;
+        if (validate().isEmpty()) {
+            Stream<Group> recipients = getRecipients() != null ? getRecipients().stream().map(Group::parse) : null;
+            sender =
+                    Sender.from(getAddress()).as(getName()).members(Group.parse(getMembers()))
+                            .deletionPolicy(MessageDeletionPolicy.internalize(getPolicy())).htmlEnabled(getHtmlEnabled())
+                            .replyTo(getReplyTo()).recipients(recipients).build();
         }
-        return null;
+        return sender;
     }
 
     void copy(Sender sender) {
         if (sender != null) {
-            if (getFromName() == null) {
-                setFromName(sender.getFromName());
+            if (getName() == null) {
+                setname(sender.getName());
             }
-            if (getFromAddress() == null) {
-                setFromAddress(sender.getFromAddress());
+            if (getAddress() == null) {
+                setAddress(sender.getAddress());
             }
             if (getPolicy() == null) {
                 setPolicy(sender.getPolicy());
@@ -191,50 +192,38 @@ public class SenderBean {
             if (getMembers() == null) {
                 setMembers(sender.getMembers().getExpression());
             }
-            if (getHtmlSender() == null) {
-                setHtmlSender(sender.getHtmlSender());
+            if (getHtmlEnabled() == null) {
+                setHtmlEnabled(sender.getHtmlEnabled());
             }
             if (getReplyTo() == null) {
                 setReplyTo(sender.getReplyTo());
             }
             if (getRecipients() == null) {
-                TreeSet<String> recipients =
-                        new TreeSet<String>(sender.getRecipients().stream().map(r -> r.getExpression())
-                                .collect(Collectors.toSet()));
-                setRecipients(recipients);
+                setRecipients(sender.getRecipients().stream().map(Group::getExpression).collect(Collectors.toSet()));
             }
         }
     }
 
     @Atomic(mode = TxMode.WRITE)
-    Set<String> configure(Sender sender) {
-        Set<String> errors = validate();
+    Collection<String> configure(Sender sender) {
+        Collection<String> errors = validate();
         if (errors.isEmpty()) {
-            sender.setFromName(getFromName());
-            sender.setFromAddress(getFromAddress());
+            sender.setName(getName());
+            sender.setAddress(getAddress());
             sender.setPolicy(MessageDeletionPolicy.internalize(getPolicy()));
             sender.setMembers(Group.parse(getMembers()));
-            sender.setHtmlSender(getHtmlSender());
+            sender.setHtmlEnabled(getHtmlEnabled());
             String replyTo = getReplyTo();
-            if (!Strings.isNullOrEmpty(replyTo)) {
+            if (replyTo != null) {
                 sender.setReplyTo(replyTo);
-            } else {
             }
             if (getRecipients() != null) {
-                sender.setRecipients(getRecipients().stream().map(e -> Group.parse(e)).collect(Collectors.toSet()));
+                sender.setRecipients(getRecipients().stream().map(Group::parse).collect(Collectors.toSet()));
             } else {
                 sender.setRecipients(Collections.emptySet());
             }
         }
         return errors;
-    }
-
-    public String getReplyTo() {
-        return replyTo;
-    }
-
-    public void setReplyTo(String replyTo) {
-        this.replyTo = replyTo;
     }
 
 }

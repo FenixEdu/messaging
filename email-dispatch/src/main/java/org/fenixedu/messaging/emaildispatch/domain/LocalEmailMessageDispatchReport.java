@@ -65,6 +65,8 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
                 }
                 finishUpDelivery();
             }
+        } else if (getQueue() != null) {
+            finishUpDelivery();
         }
     }
 
@@ -90,7 +92,7 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
         int valids;
 
         Map<Locale, Set<String>> tosByLocale, ccsByLocale, bccsByLocale;
-        Locale defLocale = message.getExtraBccsLocale();
+        Locale defLocale = message.getPreferredLocale();
 
         if (RECIPIENTS_AS_BCCS) {
             bccs.addAll(tos);
@@ -99,23 +101,23 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
             tosByLocale = Maps.newHashMap();
             ccsByLocale = Maps.newHashMap();
             bccsByLocale = emailsByPreferredLocale(bccs, validator, defLocale);
-            Set<String> extraBccs = message.getExtraBccsSet().stream().filter(validator).collect(Collectors.toSet());
-            bccsByLocale.computeIfAbsent(message.getExtraBccsLocale(), k -> new HashSet<>()).addAll(extraBccs);
+            Set<String> singleBccs = message.getSingleBccsSet().stream().filter(validator).collect(Collectors.toSet());
+            bccsByLocale.computeIfAbsent(message.getPreferredLocale(), k -> new HashSet<>()).addAll(singleBccs);
         } else {
-            //XXX force disjoint recipient lists - priority order: tos > ccs > bccs > email bccs
+            //XXX force disjoint recipient lists - priority order: tos > ccs > bccs > single bccs
             ccs.removeAll(tos);
             bccs.removeAll(tos);
             bccs.removeAll(ccs);
-            Set<String> extraBccs = message.getExtraBccsSet();
-            tos.stream().map(UserProfile::getEmail).forEach(extraBccs::remove);
-            ccs.stream().map(UserProfile::getEmail).forEach(extraBccs::remove);
-            bccs.stream().map(UserProfile::getEmail).forEach(extraBccs::remove);
+            Set<String> singleBccs = message.getSingleBccsSet();
+            tos.stream().map(UserProfile::getEmail).forEach(singleBccs::remove);
+            ccs.stream().map(UserProfile::getEmail).forEach(singleBccs::remove);
+            bccs.stream().map(UserProfile::getEmail).forEach(singleBccs::remove);
 
             tosByLocale = emailsByPreferredLocale(tos, validator, defLocale);
             ccsByLocale = emailsByPreferredLocale(ccs, validator, defLocale);
             bccsByLocale = emailsByPreferredLocale(bccs, validator, defLocale);
-            extraBccs = extraBccs.stream().filter(validator).collect(Collectors.toSet());
-            bccsByLocale.computeIfAbsent(message.getExtraBccsLocale(), k -> new HashSet<>()).addAll(extraBccs);
+            singleBccs = singleBccs.stream().filter(validator).collect(Collectors.toSet());
+            bccsByLocale.computeIfAbsent(message.getPreferredLocale(), k -> new HashSet<>()).addAll(singleBccs);
         }
 
         handlers = MimeMessageHandler.create(tosByLocale, ccsByLocale, bccsByLocale);

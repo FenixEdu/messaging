@@ -3,30 +3,36 @@ package org.fenixedu.messaging.ui;
 import static pt.ist.fenixframework.FenixFramework.atomic;
 
 import java.io.Serializable;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.Collection;
 
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.domain.MessageTemplate;
-import org.fenixedu.messaging.template.MessageTemplateDeclaration;
+import org.fenixedu.messaging.domain.MessageTemplate.MessageTemplateDeclaration;
+
+import com.google.common.collect.Lists;
 
 public class MessageContentBean implements Serializable {
 
     private static final long serialVersionUID = 7123930613219154850L;
     protected static final String BUNDLE = "MessagingResources";
 
-    private Set<String> errors;
+    private Collection<String> errors;
     private LocalizedString subject, textBody, htmlBody;
 
     public MessageContentBean() {
     }
 
     public MessageContentBean(MessageTemplateDeclaration d) {
-        subject = d.getDefaultSubject();
-        textBody = d.getDefaultTextBody();
-        htmlBody = d.getDefaultHtmlBody();
+        if (d != null) {
+            subject = d.getDefaultSubject();
+            textBody = d.getDefaultTextBody();
+            htmlBody = d.getDefaultHtmlBody();
+        } else {
+            subject = new LocalizedString();
+            textBody = new LocalizedString();
+            htmlBody = new LocalizedString();
+        }
     }
 
     public MessageContentBean(MessageTemplate t) {
@@ -35,8 +41,8 @@ public class MessageContentBean implements Serializable {
         htmlBody = t.getHtmlBody();
     }
 
-    Set<String> validate() {
-        SortedSet<String> errors = new TreeSet<String>();
+    protected Collection<String> validate() {
+        Collection<String> errors = Lists.newArrayList();
 
         if (getSubject() == null || getSubject().isEmpty()) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.subject.empty"));
@@ -50,7 +56,7 @@ public class MessageContentBean implements Serializable {
         return errors;
     }
 
-    public Set<String> getErrors() {
+    public Collection<String> getErrors() {
         return errors;
     }
 
@@ -66,7 +72,7 @@ public class MessageContentBean implements Serializable {
         return htmlBody;
     }
 
-    protected void setErrors(Set<String> errors) {
+    protected void setErrors(Collection<String> errors) {
         this.errors = errors;
     }
 

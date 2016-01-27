@@ -8,9 +8,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.HandlesTypes;
 
-import org.fenixedu.messaging.domain.MessagingSystem;
-import org.fenixedu.messaging.template.annotation.DeclareMessageTemplate;
-import org.fenixedu.messaging.template.annotation.DeclareMessageTemplates;
+import org.fenixedu.messaging.domain.MessageTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,9 +21,8 @@ public class MessageTemplateDeclarationInitializer implements ServletContainerIn
     public void onStartup(Set<Class<?>> classes, ServletContext ctx) throws ServletException {
         LOG.info("Processing messaging templates.");
         if (classes != null) {
-            classes.stream().forEach(
-                    c -> Arrays.stream(c.getAnnotationsByType(DeclareMessageTemplate.class)).forEach(
-                            MessagingSystem::declareTemplate));
+            classes.stream().flatMap(c -> Arrays.stream(c.getAnnotationsByType(DeclareMessageTemplate.class)))
+                    .forEach(MessageTemplate::declare);
         }
     }
 }

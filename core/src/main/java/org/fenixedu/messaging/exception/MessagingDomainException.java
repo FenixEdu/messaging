@@ -57,6 +57,10 @@ public class MessagingDomainException extends DomainException {
         return new MessagingDomainException(BUNDLE, "error.message.null.sender");
     }
 
+    public static MessagingDomainException nullAddress() {
+        return new MessagingDomainException(BUNDLE, "error.message.null.address");
+    }
+
     public static MessagingDomainException forbidden() {
         return new MessagingDomainException(Response.Status.FORBIDDEN, BUNDLE, "error.not.authorized");
     }

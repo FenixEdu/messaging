@@ -25,10 +25,9 @@
 package org.fenixedu.messaging.ui;
 
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.mail.internet.AddressException;
@@ -43,10 +42,11 @@ import org.fenixedu.messaging.domain.Message.MessageBuilder;
 import org.fenixedu.messaging.domain.Message.TemplateMessageBuilder;
 import org.fenixedu.messaging.domain.MessagingSystem;
 import org.fenixedu.messaging.domain.Sender;
-import org.fenixedu.messaging.template.annotation.DeclareMessageTemplate;
-import org.fenixedu.messaging.template.annotation.TemplateParameter;
+import org.fenixedu.messaging.template.DeclareMessageTemplate;
+import org.fenixedu.messaging.template.TemplateParameter;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 
 @DeclareMessageTemplate(id = "org.fenixedu.messaging.message.wrapper",
         description = "message.template.message.wrapper.description", subject = "message.template.message.wrapper.subject",
@@ -64,8 +64,8 @@ public class MessageBean extends MessageContentBean {
 
     private Sender sender;
     private String replyTo;
-    private Set<String> bccs, recipients;
-    private Locale extraBccsLocale = I18N.getLocale();
+    private Set<String> singleRecipients, recipients;
+    private Locale preferredLocale = I18N.getLocale();
 
     public Sender getSender() {
         return sender;
@@ -75,12 +75,12 @@ public class MessageBean extends MessageContentBean {
         this.sender = sender;
     }
 
-    public Locale getExtraBccsLocale() {
-        return extraBccsLocale;
+    public Locale getPreferredLocale() {
+        return preferredLocale;
     }
 
-    public void setExtraBccsLocale(Locale extraBccsLocale) {
-        this.extraBccsLocale = extraBccsLocale;
+    public void setPreferredLocale(Locale preferredLocale) {
+        this.preferredLocale = preferredLocale;
     }
 
     public Set<String> getRecipients() {
@@ -111,34 +111,34 @@ public class MessageBean extends MessageContentBean {
         }
     }
 
-    public String getBccs() {
-        return MessagingSystem.Util.toEmailListString(bccs);
+    public String getSingleRecipients() {
+        return MessagingSystem.Util.toEmailListString(singleRecipients);
     }
 
-    public void setBccs(String bccs) {
-        this.bccs = MessagingSystem.Util.toEmailSet(bccs);
+    public void setSingleRecipients(String singleRecipients) {
+        this.singleRecipients = MessagingSystem.Util.toEmailSet(singleRecipients);
     }
 
-    public Set<String> getBccsSet() {
-        return bccs;
+    public Set<String> getSingleRecipientsSet() {
+        return singleRecipients;
     }
 
-    public void setBccsSet(Set<String> bccs) {
-        this.bccs = bccs;
+    public void setSingleRecipientsSet(Set<String> singleRecipients) {
+        this.singleRecipients = singleRecipients;
     }
 
     @Override
-    public Set<String> validate() {
-        SortedSet<String> errors = new TreeSet<String>();
+    public Collection<String> validate() {
+        Collection<String> errors = Lists.newArrayList();
         if (getSender() == null) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.sender.empty"));
         }
 
         errors.addAll(super.validate());
 
-        String bccs = getBccs();
+        String singleRecipients = getSingleRecipients();
         Set<String> recipients = getRecipients();
-        if ((recipients == null || recipients.isEmpty()) && Strings.isNullOrEmpty(bccs)) {
+        if ((recipients == null || recipients.isEmpty()) && Strings.isNullOrEmpty(singleRecipients)) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipients.empty"));
         }
 
@@ -153,17 +153,17 @@ public class MessageBean extends MessageContentBean {
             }
         }
 
-        if (!Strings.isNullOrEmpty(bccs)) {
-            String[] emails = bccs.split(",");
+        if (!Strings.isNullOrEmpty(singleRecipients)) {
+            String[] emails = singleRecipients.split(",");
             for (String emailString : emails) {
                 final String email = emailString.trim();
                 if (!isValidEmailAddress(email)) {
-                    errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.bcc.invalid", email));
+                    errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.single.invalid", email));
                 }
             }
         }
 
-        if (getHtmlBody() != null && !getHtmlBody().isEmpty() && !sender.getHtmlSender()) {
+        if (getHtmlBody() != null && !getHtmlBody().isEmpty() && !sender.getHtmlEnabled()) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.html.forbidden"));
         }
 
@@ -191,13 +191,13 @@ public class MessageBean extends MessageContentBean {
     }
 
     Message send() {
-        Set<String> errors = validate();
+        Collection<String> errors = validate();
         if (errors.isEmpty()) {
             Sender sender = getSender();
             Set<Group> recipients = getRecipientGroups();
-            MessageBuilder messageBuilder = Message.from(sender).extraBccLocale(extraBccsLocale);
+            MessageBuilder messageBuilder = Message.from(sender).preferredLocale(preferredLocale);
             TemplateMessageBuilder templateBuilder =
-                    messageBuilder.template("org.fenixedu.messaging.message.wrapper").parameter("sender", sender.getFromName());
+                    messageBuilder.template("org.fenixedu.messaging.message.wrapper").parameter("sender", sender.getName());
             if (recipients != null && !recipients.isEmpty()) {
                 templateBuilder.parameter("recipients",
                         recipients.stream().map(r -> r.getPresentationName()).sorted().collect(Collectors.toList()));
@@ -213,8 +213,8 @@ public class MessageBean extends MessageContentBean {
                 templateBuilder.parameter("htmlContent", getHtmlBody());
             }
             messageBuilder = templateBuilder.and();
-            if (bccs != null) {
-                messageBuilder.bcc(bccs.toArray(new String[bccs.size()]));
+            if (singleRecipients != null) {
+                messageBuilder.singleBcc(singleRecipients);
             }
             if (!Strings.isNullOrEmpty(replyTo)) {
                 messageBuilder.replyTo(replyTo);

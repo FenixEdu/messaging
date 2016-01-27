@@ -2,10 +2,8 @@ package org.fenixedu.messaging.ui;
 
 import static pt.ist.fenixframework.FenixFramework.atomic;
 
-import java.util.HashSet;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.fenixedu.bennu.spring.portal.SpringFunctionality;
 import org.fenixedu.messaging.domain.MessagingSystem;
@@ -38,16 +36,16 @@ public class SenderConfigController {
         Sender systemSender = MessagingSystem.systemSender();
         model.addAttribute("sender", systemSender);
         model.addAttribute("system", true);
-        Set<Sender> senderSet = new HashSet<Sender>(MessagingSystem.getInstance().getSenderSet());
+        Set<Sender> senderSet = Sender.all();
         senderSet.remove(systemSender);
-        List<Sender> senders = senderSet.stream().sorted(Sender.COMPARATOR_BY_FROM_NAME).collect(Collectors.toList());
-        PaginationUtils.paginate(model, "messaging/config/senders", "senders", senders, items, page);
+        PaginationUtils.paginate(model, "messaging/config/senders", "senders", senderSet, items, page);
         return "messaging/listSenders";
     }
 
     @RequestMapping("/senders/{sender}")
     public ModelAndView viewSender(@PathVariable Sender sender) throws Exception {
-        return new ModelAndView("messaging/viewSender", ImmutableMap.of("configure", true, "sender", sender));
+        return new ModelAndView("messaging/viewSender", ImmutableMap.of("configure", true, "sender", sender, "system",
+                sender.equals(MessagingSystem.systemSender())));
     }
 
     @RequestMapping("/senders/new")
@@ -74,7 +72,7 @@ public class SenderConfigController {
 
     @RequestMapping(value = "/senders/{sender}/edit", method = RequestMethod.POST)
     public ModelAndView saveSender(@PathVariable Sender sender, @ModelAttribute("senderBean") SenderBean bean) throws Exception {
-        Set<String> errors = bean.configure(sender);
+        Collection<String> errors = bean.configure(sender);
         if (errors.isEmpty()) {
             return viewSender(sender);
         }
