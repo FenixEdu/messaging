@@ -5,14 +5,11 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-
-import org.apache.commons.validator.routines.EmailValidator;
 import org.fenixedu.bennu.core.domain.exceptions.BennuCoreDomainException;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.messaging.domain.MessageDeletionPolicy;
+import org.fenixedu.messaging.domain.MessagingSystem;
 import org.fenixedu.messaging.domain.Sender;
 
 import pt.ist.fenixframework.Atomic;
@@ -34,7 +31,7 @@ public class SenderBean {
         if (Strings.isNullOrEmpty(address)) {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.address.empty"));
         }
-        if (!EmailValidator.getInstance().isValid(address)) {
+        if (!MessagingSystem.Util.isValidEmail(address)) {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.address.invalid"));
         }
         if (getHtmlSender() == null) {
@@ -72,12 +69,8 @@ public class SenderBean {
             }
         }
         String replyTo = getReplyTo();
-        if (!Strings.isNullOrEmpty(replyTo)) {
-            try {
-                new InternetAddress(replyTo, true);
-            } catch (AddressException e) {
-                errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.replyTo.invalid", replyTo));
-            }
+        if (!(Strings.isNullOrEmpty(replyTo) || MessagingSystem.Util.isValidEmail(replyTo))) {
+            errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.replyTo.invalid", replyTo));
         }
         setErrors(errors);
         return errors;

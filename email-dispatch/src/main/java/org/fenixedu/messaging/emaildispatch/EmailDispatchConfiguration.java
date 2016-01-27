@@ -22,6 +22,12 @@ public class EmailDispatchConfiguration {
         @ConfigurationProperty(key = "mailingList.host.name")
         public String mailingListHostName();
 
+        @ConfigurationProperty(
+                key = "mailSender.bcc.recipients",
+                defaultValue = "false",
+                description = "If true, To and Cc recipients will be treated as Bcc recipients. The dispatcher does not guarantee the visibility of these types of recipients in sent emails. This flag exists for the cases where it may be preferable to guarantee that none are visible.")
+        public Boolean recipientsAsBccs();
+
     }
 
     public static ConfigurationProperties getConfiguration() {

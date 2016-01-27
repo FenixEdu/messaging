@@ -112,18 +112,11 @@ public class MessageBean extends MessageContentBean {
     }
 
     public String getBccs() {
-        if (bccs != null) {
-            return MessagingSystem.MAIL_LIST_JOINER.join(bccs);
-        }
-        return null;
+        return MessagingSystem.Util.toEmailListString(bccs);
     }
 
     public void setBccs(String bccs) {
-        if (bccs != null) {
-            this.bccs = MessagingSystem.toEmailSet(bccs).stream().filter(s -> !s.isEmpty()).collect(Collectors.toSet());
-        } else {
-            this.bccs = null;
-        }
+        this.bccs = MessagingSystem.Util.toEmailSet(bccs);
     }
 
     public Set<String> getBccsSet() {
