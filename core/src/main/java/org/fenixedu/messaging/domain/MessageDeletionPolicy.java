@@ -3,6 +3,8 @@ package org.fenixedu.messaging.domain;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.i18n.BundleUtil;
@@ -59,15 +61,17 @@ public class MessageDeletionPolicy implements Serializable {
     }
 
     protected void pruneSender(Sender sender) {
-        Stream<Message> messages = sender.getMessageSet().stream().filter(m -> m.getSent() == null);
+        Set<Message> sent = sender.getMessageSet().stream().filter(m -> m.getSent() != null).collect(Collectors.toSet());
+        Stream<Message> keep = sent.stream();
         if (keepPeriod != null) {
             DateTime cut = DateTime.now().minus(keepPeriod);
-            messages = messages.filter(m -> !m.getCreated().isBefore(cut));
+            keep = keep.filter(m -> m.getCreated().isAfter(cut));
         }
         if (keepAmount != null) {
-            messages = messages.sorted().skip(keepAmount);
+            keep = keep.sorted().limit(keepAmount);
         }
-        messages.forEach(Message::delete);
+        keep.forEach(sent::remove);
+        sent.forEach(Message::delete);
     }
 
     public static MessageDeletionPolicy internalize(String serialized) {
