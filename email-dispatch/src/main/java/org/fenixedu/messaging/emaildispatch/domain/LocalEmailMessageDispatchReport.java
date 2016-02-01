@@ -65,6 +65,8 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
                 }
                 finishUpDelivery();
             }
+        } else if (getQueue() != null) {
+            finishUpDelivery();
         }
     }
 
