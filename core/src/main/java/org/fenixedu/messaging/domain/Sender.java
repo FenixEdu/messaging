@@ -24,45 +24,136 @@
  */
 package org.fenixedu.messaging.domain;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 import org.fenixedu.bennu.core.groups.Group;
+import org.fenixedu.bennu.core.groups.NobodyGroup;
 import org.fenixedu.bennu.core.security.Authenticate;
+import org.fenixedu.messaging.exception.MessagingDomainException;
+import org.joda.time.Period;
+
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
+
+import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
 
 /**
  *
  * @author Luis Cruz
  *
  */
-public class Sender extends Sender_Base {
-    public static Comparator<Sender> COMPARATOR_BY_FROM_NAME = new Comparator<Sender>() {
-
-        @Override
-        public int compare(final Sender sender1, final Sender sender2) {
-            final int c = sender1.getFromName().compareTo(sender2.getFromName());
-            return c == 0 ? sender1.getExternalId().compareTo(sender2.getExternalId()) : c;
-        }
-
-    };
+public class Sender extends Sender_Base implements Comparable<Sender> {
 
     protected Sender() {
         super();
         setMessagingSystem(MessagingSystem.getInstance());
     }
 
-    public Sender(final String fromName, final String fromAddress, final Group members, MessageDeletionPolicy policy) {
-        this();
-        setFromName(fromName);
-        setFromAddress(fromAddress);
-        setMembers(members);
-        setPolicy(policy);
+    public static final class SenderBuilder {
+        private String address, name = null, replyTo = null;
+        private boolean htmlEnabled = false;
+        private Group members = NobodyGroup.get();
+        private MessageDeletionPolicy policy = MessageDeletionPolicy.unlimited();
+        private Set<Group> recipients = new HashSet<>();
+
+        protected SenderBuilder(String address) {
+            if (address == null) {
+                throw MessagingDomainException.nullAddress();
+            }
+            this.address = address;
+        }
+
+        public SenderBuilder as(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public SenderBuilder replyTo(String replyTo) {
+            this.replyTo = replyTo;
+            return this;
+        }
+
+        public SenderBuilder htmlEnabled(boolean htmlEnabled) {
+            this.htmlEnabled = htmlEnabled;
+            return this;
+        }
+
+        public SenderBuilder members(Group members) {
+            this.members = members != null ? members : NobodyGroup.get();
+            return this;
+        }
+
+        public SenderBuilder members(PersistentGroup members) {
+            this.members = members != null ? members.toGroup() : NobodyGroup.get();
+            return this;
+        }
+
+        public SenderBuilder deletionPolicy(MessageDeletionPolicy policy) {
+            this.policy = policy != null ? policy : MessageDeletionPolicy.unlimited();
+            return this;
+        }
+
+        public SenderBuilder keepMessages(int amount) {
+            return deletionPolicy(MessageDeletionPolicy.keepAmount(amount));
+        }
+
+        public SenderBuilder keepMessages(Period period) {
+            return deletionPolicy(MessageDeletionPolicy.keepForDuration(period));
+        }
+
+        public SenderBuilder keepMessages(int amount, Period period) {
+            return deletionPolicy(MessageDeletionPolicy.keepAmountForDuration(amount, period));
+        }
+
+        public SenderBuilder recipients(Group... recipients) {
+            filteredAddRecipients(Arrays.stream(recipients));
+            return this;
+        }
+
+        public SenderBuilder recipients(Collection<Group> recipients) {
+            if (recipients != null) {
+                filteredAddRecipients(recipients.stream());
+            }
+            return this;
+        }
+
+        public SenderBuilder recipients(Stream<Group> recipients) {
+            if (recipients != null) {
+                filteredAddRecipients(recipients);
+            }
+            return this;
+        }
+
+        private void filteredAddRecipients(Stream<Group> recipients) {
+            recipients.filter(Objects::nonNull).forEach(this.recipients::add);
+        }
+
+        @Atomic(mode = TxMode.WRITE)
+        public Sender build() {
+            Sender sender = new Sender();
+            sender.setAddress(address);
+            sender.setName(Strings.nullToEmpty(name));
+            sender.setReplyTo(replyTo);
+            sender.setHtmlEnabled(htmlEnabled);
+            sender.setMembers(members);
+            sender.setPolicy(policy);
+            sender.setRecipients(recipients);
+            return sender;
+        }
+    }
+
+    public static SenderBuilder from(String address) {
+        return new SenderBuilder(address);
     }
 
     @Override
@@ -72,9 +163,7 @@ public class Sender extends Sender_Base {
     }
 
     public void delete() {
-        for (final Message message : getMessageSet()) {
-            message.delete();
-        }
+        getMessageSet().forEach(Message::delete);
         setMemberGroup(null);
         getRecipientSet().clear();
         setMessagingSystem(null);
@@ -90,12 +179,12 @@ public class Sender extends Sender_Base {
     }
 
     public Set<Group> getRecipients() {
-        return getRecipientSet().stream().map(g -> g.toGroup()).collect(Collectors.toSet());
+        return getRecipientSet().stream().map(PersistentGroup::toGroup).collect(Collectors.toSet());
     }
 
-    public void setRecipients(Set<Group> recipients) {
+    public void setRecipients(Collection<Group> recipients) {
         getRecipientSet().clear();
-        recipients.forEach(this::addRecipient);
+        recipients.stream().distinct().forEach(this::addRecipient);
     }
 
     public void addRecipient(Group recipient) {
@@ -112,42 +201,27 @@ public class Sender extends Sender_Base {
         }
     }
 
-    public SortedSet<Group> getSortedRecipients() {
-        return new TreeSet<Group>(getRecipients());
+    public String getName(final User user) {
+        return getName();
     }
 
-    public String getFromName(final User user) {
-        return getFromName();
+    protected void pruneMessages() {
+        getPolicy().pruneMessages(this);
     }
 
-    public void pruneOldMessages() {
-        getPolicy().pruneSender(this);
-    }
-
-    public static boolean userHasRecipients() {
+    public static Set<Sender> available() {
         final User user = Authenticate.getUser();
-        for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-            if (sender.getMembers().isMember(user) && !sender.getRecipientSet().isEmpty()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static SortedSet<Sender> getAvailableSenders() {
-        final User user = Authenticate.getUser();
-
-        final SortedSet<Sender> senders = new TreeSet<Sender>(Sender.COMPARATOR_BY_FROM_NAME);
-        for (final Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-            if (sender.getMembers().isMember(user)) {
-                senders.add(sender);
-            }
-        }
-
-        return senders;
+        return MessagingSystem.getInstance().getSenderSet().stream().filter(sender -> sender.getMembers().isMember(user))
+                .collect(Collectors.toSet());
     }
 
     public static Set<Sender> all() {
-        return MessagingSystem.getInstance().getSenderSet();
+        return Sets.newHashSet(MessagingSystem.getInstance().getSenderSet());
+    }
+
+    @Override
+    public int compareTo(Sender sender) {
+        int c = getName().compareTo(sender.getName());
+        return c == 0 ? sender.getExternalId().compareTo(sender.getExternalId()) : c;
     }
 }

@@ -1,17 +1,13 @@
 package org.fenixedu.messaging.ui;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.util.CoreConfiguration;
 import org.fenixedu.bennu.spring.portal.SpringFunctionality;
 import org.fenixedu.messaging.domain.MessageTemplate;
-import org.fenixedu.messaging.domain.MessagingSystem;
-import org.fenixedu.messaging.template.MessageTemplateDeclaration;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,39 +25,32 @@ public class TemplateConfigController {
     @RequestMapping(value = { "", "/" })
     public String listTemplates(Model model, @RequestParam(value = "page", defaultValue = "1") int page, @RequestParam(
             value = "items", defaultValue = "10") int items) {
-        List<MessageTemplateDescriptionBean> templates =
-                MessagingSystem.getUndeclaredTemplates().stream().map(t -> new MessageTemplateDescriptionBean(t))
-                        .collect(Collectors.toList());
-        MessagingSystem.getTemplateDeclarations().values().forEach(d -> templates.add(new MessageTemplateDescriptionBean(d)));
-        templates.sort(MessageTemplateDescriptionBean.COMPARATOR_BY_ID);
-        PaginationUtils.paginate(model, "messaging/config/templates", "templates", templates, items, page);
+        PaginationUtils.paginate(model, "messaging/config/templates", "templates", MessageTemplate.all(), items, page);
         return "messaging/listTemplates";
     }
 
     @RequestMapping("/{template}")
     public ModelAndView viewTemplate(@PathVariable MessageTemplate template) throws Exception {
-        MessageTemplateDeclaration decl = MessagingSystem.getTemplateDeclaration(template.getId());
-
         Set<Locale> locales = new HashSet<Locale>(CoreConfiguration.supportedLocales());
         Stream.of(template.getSubject(), template.getTextBody(), template.getHtmlBody()).flatMap(ls -> ls.getLocales().stream())
                 .forEach(locales::add);
-        return new ModelAndView("messaging/viewTemplate", ImmutableMap.of("templateLocales", locales, "template", decl));
+        return new ModelAndView("messaging/viewTemplate", ImmutableMap.of("template", template, "locales",
+                getSupportedLocales(template)));
     }
 
     @RequestMapping("/{template}/edit")
     public String editTemplate(Model model, @PathVariable MessageTemplate template,
             @ModelAttribute("templateBean") MessageContentBean bean) throws Exception {
         bean.copy(template);
-        model.addAttribute("template", MessagingSystem.getTemplateDeclaration(template.getId()));
+        model.addAttribute("template", template);
         model.addAttribute("templateBean", bean);
         return "messaging/editTemplate";
     }
 
     @RequestMapping("/{template}/reset")
     public String resetTemplate(Model model, @PathVariable MessageTemplate template) throws Exception {
-        MessageTemplateDeclaration decl = MessagingSystem.getTemplateDeclaration(template.getId());
-        model.addAttribute("template", decl);
-        model.addAttribute("templateBean", new MessageContentBean(decl));
+        model.addAttribute("template", template);
+        model.addAttribute("templateBean", new MessageContentBean(template.getDeclaration()));
         return "messaging/editTemplate";
     }
 
@@ -71,8 +60,14 @@ public class TemplateConfigController {
         if (bean.edit(template)) {
             return viewTemplate(template);
         }
-        model.addAttribute("template", MessagingSystem.getTemplateDeclaration(template.getId()));
+        model.addAttribute("template", template);
         model.addAttribute("templateBean", bean);
         return new ModelAndView("messaging/editTemplate", model.asMap());
+    }
+
+    private Set<Locale> getSupportedLocales(MessageTemplate template) {
+        Set<Locale> locales = template.getContentLocales();
+        locales.addAll(CoreConfiguration.supportedLocales());
+        return locales;
     }
 }

@@ -24,12 +24,7 @@
  */
 package org.fenixedu.messaging.domain;
 
-import static pt.ist.fenixframework.FenixFramework.atomic;
-
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,9 +35,7 @@ import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.domain.UserProfile;
 import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
-import org.fenixedu.messaging.exception.MessagingDomainException;
-import org.fenixedu.messaging.template.MessageTemplateDeclaration;
-import org.fenixedu.messaging.template.annotation.DeclareMessageTemplate;
+import org.fenixedu.messaging.dispatch.MessageDispatcher;
 
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
@@ -57,114 +50,55 @@ import com.google.common.collect.Sets;
  *
  */
 public class MessagingSystem extends MessagingSystem_Base {
-    private static Map<String, DeclareMessageTemplate> declarations = new HashMap<>();
-    private static Map<String, MessageTemplateDeclaration> templates = null;
-    private static Set<MessageTemplate> undeclared = null;
+    private static MessagingSystem instance = null;
+    private static MessageDispatcher dispatcher = null;
 
     private MessagingSystem() {
         super();
         setBennu(Bennu.getInstance());
     }
 
-    public static MessagingSystem getInstance() {
-        if (Bennu.getInstance().getMessagingSystem() == null) {
-            return createMessagingSystem();
+    @Atomic(mode = TxMode.WRITE)
+    private static void initialize() {
+        instance = Bennu.getInstance().getMessagingSystem();
+        if (instance == null) {
+            instance = new MessagingSystem();
+            instance.setSystemSender(new Sender());
         }
-        return Bennu.getInstance().getMessagingSystem();
+        MessageTemplate.embody();
+    }
+
+    public static MessagingSystem getInstance() {
+        if (instance == null) {
+            initialize();
+        }
+        return instance;
     }
 
     @Atomic(mode = TxMode.WRITE)
-    private static MessagingSystem createMessagingSystem() {
-        if (Bennu.getInstance().getMessagingSystem() == null) {
-            return new MessagingSystem();
-        }
-        return Bennu.getInstance().getMessagingSystem();
+    public static void pruneMessages() {
+        getInstance().getSenderSet().forEach(Sender::pruneMessages);
     }
 
-    private static MessageDispatcher dispatcher = null;
+    @Atomic(mode = TxMode.WRITE)
+    public static MessageDispatchReport dispatch(Message message) {
+        MessageDispatchReport report = null;
+        if (dispatcher != null) {
+            report = dispatcher.dispatch(message);
+            if (report != null) {
+                message.setMessagingSystemFromPendingDispatch(null);
+                message.setDispatchReport(report);
+            }
+        }
+        return report;
+    }
 
     public static void setMessageDispatcher(MessageDispatcher dispatcher) {
         MessagingSystem.dispatcher = dispatcher;
     }
 
-    @Atomic(mode = TxMode.WRITE)
-    public static void deleteOldMessages() {
-        for (Sender sender : MessagingSystem.getInstance().getSenderSet()) {
-            sender.pruneOldMessages();
-        }
-    }
-
-    @Atomic(mode = TxMode.WRITE)
-    public static MessageDispatchReport dispatch(Message message) {
-        MessageDispatchReport report = dispatcher.dispatch(message);
-        message.setMessagingSystemFromPendingDispatch(null);
-        message.setDispatchReport(report);
-        return report;
-    }
-
     public static Sender systemSender() {
         return getInstance().getSystemSender();
-    }
-
-    public static MessageTemplateDeclaration getTemplateDeclaration(String id) {
-        MessageTemplateDeclaration declaration = getTemplateDeclarations().get(id);
-        if (declaration == null) {
-            throw MessagingDomainException.missingTemplate(id);
-        }
-        return declaration;
-    }
-
-    static MessageTemplate getTemplate(String id) {
-        MessageTemplateDeclaration declaration = getTemplateDeclaration(id);
-        if (declaration.getTemplate() == null) {
-            throw MessagingDomainException.missingTemplate(id);
-        }
-        return declaration.getTemplate();
-    }
-
-    public static void declareTemplate(DeclareMessageTemplate decl) {
-        if (declarations != null) {
-            declarations.put(decl.id(), decl);
-        }
-    }
-
-    public static Map<String, MessageTemplateDeclaration> getTemplateDeclarations() {
-        if (templates == null) {
-            initializeTemplates();
-        }
-        return templates;
-    }
-
-    public static Set<MessageTemplate> getUndeclaredTemplates() {
-        if (undeclared == null) {
-            initializeTemplates();
-        }
-        return undeclared;
-    }
-
-    private static void initializeTemplates() {
-        templates = new HashMap<>();
-        Set<MessageTemplate> existing = getInstance().getTemplateSet();
-        undeclared = new HashSet<>();
-        existing.forEach(t -> {
-            DeclareMessageTemplate declare = declarations.get(t.getId());
-            if (declare == null) {
-                undeclared.add(t);
-            } else {
-                templates.put(t.getId(), new MessageTemplateDeclaration(t, declare));
-                declarations.remove(t.getId());
-            }
-        });
-        declarations.values().forEach(declare -> atomic(() -> {
-            MessageTemplate template = new MessageTemplate();
-            MessageTemplateDeclaration declaration = new MessageTemplateDeclaration(template, declare);
-            template.setId(declare.id());
-            template.setSubject(declaration.getDefaultSubject());
-            template.setHtmlBody(declaration.getDefaultHtmlBody());
-            template.setTextBody(declaration.getDefaultTextBody());
-            templates.put(declare.id(), declaration);
-        }));
-        declarations = null;
     }
 
     public static final class Util {

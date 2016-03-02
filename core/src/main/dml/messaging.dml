@@ -11,28 +11,28 @@ class MessagingSystem {
 }
 
 class Sender {
-	boolean htmlSender;
-	String fromName;
-	String fromAddress;
-	String replyTo;
-	MessageDeletionPolicy policy;
+	public boolean htmlEnabled;
+	public String name;
+	public String address;
+	public String replyTo;
+	public MessageDeletionPolicy policy;
 }
 
 class Message {
-	LocalizedString subject;
-	LocalizedString body;
-	LocalizedString htmlBody;
-	Locale extraBccsLocale;
-	DateTime created;
-	String replyTo;
-	String extraBccs;
+	public LocalizedString subject;
+	public LocalizedString textBody;
+	public LocalizedString htmlBody;
+	public Locale preferredLocale;
+	public DateTime created;
+	public String replyTo;
+	public String singleBccs;
 }
 
 class MessageTemplate {
-	String id;
-	LocalizedString subject;
-	LocalizedString textBody;
-	LocalizedString htmlBody;
+	protected String id;
+	public LocalizedString subject;
+	public LocalizedString textBody;
+	public LocalizedString htmlBody;
 }
 
 class MessageDispatchReport {
@@ -66,7 +66,7 @@ relation MessagingSystemSender {
 	protected MessagingSystem playsRole messagingSystem {
 		multiplicity 1..1;
 	}
-	public Sender playsRole sender {
+	protected Sender playsRole sender {
 		multiplicity *;
 	}
 }
@@ -75,7 +75,7 @@ relation MessagingSystemSystemSender {
 	protected MessagingSystem playsRole rootForSystemSender {
 		multiplicity 0..1;
 	}
-	public Sender playsRole systemSender {
+	protected Sender playsRole systemSender {
 		multiplicity 0..1;
 	}
 }
@@ -84,7 +84,7 @@ relation MessagingSystemMessage {
 	protected MessagingSystem playsRole messagingSystem {
 		multiplicity 1..1;
 	}
-	public Message playsRole message {
+	protected Message playsRole message {
 		multiplicity *;
 	}
 }

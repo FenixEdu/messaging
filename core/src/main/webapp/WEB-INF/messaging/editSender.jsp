@@ -3,13 +3,14 @@
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
+<%@ taglib uri="org.fenixedu.messaging.tags.sorter" prefix="sort" %>
 
 <h2><spring:message code="title.sender.edit${ create? '.new' : '' }"/></h2>
 
 <c:if test="${not empty senderBean.errors}">
 	<div class="alert alert-danger">
 		<span><spring:message code="error.sender.not.saved"/></span>
-		<c:forEach items="${senderBean.errors}" var="error">
+		<c:forEach items="${sort:uniqueSort(senderBean.errors)}" var="error">
 			<br/><span style="padding-left: 2em;">${error}</span>
 		</c:forEach>
 	</div>
@@ -19,13 +20,13 @@
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="name"><spring:message code="label.sender.name"/>:</label>
 		<div class="col-sm-10">
-			<form:input type="text" class="form-control" id="name" path="fromName" value="${senderBean.fromName}" required="required"/>
+			<form:input type="text" class="form-control" id="name" path="name" value="${senderBean.name}" required="required"/>
 		</div>
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="address"><spring:message code="label.sender.address"/>:</label>
 		<div class="col-sm-10">
-			<form:input type="email" class="form-control" id="address" path="fromAddress" value="${senderBean.fromAddress}" required="required"/>
+			<form:input type="email" class="form-control" id="address" path="address" value="${senderBean.address}" required="required"/>
 		</div>
 	</div>
 	<div class="form-group">
@@ -66,7 +67,7 @@
 					<label style="margin: 0;" for="policy-period"><spring:message code="label.sender.policy.period"/></label>
 				</span>
 				<spring:message code="hint.period" var="placeholder"/>
-				<input id="policy-period-value" type="text" class="form-control" value="${senderBean.periodPolicy.isEmpty() ? '' : senderBean.periodPolicy}" placeholder="${placeholder}"/>
+				<input id="policy-period-value" type="text" pattern= "(\d+Y)?(\d+M)?(\d+W)?(\d+D)?(T(?=.)(\d+H)?(\d+M)?(\d+S)?)?" class="form-control" value="${senderBean.periodPolicy.isEmpty() ? '' : senderBean.periodPolicy}" placeholder="${placeholder}"/>
 				<span class="input-group-addon">
 					<input type="checkbox"  name="policy" id="policy-amount" value="" ${senderBean.amountPolicy >= 0 ? "checked" : ""}>&nbsp;
 					<label style="margin: 0;" for="policy-amount"><spring:message code="label.sender.policy.amount"/></label>
@@ -79,11 +80,11 @@
 		<label class="control-label col-sm-2"><spring:message code="label.sender.html"/>:</label>
 		<div class="col-sm-10">
 			<div class="btn-group btn-group-xs" data-toggle="buttons">
-				<label class="html-switch btn btn-${senderBean.htmlSender ? 'primary active' : 'default'}">
-					<input type="radio" name="htmlSender" id="yes" value="true" ${senderBean.htmlSender ? 'checked' : ''}> Yes
+				<label class="html-switch btn btn-${senderBean.htmlEnabled ? 'primary active' : 'default'}">
+					<input type="radio" name="htmlEnabled" id="yes" value="true" ${senderBean.htmlEnabled ? 'checked' : ''}> Yes
 				</label>
-				<label class="html-switch btn btn-${senderBean.htmlSender  ? 'default' : 'primary active'}">
-					<input type="radio" name="htmlSender" id="no" value="false" ${senderBean.htmlSender ? '' : 'checked'}> No
+				<label class="html-switch btn btn-${senderBean.htmlEnabled  ? 'default' : 'primary active'}">
+					<input type="radio" name="htmlEnabled" id="no" value="false" ${senderBean.htmlEnabled ? '' : 'checked'}> No
 				</label>
 			</div>
 		</div>
@@ -164,7 +165,7 @@
 	});
 
 	[
-	<c:forEach var="recipient" items="${senderBean.recipients}" varStatus="loop">"${recipient}"<c:if test="${!loop.last}">,</c:if></c:forEach>
+	<c:forEach var="recipient" items="${sort:uniqueSort(senderBean.recipients)}" varStatus="loop">"${recipient}"<c:if test="${!loop.last}">,</c:if></c:forEach>
 	].forEach(addRecipient);
 })();
 </script>

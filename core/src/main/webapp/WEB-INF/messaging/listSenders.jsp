@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
+<%@ taglib uri="org.fenixedu.messaging.tags.sorter" prefix="sort" %>
 
 <c:choose>
 <c:when test="${configure}">
@@ -32,13 +33,13 @@
 		</tr>
 	</thead>
 	<tbody>
-	<c:forEach items="${senders}" var="sender">
+	<c:forEach items="${sort:uniqueSort(senders)}" var="sender">
 		<tr onClick="location.href='${pageContext.request.contextPath}/${path}/${sender.externalId}'">
 			<td class="col-sm-5">
-				${sender.fromName}
+				${sender.name}
 			</td>
 			<td class="col-sm-4">
-				<code>${sender.fromAddress}</code>
+				<code>${sender.address}</code>
 			</td>
 			<td class="col-sm-3">
 				<div class="btn-group btn-group-xs pull-right">

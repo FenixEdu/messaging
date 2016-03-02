@@ -2,6 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
+<%@ taglib uri="org.fenixedu.messaging.tags.sorter" prefix="sort" %>
 
 ${portal.toolkit()}
 
@@ -10,21 +11,22 @@ ${portal.toolkit()}
 <c:if test="${not empty messageBean.errors}">
 	<div class="alert alert-danger">
 		<span><spring:message code="error.message.not.sent"/></span>
-		<c:forEach items="${messageBean.errors}" var="error">
+		<c:forEach items="${sort:uniqueSort(messageBean.errors)}" var="error">
 			<br/><span style="padding-left: 2em;">${error}</span>
 		</c:forEach>
 	</div>
 </c:if>
 
-<spring:eval expression="T(org.fenixedu.messaging.domain.Sender).getAvailableSenders()" var="senders"/>
+<spring:eval expression="T(org.fenixedu.messaging.domain.Sender).available()" var="senders"/>
+<spring:eval expression="T(org.fenixedu.bennu.core.util.CoreConfiguration).supportedLocales()" var="locales"/>
 <form:form modelAttribute="messageBean" role="form" class="form-horizontal" action="${pageContext.request.contextPath}/messaging/message" method="post">
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="senderSelect"><spring:message code="label.message.sender"/>:</label>
 		<div class="col-sm-10">
 			<form:select class="form-control" id="senderSelect" path="sender" required="true">
 				<form:option class="form-control" value=""><spring:message code="hint.sender.select"/></form:option>
-				<c:forEach  var="sender" items="${senders}">
-				<form:option class="form-control" value="${sender.externalId}">${sender.fromName} (${sender.fromAddress})</form:option>
+				<c:forEach  var="sender" items="${sort:uniqueSort(senders)}">
+				<form:option class="form-control" value="${sender.externalId}">${sender.name} (${sender.address})</form:option>
 				</c:forEach>
 			</form:select>
 		</div>
@@ -37,25 +39,25 @@ ${portal.toolkit()}
 		</div>
 	</div>
 	<div id="recipients-container" class="form-group">
-		<label class="control-label col-sm-2"><spring:message code="label.message.bccs"/>:</label>
+		<label class="control-label col-sm-2"><spring:message code="label.message.recipients"/>:</label>
 		<div id="recipients" class="form-inline col-sm-10">
-		<c:forEach  var="recipient" items="${messageBean.recipients}">
+		<c:forEach  var="recipient" items="${sort:uniqueSort(messageBean.recipients)}">
 			<input style="display:none;" type="checkbox" value="${recipient}" checked/>
 		</c:forEach>
 		</div>
 	</div>
 	<div class="form-group">
-		<label class="control-label col-sm-2" for="bccs"><spring:message code="label.message.bccs.extra"/>:</label>
+		<label class="control-label col-sm-2" for="singleRecipients"><spring:message code="label.message.recipients.single"/>:</label>
 		<div class="col-sm-10">
 			<spring:message code="hint.email.list" var="placeholder"/>
-			<input type="email" multiple="multiple" class="form-control" id="bccs" name="bccs" placeholder="${placeholder}" value="${messageBean.bccs}"/>
+			<input type="email" multiple="multiple" class="form-control" id="singleRecipients" name="singleRecipients" placeholder="${placeholder}" value="${messageBean.singleRecipients}"/>
 		</div>
 	</div>
 	<div class="form-group">
-		<label class="control-label col-sm-2" for=extraBccsLocale><spring:message code="label.message.bccs.extra.locale"/>:</label>
+		<label class="control-label col-sm-2" for=preferredLocale><spring:message code="label.message.locale.preferred"/>:</label>
 		<div class="col-sm-10">
-			<form:select class="form-control" id="extraBccsLocale" path="extraBccsLocale">
-			<c:forEach items="${supportedLocales}" var="locale">
+			<form:select class="form-control" id="preferredLocale" path="preferredLocale">
+			<c:forEach items="${locales}" var="locale">
 				<form:option value="${locale}">${locale.getDisplayName(locale)}</form:option>
 			</c:forEach>
 			</form:select>
@@ -68,9 +70,9 @@ ${portal.toolkit()}
 		</div>
 	</div>
 	<div class="form-group">
-		<label class="control-label col-sm-2" for="body"><spring:message code="label.message.body"/>:</label>
+		<label class="control-label col-sm-2" for="textBody"><spring:message code="label.message.body.text"/>:</label>
 		<div class="col-sm-10">
-			<textarea class="form-control" id="body" name="textBody" bennu-localized-string>${messageBean.textBody.json()}</textarea>
+			<textarea class="form-control" id="textBody" name="textBody" bennu-localized-string>${messageBean.textBody.json()}</textarea>
 		</div>
 	</div>
 	<div id="htmlMessage" class="form-group">
@@ -96,9 +98,9 @@ ${portal.toolkit()}
 		return checked;
 	}
 
-	function caseInsensitiveNameCompare(a, b) {
-		a = a && a['name'] && a['name'].toUpperCase() || "";
-		b = b && b['name'] && b['name'].toUpperCase() || "";
+	function nameCompare(a, b) {
+		a = a && a['name'] || "";
+		b = b && b['name'] || "";
 		if(a < b) return -1;
 		if(a > b) return 1;
 		return 0;
@@ -122,7 +124,7 @@ ${portal.toolkit()}
 			data = info[path];
 		if(data.length !== 0) {
 			element.parent().show();
-			data.sort(caseInsensitiveNameCompare)
+			data.sort(nameCompare)
 				.forEach(function(item){
 					appendCheckbox(element, checked, path, item.name, item.expression);
 				});

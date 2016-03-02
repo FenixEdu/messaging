@@ -4,9 +4,9 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
+import org.fenixedu.messaging.dispatch.MessageDispatcher;
 import org.fenixedu.messaging.domain.Message;
 import org.fenixedu.messaging.domain.MessageDispatchReport;
-import org.fenixedu.messaging.domain.MessageDispatcher;
 import org.fenixedu.messaging.domain.MessagingSystem;
 import org.fenixedu.messaging.emaildispatch.domain.LocalEmailMessageDispatchReport;
 

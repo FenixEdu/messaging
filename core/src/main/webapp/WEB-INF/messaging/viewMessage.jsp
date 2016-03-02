@@ -3,6 +3,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
+<%@ taglib uri="org.fenixedu.messaging.tags.sorter" prefix="sort" %>
 
 ${portal.toolkit()}
 
@@ -75,7 +76,7 @@ ${portal.toolkit()}
 				<spring:message code="label.message.sender.name"/>
 			</th>
 			<td>
-				${message.sender.fromName}
+				${message.sender.name}
 			</td>
 		</tr>
 		<tr>
@@ -83,7 +84,7 @@ ${portal.toolkit()}
 				<spring:message code="label.message.sender.address"/>
 			</th>
 			<td>
-				<code>${message.sender.fromAddress}</code>
+				<code>${message.sender.address}</code>
 			</td>
 		</tr>
 		<tr>
@@ -111,7 +112,7 @@ ${portal.toolkit()}
 				</th>
 				<td>
 					<div style="overflow-y:auto; max-height:85px; display:block;">
-					<c:forEach items="${message.toGroups}" var="to">
+					<c:forEach items="${sort:uniqueSort(message.toGroups)}" var="to">
 						<code style="display: inline-block; margin: 2px;">${to.presentationName}</code>
 					</c:forEach>
 					</div>
@@ -125,7 +126,7 @@ ${portal.toolkit()}
 				</th>
 				<td>
 					<div style="overflow-y:auto; max-height:85px; display:block;">
-					<c:forEach items="${message.ccGroups}" var="cc">
+					<c:forEach items="${sort:uniqueSort(message.ccGroups)}" var="cc">
 						<code style="display: inline-block; margin: 2px;">${cc.presentationName}</code>
 					</c:forEach>
 					</div>
@@ -135,44 +136,44 @@ ${portal.toolkit()}
 		<c:if test="${not empty message.bccGroups}">
 			<tr>
 				<th class="col-md-2" scope="row">
-					<spring:message code="label.message.bccs"/>
+					<spring:message code="label.message.recipients"/>
 				</th>
 				<td>
 					<div style="overflow-y:auto; max-height:85px; display:block;">
-					<c:forEach items="${message.bccGroups}" var="bcc">
+					<c:forEach items="${sort:uniqueSort(message.bccGroups)}" var="bcc">
 						<code style="display: inline-block; margin: 2px;">${bcc.presentationName}</code>
 					</c:forEach>
 					</div>
 				</td>
 			</tr>
 		</c:if>
-		<c:if test="${not empty message.extraBccs}">
+		<c:if test="${not empty message.singleBccsSet}">
 			<tr>
 				<th class="col-md-2" scope="row">
-					<spring:message code="label.message.bccs.extra"/>
+					<spring:message code="label.message.recipients.single"/>
 				</th>
 				<td>
-				<c:forEach items="${message.extraBccs}" var="bcc">
+				<c:forEach items="${sort:uniqueSort(message.singleBccsSet)}" var="bcc">
 					<code>${bcc}</code>
 				</c:forEach>
 				</td>
 			</tr>
-			<tr>
-				<th class="col-md-2" scope="row">
-					<spring:message code="label.message.bccs.extra.locale"/>
-				</th>
-				<td>
-					${message.extraBccsLocale.getDisplayName(message.extraBccsLocale)}
-				</td>
-			</tr>
 		</c:if>
+		<tr>
+			<th class="col-md-2" scope="row">
+				<spring:message code="label.message.locale.preferred"/>
+			</th>
+			<td>
+				${message.preferredLocale.getDisplayName(message.preferredLocale)}
+			</td>
+		</tr>
 		<tr>
 			<th class="col-md-2" scope="row">
 				<spring:message code="label.message.locale"/>
 			</th>
 			<td>
 				<ul class="nav nav-pills">
-				<c:forEach items="${messageLocales}" var="locale">
+				<c:forEach items="${locales}" var="locale">
 					<li><a class="btn-sm localized" id="locale-${locale}">${locale.getDisplayName(locale)}</a></li>
 				</c:forEach>
 				</ul>
@@ -183,22 +184,22 @@ ${portal.toolkit()}
 				<spring:message code="label.message.subject"/>
 			</th>
 			<td>
-			<c:forEach items="${messageLocales}" var="locale">
+			<c:forEach items="${locales}" var="locale">
 				<div class="panel panel-default localized locale-${locale}" style="margin:0;">
 					<div style="white-space: pre-wrap;" class="panel-heading"><c:out value="${message.subject.getContent(locale)}" default="${message.subject.getContent()}"/></div>
 				</div>
 			</c:forEach>
 			</td>
 		</tr>
-		<c:if test="${not message.body.isEmpty()}">
+		<c:if test="${not message.textBody.isEmpty()}">
 		<tr>
 			<th class="col-md-2" scope="row">
-				<spring:message code="label.message.body"/>
+				<spring:message code="label.message.body.text"/>
 			</th>
 			<td>
-			<c:forEach items="${messageLocales}" var="locale">
+			<c:forEach items="${locales}" var="locale">
 				<div class="panel panel-default localized locale-${locale}" style="margin:0;">
-					<div style="white-space: pre-wrap;" class="panel-heading"><c:out value="${message.body.getContent(locale)}" default="${message.body.getContent()}"/></div>
+					<div style="white-space: pre-wrap;" class="panel-heading"><c:out value="${message.textBody.getContent(locale)}" default="${message.textBody.getContent()}"/></div>
 				</div>
 			</c:forEach>
 			</td>
@@ -210,7 +211,7 @@ ${portal.toolkit()}
 				<spring:message code="label.message.body.html"/>
 			</th>
 			<td>
-			<c:forEach items="${messageLocales}" var="locale">
+			<c:forEach items="${locales}" var="locale">
 				<div class="panel panel-default localized locale-${locale}" style="margin:0;">
 					<div style="white-space: pre-wrap;" class="panel-heading"><c:out value="${message.htmlBody.getContent(locale)}" default="${message.htmlBody.getContent()}" escapeXml="false"/></div>
 				</div>
@@ -243,7 +244,6 @@ ${portal.toolkit()}
 	pills.click(function(event){
 		selectLocale($(event.target).attr('id'));
 	})
-	var firstLocale="<c:forEach items="${messageLocales}" var="locale" end="0">locale-<c:out value="${locale}"/></c:forEach>";
-	selectLocale(firstLocale);
+	selectLocale("locale-${pageContext.response.locale}");
 })();
 </script>

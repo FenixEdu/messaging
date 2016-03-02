@@ -1,6 +1,10 @@
 package org.fenixedu.messaging.ui;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.ui.Model;
 
@@ -12,12 +16,25 @@ public class PaginationUtils {
     private PaginationUtils() {
     }
 
-    public static <T> List<T> paginate(Model model, String path, String property, List<T> list, int items, int page) {
-        if (list == null || list.isEmpty()) {
+    public static <T extends Comparable<T>> List<T> paginate(Model model, String path, String property, Collection<T> items,
+            int nr, int page) {
+        List<T> list = items.stream().sorted().collect(Collectors.toList());
+        return paginateAux(model, path, property, list, nr, page);
+    }
+
+    public static <T> List<T> paginate(Model model, String path, String property, Collection<T> items, Comparator<T> comparator,
+            int nr, int page) {
+        List<T> list =
+                comparator != null ? items.stream().sorted(comparator).collect(Collectors.toList()) : new ArrayList<T>(items);
+        return paginateAux(model, path, property, list, nr, page);
+    }
+
+    private static <T> List<T> paginateAux(Model model, String path, String property, List<T> items, int nr, int page) {
+        if (items == null || items.isEmpty()) {
             return null;
         }
-        items = itemsClip(items, list.size());
-        List<List<T>> pages = Lists.partition(list, items);
+        nr = itemsClip(nr, items.size());
+        List<List<T>> pages = Lists.partition(items, nr);
         page = pageClip(page, pages.size());
         List<T> selected = pages.get(page - 1);
         if (model != null) {
@@ -26,10 +43,11 @@ public class PaginationUtils {
             }
             model.addAttribute("path", path);
             model.addAttribute("page", page);
-            model.addAttribute("items", items);
+            model.addAttribute("items", nr);
             model.addAttribute("pages", pages.size());
         }
         return selected;
+
     }
 
     private static int itemsClip(int val, int max) {

@@ -2,6 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
+<%@ taglib uri="org.fenixedu.messaging.tags.sorter" prefix="sort" %>
 
 <c:choose>
 <c:when test="${system}">
@@ -23,7 +24,7 @@
 				<spring:message code="label.sender.name"/>
 			</th>
 			<td>
-				${sender.fromName}
+				${sender.name}
 			</td>
 		</tr>
 		<tr>
@@ -31,7 +32,7 @@
 				<spring:message code="label.sender.address"/>
 			</th>
 			<td>
-				<code>${sender.fromAddress}</code>
+				<code>${sender.address}</code>
 			</td>
 		</tr>
 		<c:if test="${not empty sender.replyTo}">
@@ -44,14 +45,14 @@
 			</td>
 		</tr>
 		</c:if>
-		<c:if test="${not empty sender.sortedRecipients}">
+		<c:if test="${not empty sender.recipients}">
 		<tr>
 			<th class="col-md-2" scope="row">
 				<spring:message code="label.sender.recipients"/>
 			</th>
 			<td>
 				<div style="overflow-y:auto; max-height:85px; display:block;">
-				<c:forEach items="${sender.sortedRecipients}" var="recipient">
+				<c:forEach items="${sort:uniqueSort(sender.recipients)}" var="recipient">
 					<code style="display: inline-block; margin: 2px;">${recipient.presentationName}</code>
 				</c:forEach>
 				</div>
@@ -72,7 +73,7 @@
 			</th>
 			<td>
 				<c:choose>
-				<c:when test="${ sender.htmlSender }">
+				<c:when test="${ sender.htmlEnabled }">
 				<spring:message code="label.yes"/>
 				</c:when>
 				<c:otherwise>
@@ -124,7 +125,7 @@
 		</tr>
 	</thead>
 	<tbody>
-	<c:forEach items="${messages}" var="message">
+	<c:forEach items="${sort:uniqueSort(messages)}" var="message">
 		<tr onClick="location.href='${pageContext.request.contextPath}/messaging/messages/${message.externalId}'">
 			<td class="col-sm-2">${message.created.toString("dd-MM-yyyy HH:mm:ss")}</td>
 			<td class="col-sm-6"><c:out value="${message.subject.content}"/></td>

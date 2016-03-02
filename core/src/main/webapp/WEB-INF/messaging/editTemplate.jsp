@@ -2,6 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
+<%@ taglib uri="org.fenixedu.messaging.tags.sorter" prefix="sort" %>
 
 ${portal.toolkit()}
 
@@ -10,31 +11,33 @@ ${portal.toolkit()}
 <c:if test="${not empty templateBean.errors}">
 <div class="alert alert-danger">
 	<span><spring:message code="error.template.not.saved"/></span>
-	<c:forEach items="${templateBean.errors}" var="error">
+	<c:forEach items="${sort:uniqueSort(templateBean.errors)}" var="error">
 		<br/><span style="padding-left: 2em;">${error}</span>
 	</c:forEach>
 </div>
 </c:if>
 
 <form:form modelAttribute="templateBean" role="form" class="form-horizontal" action="${pageContext.request.contextPath}/messaging/config/templates/${template.externalId}/edit" method="post">
-	<div class="collapse form-group template-info">
+	<div class="form-group">
 		<label class="control-label col-sm-2"><spring:message code="label.template.id"/></label>
 		<div class="col-sm-10" style="padding-top: 7px;">
 			<code>${template.id}</code>
 		</div>
 	</div>
+	<c:if test="${not empty template.declaration.description}">
 	<div class="collapse form-group template-info">
 		<label class="control-label col-sm-2"><spring:message code="label.template.description"/></label>
 		<div class="col-sm-10" style="padding-top: 7px;">
-			${template.description.content}
+			${template.declaration.description.content}
 		</div>
 	</div>
-	<c:if test="${not empty template.parameters}">
+	</c:if>
+	<c:if test="${not empty template.declaration.parameters}">
 	<div class="collapse form-group template-info">
 		<label class="control-label col-sm-2"><spring:message code="label.template.parameters"/></label>
 		<div class="col-sm-10">
 			<ul class="list-unstyled">
-			<c:forEach items="${template.parameters}" var="entry">
+			<c:forEach items="${sort:mapSort(template.declaration.parameters)}" var="entry">
 				<li><em>${entry.key}</em>: ${entry.value.content}</li>
 			</c:forEach>
 			</ul>
@@ -48,7 +51,7 @@ ${portal.toolkit()}
 		</div>
 	</div>
 	<div class="form-group">
-		<label class="control-label col-sm-2" for="textBody"><spring:message code="label.message.body"/>:</label>
+		<label class="control-label col-sm-2" for="textBody"><spring:message code="label.message.body.text"/>:</label>
 		<div class="col-sm-10">
 			<textarea class="form-control" id="textBody" name="textBody" bennu-localized-string>${templateBean.textBody.json()}</textarea>
 		</div>
@@ -62,6 +65,7 @@ ${portal.toolkit()}
 	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-10 btn-group">
 				<button class="btn btn-primary" type="submit"><spring:message code="action.save"/></button>
+				<c:if test="${not empty template.declaration}">
 				<div class="btn-group">
 					<button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">
 						<spring:message code="label.actions"/>
@@ -73,22 +77,23 @@ ${portal.toolkit()}
 						<li id="hideInfo"><a data-toggle="collapse" href=".template-info"><spring:message code="action.hide.template.info"/></a></li>
 					</ul>
 				</div>
+				<script>
+				(function(){
+					var show = $('#showInfo'),
+						hide = $('#hideInfo');
+					show.click(function() {
+						hide.show();
+						show.hide();
+					});
+					hide.click(function() {
+						hide.hide();
+						show.show();
+					});
+					hide.hide();
+				})();
+				</script>
+				</c:if>
 			</div>
 		</div>
 	</div>
 </form:form>
-<script>
-(function(){
-	var show = $('#showInfo'),
-		hide = $('#hideInfo');
-	show.click(function() {
-		hide.show();
-		show.hide();
-	});
-	hide.click(function() {
-		hide.hide();
-		show.show();
-	});
-	hide.hide();
-})();
-</script>

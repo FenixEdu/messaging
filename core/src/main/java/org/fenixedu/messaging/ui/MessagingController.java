@@ -25,18 +25,14 @@
 package org.fenixedu.messaging.ui;
 
 import java.util.Base64;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.bennu.core.util.CoreConfiguration;
 import org.fenixedu.bennu.spring.portal.SpringApplication;
 import org.fenixedu.bennu.spring.portal.SpringFunctionality;
-import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.domain.Message;
 import org.fenixedu.messaging.domain.Sender;
 import org.fenixedu.messaging.exception.MessagingDomainException;
@@ -72,9 +68,7 @@ public class MessagingController {
     @RequestMapping(value = { "/senders", "/senders/" })
     public String listSenders(Model model, @RequestParam(value = "page", defaultValue = "1") int page, @RequestParam(
             value = "items", defaultValue = "10") int items) {
-        List<Sender> senders =
-                Sender.getAvailableSenders().stream().sorted(Sender.COMPARATOR_BY_FROM_NAME).collect(Collectors.toList());
-        PaginationUtils.paginate(model, "messaging/senders", "senders", senders, items, page);
+        PaginationUtils.paginate(model, "messaging/senders", "senders", Sender.available(), items, page);
         return "/messaging/listSenders";
     }
 
@@ -86,10 +80,8 @@ public class MessagingController {
             throw MessagingDomainException.forbidden();
         }
         model.addAttribute("sender", sender);
-        List<Message> messages =
-                sender.getMessageSet().stream().sorted(Message.COMPARATOR_BY_CREATED_DATE_OLDER_LAST)
-                        .collect(Collectors.toList());
-        PaginationUtils.paginate(model, "messaging/senders/" + sender.getExternalId(), "messages", messages, items, page);
+        PaginationUtils.paginate(model, "messaging/senders/" + sender.getExternalId(), "messages", sender.getMessageSet(), items,
+                page);
         return "/messaging/viewSender";
     }
 
@@ -113,7 +105,7 @@ public class MessagingController {
         if (!Strings.isNullOrEmpty(replyTo)) {
             info.add("replyTo", new JsonPrimitive(replyTo));
         }
-        info.addProperty("html", sender.getHtmlSender());
+        info.addProperty("html", sender.getHtmlEnabled());
         return new ResponseEntity<String>(info.toString(), HttpStatus.OK);
     }
 
@@ -122,14 +114,9 @@ public class MessagingController {
         if (messageBean.getSender() != null && !allowedSender(messageBean.getSender())) {
             throw MessagingDomainException.forbidden();
         }
-
         if (messageBean.getSender() == null) {
-            final Set<Sender> availableSenders = Sender.getAvailableSenders();
-            if (availableSenders.size() == 1) {
-                messageBean.setSender(availableSenders.iterator().next());
-            }
+            messageBean.setSender(Sender.available().stream().findAny().orElse(null));
         }
-        model.addAttribute("supportedLocales", CoreConfiguration.supportedLocales());
         model.addAttribute("messageBean", messageBean);
         return "/messaging/newMessage";
     }
@@ -156,22 +143,17 @@ public class MessagingController {
         if (!allowedSender(message.getSender())) {
             throw MessagingDomainException.forbidden();
         }
-        Set<Locale> locales = new HashSet<Locale>();
-        locales.addAll(CoreConfiguration.supportedLocales());
-        locales.addAll(message.getSubject().getLocales());
-        LocalizedString content = message.getBody();
-        if (content != null) {
-            locales.addAll(content.getLocales());
-        }
-        content = message.getHtmlBody();
-        if (content != null) {
-            locales.addAll(content.getLocales());
-        }
-        locales.add(message.getExtraBccsLocale());
-        model.addAttribute("messageLocales", locales);
+        model.addAttribute("locales", getSupportedLocales(message));
         model.addAttribute("deletable", isMessageDeletable(message));
         model.addAttribute("message", message);
         return "/messaging/viewMessage";
+    }
+
+    private Set<Locale> getSupportedLocales(Message message) {
+        Set<Locale> locales = message.getContentLocales();
+        locales.addAll(CoreConfiguration.supportedLocales());
+        locales.add(message.getPreferredLocale());
+        return locales;
     }
 
     @RequestMapping(value = "/messages/{message}/delete", method = RequestMethod.POST)

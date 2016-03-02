@@ -93,8 +93,8 @@ public class MessageSendingUrlBuilder {
         return this;
     }
 
-    public MessageSendingUrlBuilder extraBccsLocale(Locale extraBccsLocale) {
-        builder.replaceQueryParam("extraBccsLocale", extraBccsLocale);
+    public MessageSendingUrlBuilder preferredLocale(Locale preferredLocale) {
+        builder.replaceQueryParam("preferredLocale", preferredLocale);
         return this;
     }
 

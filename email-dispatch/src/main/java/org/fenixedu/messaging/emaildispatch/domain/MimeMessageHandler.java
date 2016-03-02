@@ -72,8 +72,8 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
 
     protected String getFrom() {
         Sender sender = getReport().getMessage().getSender();
-        String name = sender.getFromName();
-        String from = sender.getFromAddress();
+        String name = sender.getName();
+        String from = sender.getAddress();
         return Strings.isNullOrEmpty(name) ? from : name.replace(',', ' ').trim() + " <" + from + ">";
     }
 
@@ -121,10 +121,10 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
             mimeMultipart.addBodyPart(bodyPart);
         }
 
-        final String body = getContent(message.getBody(), locale);
-        if (body != null && !body.trim().isEmpty()) {
+        final String textBody = getContent(message.getTextBody(), locale);
+        if (textBody != null && !textBody.trim().isEmpty()) {
             final BodyPart bodyPart = new MimeBodyPart();
-            bodyPart.setText(body);
+            bodyPart.setText(textBody);
             mimeMultipart.addBodyPart(bodyPart);
         }
 

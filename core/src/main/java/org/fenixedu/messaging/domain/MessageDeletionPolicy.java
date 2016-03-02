@@ -3,6 +3,8 @@ package org.fenixedu.messaging.domain;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fenixedu.bennu.core.i18n.BundleUtil;
@@ -17,6 +19,8 @@ public class MessageDeletionPolicy implements Serializable {
     private static final long serialVersionUID = 1535994777149570075L;
     private static final String BUNDLE = "MessagingResources";
     private static final Joiner PRESENTATION_JOINER = Joiner.on(", "), SERIALIZATION_JOINER = Joiner.on(",");
+    private static final MessageDeletionPolicy UNLIMITED = new MessageDeletionPolicy();
+
     private Period keepPeriod = null;
     private Integer keepAmount = null;
 
@@ -31,19 +35,28 @@ public class MessageDeletionPolicy implements Serializable {
     }
 
     public static MessageDeletionPolicy keepAmountForDuration(Integer amount, Period period) {
+        if (amount == null && period == null) {
+            return unlimited();
+        }
         return new MessageDeletionPolicy(period, amount);
     }
 
     public static MessageDeletionPolicy keepForDuration(Period period) {
+        if (period == null) {
+            return unlimited();
+        }
         return new MessageDeletionPolicy(period, null);
     }
 
     public static MessageDeletionPolicy keepAmount(Integer amount) {
+        if (amount == null) {
+            return unlimited();
+        }
         return new MessageDeletionPolicy(null, amount);
     }
 
     public static MessageDeletionPolicy unlimited() {
-        return new MessageDeletionPolicy(null, null);
+        return UNLIMITED;
     }
 
     public Integer getAmount() {
@@ -58,16 +71,18 @@ public class MessageDeletionPolicy implements Serializable {
         return keepAmount == null && keepPeriod == null;
     }
 
-    protected void pruneSender(Sender sender) {
-        Stream<Message> messages = sender.getMessageSet().stream().filter(m -> m.getSent() == null);
+    protected void pruneMessages(Sender sender) {
+        Set<Message> sent = sender.getMessageSet().stream().filter(m -> m.getSent() != null).collect(Collectors.toSet());
+        Stream<Message> keep = sent.stream();
         if (keepPeriod != null) {
             DateTime cut = DateTime.now().minus(keepPeriod);
-            messages = messages.filter(m -> !m.getCreated().isBefore(cut));
+            keep = keep.filter(m -> m.getCreated().isAfter(cut));
         }
         if (keepAmount != null) {
-            messages = messages.sorted().skip(keepAmount);
+            keep = keep.sorted().limit(keepAmount);
         }
-        messages.forEach(Message::delete);
+        keep.forEach(sent::remove);
+        sent.forEach(Message::delete);
     }
 
     public static MessageDeletionPolicy internalize(String serialized) {
