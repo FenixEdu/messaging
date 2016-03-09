@@ -10,7 +10,7 @@
 
     <artifactId>messaging-system</artifactId>
     <name>Messaging System</name>
-    <version>2.1.0-SNAPSHOT</version>
+    <version>3.0.0.RC1</version>
     <packaging>pom</packaging>
 
     <scm>
