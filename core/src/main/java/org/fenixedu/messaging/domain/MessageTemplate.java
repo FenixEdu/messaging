@@ -21,20 +21,26 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.exception.MessagingDomainException;
 import org.fenixedu.messaging.template.DeclareMessageTemplate;
 
-import pt.ist.fenixframework.Atomic;
-
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.mitchellbosecke.pebble.PebbleEngine;
+import com.mitchellbosecke.pebble.PebbleEngine.Builder;
 import com.mitchellbosecke.pebble.error.PebbleException;
 import com.mitchellbosecke.pebble.loader.StringLoader;
+
+import pt.ist.fenixframework.Atomic;
 
 public class MessageTemplate extends MessageTemplate_Base implements Comparable<MessageTemplate> {
     private static final HashMap<String, DeclareMessageTemplate> declareAnnotations = Maps.newHashMap();
     private static final HashMap<String, MessageTemplateDeclaration> declarations = Maps.newHashMap();
-    private static final PebbleEngine engine = new PebbleEngine(new StringLoader());
+    private static final PebbleEngine engine;
+    static {
+        final Builder builder = new PebbleEngine.Builder();
+        builder.loader(new StringLoader());
+        engine = builder.build();
+    }
 
     public static class MessageTemplateDeclaration {
 
