@@ -36,7 +36,6 @@ import java.util.stream.Stream;
 import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 import org.fenixedu.bennu.core.groups.Group;
-import org.fenixedu.bennu.core.groups.NobodyGroup;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.messaging.exception.MessagingDomainException;
 import org.joda.time.Period;
@@ -62,7 +61,7 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
     public static final class SenderBuilder {
         private String address, name = null, replyTo = null;
         private boolean htmlEnabled = false;
-        private Group members = NobodyGroup.get();
+        private Group members = Group.nobody();
         private MessageDeletionPolicy policy = MessageDeletionPolicy.unlimited();
         private Set<Group> recipients = new HashSet<>();
 
@@ -89,12 +88,12 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
         }
 
         public SenderBuilder members(Group members) {
-            this.members = members != null ? members : NobodyGroup.get();
+            this.members = members != null ? members : Group.nobody();
             return this;
         }
 
         public SenderBuilder members(PersistentGroup members) {
-            this.members = members != null ? members.toGroup() : NobodyGroup.get();
+            this.members = members != null ? members.toGroup() : Group.nobody();
             return this;
         }
 

@@ -111,7 +111,7 @@ public class MessagingSystem extends MessagingSystem_Base {
         }
 
         public static Set<String> toEmailSet(Collection<PersistentGroup> groups) {
-            return groups.stream().flatMap(g -> g.getMembers().stream()).map(User::getProfile).filter(Objects::nonNull)
+            return groups.stream().flatMap(g -> g.getMembers()).map(User::getProfile).filter(Objects::nonNull)
                     .map(UserProfile::getEmail).filter(e -> !Strings.isNullOrEmpty(e)).collect(Collectors.toSet());
         }
 
