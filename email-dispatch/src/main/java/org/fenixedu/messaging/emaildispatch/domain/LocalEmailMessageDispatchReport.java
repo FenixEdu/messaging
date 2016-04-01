@@ -93,6 +93,7 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
 
         Map<Locale, Set<String>> tosByLocale, ccsByLocale, bccsByLocale;
         Locale defLocale = message.getPreferredLocale();
+        Set<Locale> messageLocales = message.getContentLocales();
 
         if (RECIPIENTS_AS_BCCS) {
             bccs.addAll(tos);
@@ -100,7 +101,7 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
 
             tosByLocale = Maps.newHashMap();
             ccsByLocale = Maps.newHashMap();
-            bccsByLocale = emailsByPreferredLocale(bccs, validator, defLocale);
+            bccsByLocale = emailsByMessageLocale(bccs, validator, defLocale, messageLocales);
             Set<String> singleBccs = message.getSingleBccsSet().stream().filter(validator).collect(Collectors.toSet());
             bccsByLocale.computeIfAbsent(message.getPreferredLocale(), k -> new HashSet<>()).addAll(singleBccs);
         } else {
@@ -113,9 +114,9 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
             ccs.stream().map(UserProfile::getEmail).forEach(singleBccs::remove);
             bccs.stream().map(UserProfile::getEmail).forEach(singleBccs::remove);
 
-            tosByLocale = emailsByPreferredLocale(tos, validator, defLocale);
-            ccsByLocale = emailsByPreferredLocale(ccs, validator, defLocale);
-            bccsByLocale = emailsByPreferredLocale(bccs, validator, defLocale);
+            tosByLocale = emailsByMessageLocale(tos, validator, defLocale, messageLocales);
+            ccsByLocale = emailsByMessageLocale(ccs, validator, defLocale, messageLocales);
+            bccsByLocale = emailsByMessageLocale(bccs, validator, defLocale, messageLocales);
             singleBccs = singleBccs.stream().filter(validator).collect(Collectors.toSet());
             bccsByLocale.computeIfAbsent(message.getPreferredLocale(), k -> new HashSet<>()).addAll(singleBccs);
         }
@@ -130,12 +131,15 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
         return new LocalEmailMessageDispatchReport(handlers, valids, invalids.size());
     }
 
-    private static Map<Locale, Set<String>> emailsByPreferredLocale(Set<UserProfile> users, Predicate<String> emailValidator,
-            Locale defLocale) {
+    private static Map<Locale, Set<String>> emailsByMessageLocale(Set<UserProfile> users, Predicate<String> emailValidator,
+            Locale defLocale, Set<Locale> messageLocales) {
         Map<Locale, Set<String>> emails = new HashMap<>();
         users.stream().filter(p -> emailValidator.test(p.getEmail())).forEach(p -> {
-            Locale prefLocale = p.getPreferredLocale();
-            emails.computeIfAbsent(prefLocale != null ? prefLocale : defLocale, k -> new HashSet<>()).add(p.getEmail());
+            Locale locale = p.getPreferredLocale();
+            if (locale == null || !messageLocales.contains(locale)) {
+                locale = defLocale;
+            }
+            emails.computeIfAbsent(locale, k -> new HashSet<>()).add(p.getEmail());
         });
         return emails;
     }
