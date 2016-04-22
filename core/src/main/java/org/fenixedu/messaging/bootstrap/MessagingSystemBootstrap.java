@@ -66,14 +66,14 @@ public class MessagingSystemBootstrap {
     @Section(name = "title.bootstrapper.systemsender", description = "title.bootstrapper.systemsender.description",
             bundle = BUNDLE)
     public static interface SystemSenderSection {
-        @Field(name = "label.bootstrapper.systemsender.name", hint = "hint.bootstrapper.systemsender.name", order = 1)
+        @Field(name = "label.bootstrapper.systemsender.name", defaultValue = "System Sender", order = 1)
         public String getName();
 
-        @Field(name = "label.bootstrapper.systemsender.address", hint = "hint.bootstrapper.systemsender.address",
+        @Field(name = "label.bootstrapper.systemsender.address", defaultValue = "system@fenixedu.org",
                 fieldType = FieldType.EMAIL, order = 2)
         public String getAddress();
 
-        @Field(name = "label.bootstrapper.systemsender.group", hint = "hint.bootstrapper.systemsender.group", order = 3)
+        @Field(name = "label.bootstrapper.systemsender.group", hint = "hint.bootstrapper.systemsender.group", defaultValue = "nobody", order = 3)
         public String getGroupExpression();
     }
 }
