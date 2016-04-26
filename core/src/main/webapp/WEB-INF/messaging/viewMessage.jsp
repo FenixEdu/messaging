@@ -224,6 +224,7 @@ ${portal.toolkit()}
 			<th></th>
 			<td>
 				<form action="${pageContext.request.contextPath}/messaging/messages/${message.externalId}/delete" method="post">
+					${csrf.field()}
 					<button class="btn btn-danger" type="submit"><spring:message code="action.delete"/></button>
 				</form>
 			</td>

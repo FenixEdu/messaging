@@ -18,6 +18,7 @@ ${portal.toolkit()}
 </c:if>
 
 <form:form modelAttribute="templateBean" role="form" class="form-horizontal" action="${pageContext.request.contextPath}/messaging/config/templates/${template.externalId}/edit" method="post">
+	${csrf.field()}
 	<div class="form-group">
 		<label class="control-label col-sm-2"><spring:message code="label.template.id"/></label>
 		<div class="col-sm-10" style="padding-top: 7px;">
