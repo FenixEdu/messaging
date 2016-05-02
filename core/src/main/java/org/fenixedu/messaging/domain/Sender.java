@@ -24,9 +24,11 @@
  */
 package org.fenixedu.messaging.domain;
 
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
+
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -40,16 +42,11 @@ import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.messaging.exception.MessagingDomainException;
 import org.joda.time.Period;
 
-import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.Atomic.TxMode;
-
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 
 /**
- *
  * @author Luis Cruz
- *
  */
 public class Sender extends Sender_Base implements Comparable<Sender> {
 
@@ -158,7 +155,7 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
     @Override
     public Set<Message> getMessageSet() {
         // FIXME remove when framework supports read-only relations
-        return Collections.unmodifiableSet(super.getMessageSet());
+        return super.getMessageSet();
     }
 
     public void delete() {
