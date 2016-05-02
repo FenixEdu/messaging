@@ -1,0 +1,4 @@
+package org.fenixedu.messaging.test.domain;
+
+class MockEmailMessageDispatchReport extends .org.fenixedu.messaging.core.domain.MessageDispatchReport;
+class MockAsyncEmailMessageDispatchReport extends .org.fenixedu.messaging.core.domain.MessageDispatchReport;
