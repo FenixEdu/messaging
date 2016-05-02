@@ -1,5 +1,19 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
+import com.google.common.collect.Maps;
+import org.fenixedu.bennu.core.domain.User;
+import org.fenixedu.bennu.core.domain.UserProfile;
+import org.fenixedu.bennu.core.groups.Group;
+import org.fenixedu.messaging.core.domain.Message;
+import org.fenixedu.messaging.core.domain.MessagingSystem;
+import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
+
+import javax.mail.MessagingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,23 +26,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.mail.MessagingException;
-
-import org.fenixedu.bennu.core.domain.User;
-import org.fenixedu.bennu.core.domain.UserProfile;
-import org.fenixedu.bennu.core.groups.Group;
-import org.fenixedu.messaging.domain.Message;
-import org.fenixedu.messaging.domain.MessagingSystem;
-import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.Atomic.TxMode;
-
-import com.google.common.collect.Maps;
 
 public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchReport_Base {
     private static final Logger logger = LoggerFactory.getLogger(LocalEmailMessageDispatchReport.class);

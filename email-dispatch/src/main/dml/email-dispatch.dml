@@ -1,6 +1,6 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
-class LocalEmailMessageDispatchReport extends .org.fenixedu.messaging.domain.MessageDispatchReport;
+class LocalEmailMessageDispatchReport extends .org.fenixedu.messaging.core.domain.MessageDispatchReport;
 
 class MimeMessageHandler {
     protected String toAddresses;
@@ -14,7 +14,7 @@ class EmailBlacklist {
 }
 
 relation EmailQueue {
-    protected .org.fenixedu.messaging.domain.MessagingSystem playsRole queue {
+    protected .org.fenixedu.messaging.core.domain.MessagingSystem playsRole queue {
         multiplicity 0..1;
     }
     public LocalEmailMessageDispatchReport playsRole unfinishedReports {
@@ -32,7 +32,7 @@ relation MessageDispatchReportEmails {
 }
 
 relation EmailBlacklistRoot {
-    protected .org.fenixedu.messaging.domain.MessagingSystem playsRole messagingSystem {
+    protected .org.fenixedu.messaging.core.domain.MessagingSystem playsRole messagingSystem {
         multiplicity 1..1;
     }
     public EmailBlacklist playsRole blacklist {

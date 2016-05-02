@@ -1,15 +1,16 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
+import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.messaging.core.domain.Message;
+import org.fenixedu.messaging.core.domain.MessagingSystem;
+import org.fenixedu.messaging.core.domain.Sender;
+import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration;
+import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration.ConfigurationProperties;
+import org.joda.time.DateTime;
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
 
 import javax.mail.Address;
 import javax.mail.BodyPart;
@@ -23,20 +24,16 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
-
-import org.fenixedu.commons.i18n.LocalizedString;
-import org.fenixedu.messaging.domain.Message;
-import org.fenixedu.messaging.domain.MessagingSystem;
-import org.fenixedu.messaging.domain.Sender;
-import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration;
-import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration.ConfigurationProperties;
-import org.joda.time.DateTime;
-
-import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.Atomic.TxMode;
-
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class MimeMessageHandler extends MimeMessageHandler_Base {
     private static final int MAX_RECIPIENTS = EmailDispatchConfiguration.getConfiguration().mailSenderMaxRecipients();
