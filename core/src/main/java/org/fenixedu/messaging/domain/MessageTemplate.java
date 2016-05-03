@@ -165,8 +165,8 @@ public class MessageTemplate extends MessageTemplate_Base implements Comparable<
         declareAnnotations.put(decl.id(), decl);
     };
 
-    protected static void embody() {
-        MessagingSystem.getInstance().getTemplateSet().forEach(t -> {
+    protected static void reifyDeclared(Set<MessageTemplate> knownTemplates) {
+        knownTemplates.forEach(t -> {
             declareAnnotations.computeIfPresent(t.getId(), (id, declaration) -> {
                 declarations.put(id, new MessageTemplateDeclaration(declaration));
                 return null;

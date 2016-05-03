@@ -63,9 +63,9 @@ public class MessagingSystem extends MessagingSystem_Base {
         instance = Bennu.getInstance().getMessagingSystem();
         if (instance == null) {
             instance = new MessagingSystem();
-            instance.setSystemSender(new Sender());
+            instance.setSystemSender(Sender.from("system@fenixedu.org").as("System Sender").build());
         }
-        MessageTemplate.embody();
+        MessageTemplate.reifyDeclared(instance.getTemplateSet());
     }
 
     public static MessagingSystem getInstance() {
