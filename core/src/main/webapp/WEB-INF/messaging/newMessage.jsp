@@ -20,6 +20,7 @@ ${portal.toolkit()}
 <spring:eval expression="T(org.fenixedu.messaging.domain.Sender).available()" var="senders"/>
 <spring:eval expression="T(org.fenixedu.bennu.core.util.CoreConfiguration).supportedLocales()" var="locales"/>
 <form:form modelAttribute="messageBean" role="form" class="form-horizontal" action="${pageContext.request.contextPath}/messaging/message" method="post">
+	${csrf.field()}
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="senderSelect"><spring:message code="label.message.sender"/>:</label>
 		<div class="col-sm-10">

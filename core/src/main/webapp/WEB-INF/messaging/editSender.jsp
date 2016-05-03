@@ -17,6 +17,7 @@
 </c:if>
 
 <form:form modelAttribute="senderBean" role="form" class="form-horizontal" method="post">
+	${csrf.field()}
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="name"><spring:message code="label.sender.name"/>:</label>
 		<div class="col-sm-10">
