@@ -63,8 +63,8 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
         private Set<Group> recipients = new HashSet<>();
 
         protected SenderBuilder(String address) {
-            if (address == null) {
-                throw MessagingDomainException.nullAddress();
+            if (!MessagingSystem.Util.isValidEmail(address)) {
+                throw MessagingDomainException.invalidAddress();
             }
             this.address = address;
         }
@@ -75,7 +75,7 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
         }
 
         public SenderBuilder replyTo(String replyTo) {
-            this.replyTo = replyTo;
+            this.replyTo = MessagingSystem.Util.isValidEmail(replyTo) ? replyTo : null;
             return this;
         }
 

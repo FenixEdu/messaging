@@ -36,6 +36,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -191,95 +192,82 @@ public final class Message extends Message_Base implements Comparable<Message> {
             return this;
         }
 
-        private static <T> void filteredAdd(Stream<T> items, Collection<T> collection) {
-            items.filter(Objects::nonNull).forEach(collection::add);
+        private static <T> void filteredAdd(Stream<T> stream, Predicate<T> filter, Set<T> set) {
+            if (stream != null) {
+                stream.filter(filter).forEach(set::add);
+            }
+        }
+
+        private static <T> void filteredAdd(T[] array, Predicate<T> filter, Set<T> set) {
+            if (array != null) {
+                Arrays.stream(array).filter(filter).forEach(set::add);
+            }
+        }
+
+        private static <T> void filteredAdd(Collection<T> collection, Predicate<T> filter, Set<T> set) {
+            set.clear();
+            if (collection != null) {
+                collection.stream().filter(filter).forEach(set::add);
+            }
         }
 
         public MessageBuilder to(Collection<Group> tos) {
-            this.tos.clear();
-            if (tos != null) {
-                filteredAdd(tos.stream(), this.tos);
-            }
+            filteredAdd(tos, Objects::nonNull, this.tos);
             return this;
         }
 
         public MessageBuilder to(Stream<Group> tos) {
-            if (tos != null) {
-                filteredAdd(tos, this.tos);
-            }
+            filteredAdd(tos, Objects::nonNull, this.tos);
             return this;
         }
 
         public MessageBuilder to(Group... tos) {
-            if (tos != null) {
-                filteredAdd(Arrays.stream(tos), this.tos);
-            }
+            filteredAdd(tos, Objects::nonNull, this.tos);
             return this;
         }
 
         public MessageBuilder cc(Collection<Group> ccs) {
-            this.ccs.clear();
-            if (ccs != null) {
-                filteredAdd(ccs.stream(), this.ccs);
-            }
+            filteredAdd(ccs, Objects::nonNull, this.ccs);
             return this;
         }
 
         public MessageBuilder cc(Stream<Group> ccs) {
-            if (ccs != null) {
-                filteredAdd(ccs, this.ccs);
-            }
+            filteredAdd(ccs, Objects::nonNull, this.ccs);
             return this;
         }
 
         public MessageBuilder cc(Group... ccs) {
-            if (ccs != null) {
-                filteredAdd(Arrays.stream(ccs), this.ccs);
-            }
+            filteredAdd(ccs, Objects::nonNull, this.ccs);
             return this;
         }
 
         public MessageBuilder bcc(Collection<Group> bccs) {
-            this.bccs.clear();
-            if (bccs != null) {
-                filteredAdd(bccs.stream(), this.bccs);
-            }
+            filteredAdd(bccs, Objects::nonNull, this.bccs);
             return this;
         }
 
         public MessageBuilder bcc(Stream<Group> bccs) {
-            if (bccs != null) {
-                filteredAdd(bccs, this.bccs);
-            }
+            filteredAdd(bccs, Objects::nonNull, this.bccs);
             return this;
         }
 
         public MessageBuilder bcc(Group... bccs) {
-            if (bccs != null) {
-                filteredAdd(Arrays.stream(bccs), this.bccs);
-            }
+            filteredAdd(bccs, Objects::nonNull, this.bccs);
             return this;
         }
 
         public MessageBuilder singleBcc(Collection<String> bccs) {
-            this.singleBccs.clear();
-            if (bccs != null) {
-                filteredAdd(bccs.stream(), this.singleBccs);
-            }
+            filteredAdd(bccs, MessagingSystem.Util::isValidEmail, this.singleBccs);
             return this;
         }
 
         public MessageBuilder singleBcc(Stream<String> bccs) {
-            if (bccs != null) {
-                filteredAdd(bccs, this.singleBccs);
-            }
+            filteredAdd(bccs, MessagingSystem.Util::isValidEmail, this.singleBccs);
             return this;
         }
 
         public MessageBuilder singleBcc(String... bccs) {
-            if (bccs != null) {
-                filteredAdd(Arrays.stream(bccs), this.singleBccs);
-            }
+            filteredAdd(bccs, MessagingSystem.Util::isValidEmail, this.singleBccs);
             return this;
         }
 
@@ -288,7 +276,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder replyTo(String replyTo) {
-            this.replyTo = replyTo;
+            this.replyTo = MessagingSystem.Util.isValidEmail(replyTo) ? replyTo : null;
             return this;
         }
 
