@@ -24,6 +24,9 @@
  */
 package org.fenixedu.messaging.domain;
 
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,15 +48,10 @@ import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.exception.MessagingDomainException;
 import org.joda.time.DateTime;
 
-import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.Atomic.TxMode;
-
 import com.google.common.base.Strings;
 
 /**
- *
  * @author Luis Cruz
- *
  */
 public final class Message extends Message_Base implements Comparable<Message> {
 
@@ -98,8 +96,8 @@ public final class Message extends Message_Base implements Comparable<Message> {
     public static final class MessageBuilder implements Serializable {
         private static final long serialVersionUID = 525424959825814582L;
         private Sender sender;
-        private LocalizedString subject = new LocalizedString(), textBody = new LocalizedString(),
-                htmlBody = new LocalizedString();
+        private LocalizedString subject = new LocalizedString(), textBody = new LocalizedString(), htmlBody =
+                new LocalizedString();
         private String replyTo = null;
         private Locale preferredLocale = I18N.getLocale();
         private Set<Group> tos = new HashSet<>(), ccs = new HashSet<>(), bccs = new HashSet<>();
@@ -119,14 +117,13 @@ public final class Message extends Message_Base implements Comparable<Message> {
 
         public MessageBuilder subject(String subject, Locale locale) {
             if (locale != null) {
-                this.subject = this.subject.with(locale, subject != null ? subject : "");
+                this.subject = Strings.isNullOrEmpty(subject) ? this.subject.without(locale) : this.subject.with(locale, subject);
             }
             return this;
         }
 
         public MessageBuilder subject(String subject) {
-            this.subject = this.subject.with(I18N.getLocale(), subject != null ? subject : "");
-            return this;
+            return subject(subject, I18N.getLocale());
         }
 
         public MessageBuilder textBody(LocalizedString textBody) {
@@ -136,14 +133,14 @@ public final class Message extends Message_Base implements Comparable<Message> {
 
         public MessageBuilder textBody(String textBody, Locale locale) {
             if (locale != null) {
-                this.textBody = this.textBody.with(locale, textBody != null ? textBody : "");
+                this.textBody =
+                        Strings.isNullOrEmpty(textBody) ? this.textBody.without(locale) : this.textBody.with(locale, textBody);
             }
             return this;
         }
 
         public MessageBuilder textBody(String textBody) {
-            this.textBody = this.textBody.with(I18N.getLocale(), textBody != null ? textBody : "");
-            return this;
+            return textBody(textBody, I18N.getLocale());
         }
 
         public MessageBuilder htmlBody(LocalizedString htmlBody) {
@@ -153,14 +150,14 @@ public final class Message extends Message_Base implements Comparable<Message> {
 
         public MessageBuilder htmlBody(String htmlBody, Locale locale) {
             if (locale != null) {
-                this.htmlBody = this.htmlBody.with(locale, htmlBody != null ? htmlBody : "");
+                this.htmlBody =
+                        Strings.isNullOrEmpty(htmlBody) ? this.htmlBody.without(locale) : this.htmlBody.with(locale, htmlBody);
             }
             return this;
         }
 
         public MessageBuilder htmlBody(String htmlBody) {
-            this.htmlBody = this.htmlBody.with(I18N.getLocale(), htmlBody != null ? htmlBody : "");
-            return this;
+            return htmlBody(htmlBody, I18N.getLocale());
         }
 
         public TemplateMessageBuilder template(String key) {
@@ -199,6 +196,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder to(Collection<Group> tos) {
+            this.tos.clear();
             if (tos != null) {
                 filteredAdd(tos.stream(), this.tos);
             }
@@ -213,11 +211,14 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder to(Group... tos) {
-            filteredAdd(Arrays.stream(tos), this.tos);
+            if (tos != null) {
+                filteredAdd(Arrays.stream(tos), this.tos);
+            }
             return this;
         }
 
         public MessageBuilder cc(Collection<Group> ccs) {
+            this.ccs.clear();
             if (ccs != null) {
                 filteredAdd(ccs.stream(), this.ccs);
             }
@@ -232,11 +233,14 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder cc(Group... ccs) {
-            filteredAdd(Arrays.stream(ccs), this.ccs);
+            if (ccs != null) {
+                filteredAdd(Arrays.stream(ccs), this.ccs);
+            }
             return this;
         }
 
         public MessageBuilder bcc(Collection<Group> bccs) {
+            this.bccs.clear();
             if (bccs != null) {
                 filteredAdd(bccs.stream(), this.bccs);
             }
@@ -251,11 +255,14 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder bcc(Group... bccs) {
-            filteredAdd(Arrays.stream(bccs), this.bccs);
+            if (bccs != null) {
+                filteredAdd(Arrays.stream(bccs), this.bccs);
+            }
             return this;
         }
 
         public MessageBuilder singleBcc(Collection<String> bccs) {
+            this.singleBccs.clear();
             if (bccs != null) {
                 filteredAdd(bccs.stream(), this.singleBccs);
             }
@@ -270,7 +277,9 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder singleBcc(String... bccs) {
-            filteredAdd(Arrays.stream(bccs), this.singleBccs);
+            if (bccs != null) {
+                filteredAdd(Arrays.stream(bccs), this.singleBccs);
+            }
             return this;
         }
 
