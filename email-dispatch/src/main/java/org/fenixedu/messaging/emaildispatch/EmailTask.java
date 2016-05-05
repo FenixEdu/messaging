@@ -26,7 +26,7 @@ package org.fenixedu.messaging.emaildispatch;
 
 import org.fenixedu.bennu.scheduler.CronTask;
 import org.fenixedu.bennu.scheduler.annotation.Task;
-import org.fenixedu.messaging.domain.MessagingSystem;
+import org.fenixedu.messaging.core.domain.MessagingSystem;
 import org.fenixedu.messaging.emaildispatch.domain.LocalEmailMessageDispatchReport;
 
 @Task(englishTitle = "Email Sender", readOnly = true)

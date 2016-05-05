@@ -1,5 +1,8 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,15 +21,12 @@ import javax.mail.MessagingException;
 import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.domain.UserProfile;
 import org.fenixedu.bennu.core.groups.Group;
-import org.fenixedu.messaging.domain.Message;
-import org.fenixedu.messaging.domain.MessagingSystem;
+import org.fenixedu.messaging.core.domain.Message;
+import org.fenixedu.messaging.core.domain.MessagingSystem;
 import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.Atomic.TxMode;
 
 import com.google.common.collect.Maps;
 
@@ -122,9 +122,8 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
         }
 
         handlers = MimeMessageHandler.create(tosByLocale, ccsByLocale, bccsByLocale);
-        valids =
-                Stream.of(tosByLocale, ccsByLocale, bccsByLocale).flatMap(m -> m.values().stream()).mapToInt(Collection::size)
-                        .sum();
+        valids = Stream.of(tosByLocale, ccsByLocale, bccsByLocale).flatMap(m -> m.values().stream()).mapToInt(Collection::size)
+                .sum();
 
         invalids.stream().forEach(blacklist::addInvalidAddress);
 

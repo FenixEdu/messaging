@@ -9,6 +9,9 @@
 .classpath
 .settings/
 
+.idea
+*.iml
+
 # Maven #
 target/
 bin/

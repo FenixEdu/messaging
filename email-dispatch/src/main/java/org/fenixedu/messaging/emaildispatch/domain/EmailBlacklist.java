@@ -1,16 +1,16 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.fenixedu.messaging.domain.MessagingSystem;
+import org.fenixedu.messaging.core.domain.MessagingSystem;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.Atomic.TxMode;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;

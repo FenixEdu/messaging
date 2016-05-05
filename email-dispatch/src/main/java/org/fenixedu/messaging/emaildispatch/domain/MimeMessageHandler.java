@@ -1,5 +1,8 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -25,15 +28,12 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
 import org.fenixedu.commons.i18n.LocalizedString;
-import org.fenixedu.messaging.domain.Message;
-import org.fenixedu.messaging.domain.MessagingSystem;
-import org.fenixedu.messaging.domain.Sender;
+import org.fenixedu.messaging.core.domain.Message;
+import org.fenixedu.messaging.core.domain.MessagingSystem;
+import org.fenixedu.messaging.core.domain.Sender;
 import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration;
 import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration.ConfigurationProperties;
 import org.joda.time.DateTime;
-
-import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.Atomic.TxMode;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -172,7 +172,8 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
             Collection<String> bccs) {
         Collection<MimeMessageHandler> handlers = new ArrayList<>();
         List<String> all =
-                Stream.of(tos, ccs, bccs).filter(Objects::nonNull).flatMap(Collection::stream).collect(Collectors.toList()), partial;
+                Stream.of(tos, ccs, bccs).filter(Objects::nonNull).flatMap(Collection::stream).collect(Collectors.toList()),
+                partial;
         List<List<String>> split = Lists.partition(all, MAX_RECIPIENTS);
         MimeMessageHandler handler;
 
@@ -196,17 +197,14 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
         if (i < nHandlers && mixedTos != 0) {
             partial = split.get(i);
             if (nCcs == 0) { //Tos along with Bccs
-                handler =
-                        new MimeMessageHandler(locale, partial.subList(0, mixedTos), null, partial.subList(mixedTos,
-                                partial.size()));
+                handler = new MimeMessageHandler(locale, partial.subList(0, mixedTos), null,
+                        partial.subList(mixedTos, partial.size()));
             } else if (ccStart == bccStart) {// Tos along with Ccs and Bccs
-                handler =
-                        new MimeMessageHandler(locale, partial.subList(0, mixedTos), partial.subList(mixedTos, mixedVisible),
-                                partial.subList(mixedVisible, partial.size()));
+                handler = new MimeMessageHandler(locale, partial.subList(0, mixedTos), partial.subList(mixedTos, mixedVisible),
+                        partial.subList(mixedVisible, partial.size()));
             } else { // Tos along with Ccs
-                handler =
-                        new MimeMessageHandler(locale, partial.subList(0, mixedTos), partial.subList(mixedTos, partial.size()),
-                                null);
+                handler = new MimeMessageHandler(locale, partial.subList(0, mixedTos), partial.subList(mixedTos, partial.size()),
+                        null);
             }
             handlers.add(handler);
             i++;
@@ -216,8 +214,8 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
         }
         if (i < nHandlers && mixedVisible != 0 && ccStart != bccStart) { // Ccs along with Bccs
             partial = split.get(i);
-            handlers.add(new MimeMessageHandler(locale, null, partial.subList(0, mixedVisible), partial.subList(mixedVisible,
-                    partial.size())));
+            handlers.add(new MimeMessageHandler(locale, null, partial.subList(0, mixedVisible),
+                    partial.subList(mixedVisible, partial.size())));
             i++;
         }
         for (; i < nHandlers; i++) { // Bccs only
@@ -263,9 +261,8 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
                         return RecipientType.BCC;
                     }
                 }));
-        getReport().addHandler(
-                new MimeMessageHandler(getLocale(), unsent.get(RecipientType.TO), unsent.get(RecipientType.CC), unsent
-                        .get(RecipientType.BCC)));
+        getReport().addHandler(new MimeMessageHandler(getLocale(), unsent.get(RecipientType.TO), unsent.get(RecipientType.CC),
+                unsent.get(RecipientType.BCC)));
     }
 
     public void delete() {
