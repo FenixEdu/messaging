@@ -145,7 +145,7 @@ public class MessagingController {
             throw MessagingDomainException.forbidden();
         }
         model.addAttribute("locales", getSupportedLocales(message));
-        model.addAttribute("deletable", isMessageDeletable(message));
+        model.addAttribute("deletable", message.isDeletable());
         model.addAttribute("message", message);
         return "/messaging/viewMessage";
     }
@@ -160,24 +160,10 @@ public class MessagingController {
     @RequestMapping(value = "/messages/{message}/delete", method = RequestMethod.POST)
     public String deleteMessage(@PathVariable Message message, Model model) {
         Sender sender = message.getSender();
-        userMessageDelete(message);
-        return viewSender(sender, model, 1, 10);
-    }
-
-    private void userMessageDelete(Message message) {
-        if (isMessageDeletable(message)) {
-            message.delete();
-        } else if (!isLoggedUserCreator(message)) {
+        if (!message.safeDelete()) {
             throw MessagingDomainException.forbidden();
         }
-    }
-
-    private boolean isMessageDeletable(Message message) {
-        return isLoggedUserCreator(message) && message.getDispatchReport() == null;
-    }
-
-    private boolean isLoggedUserCreator(Message message) {
-        return message.getUser().equals(Authenticate.getUser());
+        return viewSender(sender, model, 1, 10);
     }
 
     private boolean allowedSender(Sender sender) {

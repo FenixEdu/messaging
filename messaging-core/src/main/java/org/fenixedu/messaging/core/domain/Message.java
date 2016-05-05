@@ -28,7 +28,6 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,10 +44,16 @@ import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.messaging.core.domain.MessagingSystem.Util;
 import org.fenixedu.messaging.core.exception.MessagingDomainException;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Strings;
+
+import static java.util.Objects.requireNonNull;
+import static org.fenixedu.messaging.core.domain.MessagingSystem.Util.builderSetAdd;
+import static org.fenixedu.messaging.core.domain.MessagingSystem.Util.builderSetCopy;
+import static org.fenixedu.messaging.core.domain.MessagingSystem.Util.toEmailSet;
 
 /**
  * @author Luis Cruz
@@ -58,34 +63,29 @@ public final class Message extends Message_Base implements Comparable<Message> {
     public static final class TemplateMessageBuilder {
 
         private MessageBuilder messageBuilder;
-        private String key;
+        private MessageTemplate template;
         private final Map<String, Object> params = new HashMap<>();
 
         protected TemplateMessageBuilder(String key, MessageBuilder messageBuilder) {
-            if (MessageTemplate.get(key) == null) {
+            this.template = MessageTemplate.get(key);
+            if (this.template == null) {
                 throw MessagingDomainException.missingTemplate(key);
             }
-            this.key = key;
-            this.messageBuilder = messageBuilder;
+            this.messageBuilder = requireNonNull(messageBuilder);
         }
 
         public TemplateMessageBuilder parameter(String s, Object e) {
-            if (s != null && e != null) {
-                this.params.put(s, e);
-            }
+            this.params.put(requireNonNull(s), e);
             return this;
         }
 
         public TemplateMessageBuilder parameters(Map<String, Object> params) {
-            if (params != null) {
-                params.entrySet().stream().filter(e -> e.getKey() != null && e.getValue() != null)
-                        .forEach(e -> this.params.put(e.getKey(), e.getValue()));
-            }
+            params.entrySet().stream().filter(e -> e.getKey() != null && e.getValue() != null)
+                    .forEach(e -> this.params.put(e.getKey(), e.getValue()));
             return this;
         }
 
         public MessageBuilder and() {
-            MessageTemplate template = MessageTemplate.get(key);
             messageBuilder.subject(template.getCompiledSubject(params));
             messageBuilder.textBody(template.getCompiledTextBody(params));
             messageBuilder.htmlBody(template.getCompiledHtmlBody(params));
@@ -111,14 +111,13 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder subject(LocalizedString subject) {
-            this.subject = subject != null ? subject : new LocalizedString();
+            this.subject = requireNonNull(subject);
             return this;
         }
 
         public MessageBuilder subject(String subject, Locale locale) {
-            if (locale != null) {
-                this.subject = Strings.isNullOrEmpty(subject) ? this.subject.without(locale) : this.subject.with(locale, subject);
-            }
+            requireNonNull(locale);
+            this.subject = Strings.isNullOrEmpty(subject) ? this.subject.without(locale) : this.subject.with(locale, subject);
             return this;
         }
 
@@ -127,15 +126,14 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder textBody(LocalizedString textBody) {
-            this.textBody = textBody != null ? textBody : new LocalizedString();
+            this.textBody = requireNonNull(textBody);
             return this;
         }
 
         public MessageBuilder textBody(String textBody, Locale locale) {
-            if (locale != null) {
-                this.textBody =
-                        Strings.isNullOrEmpty(textBody) ? this.textBody.without(locale) : this.textBody.with(locale, textBody);
-            }
+            requireNonNull(locale);
+            this.textBody =
+                    Strings.isNullOrEmpty(textBody) ? this.textBody.without(locale) : this.textBody.with(locale, textBody);
             return this;
         }
 
@@ -144,15 +142,14 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder htmlBody(LocalizedString htmlBody) {
-            this.htmlBody = htmlBody != null ? htmlBody : new LocalizedString();
+            this.htmlBody = requireNonNull(htmlBody);
             return this;
         }
 
         public MessageBuilder htmlBody(String htmlBody, Locale locale) {
-            if (locale != null) {
-                this.htmlBody =
-                        Strings.isNullOrEmpty(htmlBody) ? this.htmlBody.without(locale) : this.htmlBody.with(locale, htmlBody);
-            }
+            requireNonNull(locale);
+            this.htmlBody =
+                    Strings.isNullOrEmpty(htmlBody) ? this.htmlBody.without(locale) : this.htmlBody.with(locale, htmlBody);
             return this;
         }
 
@@ -161,15 +158,15 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public TemplateMessageBuilder template(String key) {
-            return new TemplateMessageBuilder(key, this);
+            return new TemplateMessageBuilder(requireNonNull(key), this);
         }
 
         public MessageBuilder template(String key, Map<String, Object> parameters) {
-            return new TemplateMessageBuilder(key, this).parameters(parameters).and();
+            return new TemplateMessageBuilder(requireNonNull(key), this).parameters(requireNonNull(parameters)).and();
         }
 
         public MessageBuilder preferredLocale(Locale preferredLocale) {
-            this.preferredLocale = preferredLocale != null ? preferredLocale : I18N.getLocale();
+            this.preferredLocale = requireNonNull(preferredLocale);
             return this;
         }
 
@@ -191,95 +188,63 @@ public final class Message extends Message_Base implements Comparable<Message> {
             return this;
         }
 
-        private static <T> void filteredAdd(Stream<T> items, Collection<T> collection) {
-            items.filter(Objects::nonNull).forEach(collection::add);
-        }
-
         public MessageBuilder to(Collection<Group> tos) {
-            this.tos.clear();
-            if (tos != null) {
-                filteredAdd(tos.stream(), this.tos);
-            }
+            builderSetCopy(requireNonNull(tos), Objects::nonNull, this.tos);
             return this;
         }
 
         public MessageBuilder to(Stream<Group> tos) {
-            if (tos != null) {
-                filteredAdd(tos, this.tos);
-            }
+            builderSetAdd(requireNonNull(tos), Objects::nonNull, this.tos);
             return this;
         }
 
         public MessageBuilder to(Group... tos) {
-            if (tos != null) {
-                filteredAdd(Arrays.stream(tos), this.tos);
-            }
+            builderSetAdd(requireNonNull(tos), Objects::nonNull, this.tos);
             return this;
         }
 
         public MessageBuilder cc(Collection<Group> ccs) {
-            this.ccs.clear();
-            if (ccs != null) {
-                filteredAdd(ccs.stream(), this.ccs);
-            }
+            builderSetCopy(requireNonNull(ccs), Objects::nonNull, this.ccs);
             return this;
         }
 
         public MessageBuilder cc(Stream<Group> ccs) {
-            if (ccs != null) {
-                filteredAdd(ccs, this.ccs);
-            }
+            builderSetAdd(requireNonNull(ccs), Objects::nonNull, this.ccs);
             return this;
         }
 
         public MessageBuilder cc(Group... ccs) {
-            if (ccs != null) {
-                filteredAdd(Arrays.stream(ccs), this.ccs);
-            }
+            builderSetAdd(requireNonNull(ccs), Objects::nonNull, this.ccs);
             return this;
         }
 
         public MessageBuilder bcc(Collection<Group> bccs) {
-            this.bccs.clear();
-            if (bccs != null) {
-                filteredAdd(bccs.stream(), this.bccs);
-            }
+            builderSetCopy(requireNonNull(bccs), Objects::nonNull, this.bccs);
             return this;
         }
 
         public MessageBuilder bcc(Stream<Group> bccs) {
-            if (bccs != null) {
-                filteredAdd(bccs, this.bccs);
-            }
+            builderSetAdd(requireNonNull(bccs), Objects::nonNull, this.bccs);
             return this;
         }
 
         public MessageBuilder bcc(Group... bccs) {
-            if (bccs != null) {
-                filteredAdd(Arrays.stream(bccs), this.bccs);
-            }
+            builderSetAdd(requireNonNull(bccs), Objects::nonNull, this.bccs);
             return this;
         }
 
         public MessageBuilder singleBcc(Collection<String> bccs) {
-            this.singleBccs.clear();
-            if (bccs != null) {
-                filteredAdd(bccs.stream(), this.singleBccs);
-            }
+            builderSetCopy(requireNonNull(bccs), Util::isValidEmail, this.singleBccs);
             return this;
         }
 
         public MessageBuilder singleBcc(Stream<String> bccs) {
-            if (bccs != null) {
-                filteredAdd(bccs, this.singleBccs);
-            }
+            builderSetAdd(requireNonNull(bccs), Util::isValidEmail, this.singleBccs);
             return this;
         }
 
         public MessageBuilder singleBcc(String... bccs) {
-            if (bccs != null) {
-                filteredAdd(Arrays.stream(bccs), this.singleBccs);
-            }
+            builderSetAdd(requireNonNull(bccs), Util::isValidEmail, this.singleBccs);
             return this;
         }
 
@@ -288,7 +253,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder replyTo(String replyTo) {
-            this.replyTo = replyTo;
+            this.replyTo = MessagingSystem.Util.isValidEmail(replyTo) ? replyTo : null;
             return this;
         }
 
@@ -300,7 +265,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
             this.tos.stream().map(Group::toPersistentGroup).forEach(message::addTo);
             this.ccs.stream().map(Group::toPersistentGroup).forEach(message::addCc);
             this.bccs.stream().map(Group::toPersistentGroup).forEach(message::addBcc);
-            message.setSingleBccs(Strings.emptyToNull(MessagingSystem.Util.toEmailListString(singleBccs)));
+            message.setSingleBccs(Strings.emptyToNull(Util.toEmailListString(singleBccs)));
             message.setSubject(subject);
             message.setTextBody(textBody);
             message.setHtmlBody(htmlBody);
@@ -338,12 +303,89 @@ public final class Message extends Message_Base implements Comparable<Message> {
         return super.getDispatchReport();
     }
 
+    @Override
+    public DateTime getCreated() {
+        // FIXME remove when the framework supports read-only properties
+        return super.getCreated();
+    }
+
+    @Override
+    public String getReplyTo() {
+        // FIXME remove when the framework supports read-only properties
+        return super.getReplyTo();
+    }
+
+    @Override
+    public Sender getSender() {
+        // FIXME remove when the framework supports read-only properties
+        return super.getSender();
+    }
+
+    @Override
+    public LocalizedString getSubject() {
+        // FIXME remove when the framework supports read-only properties
+        return super.getSubject();
+    }
+
+    @Override
+    public LocalizedString getTextBody() {
+        // FIXME remove when the framework supports read-only properties
+        return super.getTextBody();
+    }
+
+    @Override
+    public LocalizedString getHtmlBody() {
+        // FIXME remove when the framework supports read-only properties
+        return super.getHtmlBody();
+    }
+
+    @Override
+    public Locale getPreferredLocale() {
+        // FIXME remove when the framework supports read-only properties
+        return super.getPreferredLocale();
+    }
+
+    public Set<Group> getToGroups() {
+        return getToSet().stream().map(PersistentGroup::toGroup).collect(Collectors.toSet());
+    }
+
+    public Set<String> getTos() {
+        return toEmailSet(getToSet());
+    }
+
+    public Set<Group> getCcGroups() {
+        return getCcSet().stream().map(PersistentGroup::toGroup).collect(Collectors.toSet());
+    }
+
+    public Set<String> getCcs() {
+        return toEmailSet(getCcSet());
+    }
+
+    public Set<Group> getBccGroups() {
+        return getBccSet().stream().map(PersistentGroup::toGroup).collect(Collectors.toSet());
+    }
+
+    public Set<String> getBccs() {
+        Set<String> bccs = toEmailSet(getBccSet());
+        bccs.addAll(getSingleBccsSet());
+        return bccs;
+    }
+
+    public Set<String> getSingleBccsSet() {
+        return toEmailSet(getSingleBccs());
+    }
+
+    public Set<Locale> getContentLocales() {
+        return Stream.of(getSubject(), getTextBody(), getHtmlBody()).filter(Objects::nonNull)
+                .flatMap(c -> c.getLocales().stream()).collect(Collectors.toSet());
+    }
+
     public DateTime getSent() {
         return getDispatchReport() != null ? getDispatchReport().getFinishedDelivery() : null;
     }
 
-    @Atomic
-    public void delete() {
+    @Atomic(mode = TxMode.WRITE)
+    protected void delete() {
         getToSet().clear();
         getCcSet().clear();
         getBccSet().clear();
@@ -357,39 +399,20 @@ public final class Message extends Message_Base implements Comparable<Message> {
         deleteDomainObject();
     }
 
-    public Set<Group> getToGroups() {
-        return getToSet().stream().map(PersistentGroup::toGroup).collect(Collectors.toSet());
+    public boolean safeDelete() {
+        if (isDeletable()) {
+            delete();
+            return true;
+        }
+        return false;
     }
 
-    public Set<String> getTos() {
-        return MessagingSystem.Util.toEmailSet(getToSet());
+    public boolean isDeletable() {
+        return isCreatorLoggedIn() && getDispatchReport() == null;
     }
 
-    public Set<Group> getCcGroups() {
-        return getCcSet().stream().map(PersistentGroup::toGroup).collect(Collectors.toSet());
-    }
-
-    public Set<String> getCcs() {
-        return MessagingSystem.Util.toEmailSet(getCcSet());
-    }
-
-    public Set<Group> getBccGroups() {
-        return getBccSet().stream().map(PersistentGroup::toGroup).collect(Collectors.toSet());
-    }
-
-    public Set<String> getBccs() {
-        Set<String> bccs = MessagingSystem.Util.toEmailSet(getBccSet());
-        bccs.addAll(getSingleBccsSet());
-        return bccs;
-    }
-
-    public Set<Locale> getContentLocales() {
-        return Stream.of(getSubject(), getTextBody(), getHtmlBody()).filter(Objects::nonNull)
-                .flatMap(c -> c.getLocales().stream()).collect(Collectors.toSet());
-    }
-
-    public Set<String> getSingleBccsSet() {
-        return MessagingSystem.Util.toEmailSet(getSingleBccs());
+    public boolean isCreatorLoggedIn() {
+        return getUser().equals(Authenticate.getUser());
     }
 
     @Override

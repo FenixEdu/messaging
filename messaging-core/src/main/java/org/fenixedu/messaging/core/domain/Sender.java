@@ -27,7 +27,6 @@ package org.fenixedu.messaging.core.domain;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
@@ -45,6 +44,11 @@ import org.joda.time.Period;
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 
+import static java.util.Objects.requireNonNull;
+import static org.fenixedu.messaging.core.domain.MessagingSystem.Util.builderSetAdd;
+import static org.fenixedu.messaging.core.domain.MessagingSystem.Util.builderSetCopy;
+import static org.fenixedu.messaging.core.domain.MessagingSystem.Util.isValidEmail;
+
 /**
  * @author Luis Cruz
  */
@@ -59,23 +63,23 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
         private String address, name = null, replyTo = null;
         private boolean htmlEnabled = false;
         private Group members = Group.nobody();
-        private MessageDeletionPolicy policy = MessageDeletionPolicy.unlimited();
+        private MessageDeletionPolicy policy = MessageDeletionPolicy.keepAll();
         private Set<Group> recipients = new HashSet<>();
 
         protected SenderBuilder(String address) {
-            if (address == null) {
-                throw MessagingDomainException.nullAddress();
+            if (!isValidEmail(address)) {
+                throw MessagingDomainException.invalidAddress();
             }
             this.address = address;
         }
 
         public SenderBuilder as(String name) {
-            this.name = name;
+            this.name = requireNonNull(name);
             return this;
         }
 
         public SenderBuilder replyTo(String replyTo) {
-            this.replyTo = replyTo;
+            this.replyTo = isValidEmail(replyTo) ? replyTo : null;
             return this;
         }
 
@@ -85,53 +89,53 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
         }
 
         public SenderBuilder members(Group members) {
-            this.members = members != null ? members : Group.nobody();
-            return this;
-        }
-
-        public SenderBuilder members(PersistentGroup members) {
-            this.members = members != null ? members.toGroup() : Group.nobody();
+            this.members = requireNonNull(members);
             return this;
         }
 
         public SenderBuilder deletionPolicy(MessageDeletionPolicy policy) {
-            this.policy = policy != null ? policy : MessageDeletionPolicy.unlimited();
+            this.policy = requireNonNull(policy);
             return this;
         }
 
         public SenderBuilder keepMessages(int amount) {
-            return deletionPolicy(MessageDeletionPolicy.keepAmount(amount));
+            this.policy = MessageDeletionPolicy.keep(amount);
+            return this;
         }
 
         public SenderBuilder keepMessages(Period period) {
-            return deletionPolicy(MessageDeletionPolicy.keepForDuration(period));
+            this.policy = MessageDeletionPolicy.keep(period);
+            return this;
         }
 
         public SenderBuilder keepMessages(int amount, Period period) {
-            return deletionPolicy(MessageDeletionPolicy.keepAmountForDuration(amount, period));
+            this.policy = MessageDeletionPolicy.keep(amount, period);
+            return this;
+        }
+
+        public SenderBuilder keepAllMessages() {
+            this.policy = MessageDeletionPolicy.keepAll();
+            return this;
+        }
+
+        public SenderBuilder keepNoMessages() {
+            this.policy = MessageDeletionPolicy.keepAll();
+            return this;
         }
 
         public SenderBuilder recipients(Group... recipients) {
-            filteredAddRecipients(Arrays.stream(recipients));
+            builderSetAdd(requireNonNull(recipients), Objects::nonNull, this.recipients);
             return this;
         }
 
         public SenderBuilder recipients(Collection<Group> recipients) {
-            if (recipients != null) {
-                filteredAddRecipients(recipients.stream());
-            }
+            builderSetCopy(requireNonNull(recipients), Objects::nonNull, this.recipients);
             return this;
         }
 
         public SenderBuilder recipients(Stream<Group> recipients) {
-            if (recipients != null) {
-                filteredAddRecipients(recipients);
-            }
+            builderSetAdd(requireNonNull(recipients), Objects::nonNull, this.recipients);
             return this;
-        }
-
-        private void filteredAddRecipients(Stream<Group> recipients) {
-            recipients.filter(Objects::nonNull).forEach(this.recipients::add);
         }
 
         @Atomic(mode = TxMode.WRITE)
@@ -156,14 +160,6 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
     public Set<Message> getMessageSet() {
         // FIXME remove when framework supports read-only relations
         return super.getMessageSet();
-    }
-
-    public void delete() {
-        getMessageSet().forEach(Message::delete);
-        setMemberGroup(null);
-        getRecipientSet().clear();
-        setMessagingSystem(null);
-        deleteDomainObject();
     }
 
     public Group getMembers() {
@@ -203,6 +199,15 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
 
     protected void pruneMessages() {
         getPolicy().pruneMessages(this);
+    }
+
+    @Atomic(mode = TxMode.WRITE)
+    public void delete() {
+        getMessageSet().forEach(Message::delete);
+        setMemberGroup(null);
+        getRecipientSet().clear();
+        setMessagingSystem(null);
+        deleteDomainObject();
     }
 
     public static Set<Sender> available() {
