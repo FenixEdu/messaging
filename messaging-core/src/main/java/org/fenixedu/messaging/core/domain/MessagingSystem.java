@@ -27,9 +27,11 @@ package org.fenixedu.messaging.core.domain;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -121,6 +123,19 @@ public class MessagingSystem extends MessagingSystem_Base {
         public static String toEmailListString(Collection<String> emails) {
             return emails == null ? "" : MAIL_LIST_JOINER
                     .join(emails.stream().filter(e -> !Strings.isNullOrEmpty(e)).collect(Collectors.toSet()));
+        }
+
+        protected static <T> void builderSetAdd(Stream<T> stream, Predicate<T> filter, Set<T> set) {
+            stream.filter(filter).forEach(set::add);
+        }
+
+        protected static <T> void builderSetAdd(T[] array, Predicate<T> filter, Set<T> set) {
+            builderSetAdd(Arrays.stream(array), filter, set);
+        }
+
+        protected static <T> void builderSetCopy(Collection<T> collection, Predicate<T> filter, Set<T> set) {
+            set.clear();
+            builderSetAdd(collection.stream(), filter, set);
         }
     }
 }

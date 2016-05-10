@@ -19,13 +19,13 @@ class Sender {
 }
 
 class Message {
-	public LocalizedString subject;
-	public LocalizedString textBody;
-	public LocalizedString htmlBody;
-	public Locale preferredLocale;
-	public DateTime created;
-	public String replyTo;
-	public String singleBccs;
+	protected LocalizedString subject;
+	protected LocalizedString textBody;
+	protected LocalizedString htmlBody;
+	protected Locale preferredLocale;
+	protected DateTime created;
+	protected String replyTo;
+	protected String singleBccs;
 }
 
 class MessageTemplate {
@@ -36,7 +36,7 @@ class MessageTemplate {
 }
 
 class MessageDispatchReport {
-	public DateTime startedDelivery;
+	protected DateTime startedDelivery;
 	public DateTime finishedDelivery;
 	public int totalCount;
 	public int deliveredCount;
@@ -126,7 +126,7 @@ relation SenderPersistentGroupRecipients {
 }
 
 relation SenderMessage {
-	public Sender playsRole sender {
+	protected Sender playsRole sender {
 		multiplicity 1..1;
 	}
 	protected Message playsRole message {

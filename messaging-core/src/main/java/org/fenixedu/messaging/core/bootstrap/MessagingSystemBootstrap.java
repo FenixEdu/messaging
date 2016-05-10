@@ -59,7 +59,7 @@ public class MessagingSystemBootstrap {
             sender.setName(name);
             sender.setAddress(address);
             sender.setMembers(group);
-            sender.setPolicy(MessageDeletionPolicy.unlimited());
+            sender.setPolicy(MessageDeletionPolicy.keepAll());
             sender.addRecipient(Group.anyone());
         }
         return errors;

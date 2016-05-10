@@ -19,44 +19,41 @@ public class MessageDeletionPolicy implements Serializable {
     private static final long serialVersionUID = 1535994777149570075L;
     private static final String BUNDLE = "MessagingResources";
     private static final Joiner PRESENTATION_JOINER = Joiner.on(", "), SERIALIZATION_JOINER = Joiner.on(",");
-    private static final MessageDeletionPolicy UNLIMITED = new MessageDeletionPolicy();
+    private static final MessageDeletionPolicy ALL = new MessageDeletionPolicy(null, null), NONE =
+            new MessageDeletionPolicy(0, null);
 
-    private Period keepPeriod = null;
-    private Integer keepAmount = null;
+    private Period keepPeriod;
+    private Integer keepAmount;
 
-    protected MessageDeletionPolicy() {
-    }
-
-    protected MessageDeletionPolicy(Period period, Integer amount) {
+    protected MessageDeletionPolicy(Integer amount, Period period) {
         this.keepPeriod = period;
-        if (amount != null) {
-            this.keepAmount = amount > 0 ? amount : 0;
-        }
+        this.keepAmount = amount;
     }
 
-    public static MessageDeletionPolicy keepAmountForDuration(Integer amount, Period period) {
+    public static MessageDeletionPolicy keep(Integer amount, Period period) {
         if (amount == null && period == null) {
-            return unlimited();
+            return keepAll();
         }
-        return new MessageDeletionPolicy(period, amount);
+        if (amount.intValue() <= 0) {
+            return keepNone();
+        }
+        return new MessageDeletionPolicy(amount, period);
     }
 
-    public static MessageDeletionPolicy keepForDuration(Period period) {
-        if (period == null) {
-            return unlimited();
-        }
-        return new MessageDeletionPolicy(period, null);
+    public static MessageDeletionPolicy keep(Period period) {
+        return keep(null, period);
     }
 
-    public static MessageDeletionPolicy keepAmount(Integer amount) {
-        if (amount == null) {
-            return unlimited();
-        }
-        return new MessageDeletionPolicy(null, amount);
+    public static MessageDeletionPolicy keep(Integer amount) {
+        return keep(amount, null);
     }
 
-    public static MessageDeletionPolicy unlimited() {
-        return UNLIMITED;
+    public static MessageDeletionPolicy keepAll() {
+        return ALL;
+    }
+
+    public static MessageDeletionPolicy keepNone() {
+        return NONE;
     }
 
     public Integer getAmount() {
@@ -87,7 +84,7 @@ public class MessageDeletionPolicy implements Serializable {
 
     public static MessageDeletionPolicy internalize(String serialized) {
         if (serialized.contains("-1")) {
-            return MessageDeletionPolicy.unlimited();
+            return MessageDeletionPolicy.keepAll();
         }
         String[] attrs = serialized.split("\\s*,\\s*");
         Integer amount = null;
@@ -101,7 +98,7 @@ public class MessageDeletionPolicy implements Serializable {
                 }
             }
         }
-        return new MessageDeletionPolicy(period, amount);
+        return keep(amount, period);
     }
 
     public static MessageDeletionPolicy internalize(String[] parts) {
