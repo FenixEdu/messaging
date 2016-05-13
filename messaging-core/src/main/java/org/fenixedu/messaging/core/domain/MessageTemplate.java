@@ -112,13 +112,9 @@ public class MessageTemplate extends MessageTemplate_Base implements Comparable<
         return declarations.get(getId());
     }
 
-    ;
-
     public boolean isDeclared() {
         return declarations.containsKey(getId());
     }
-
-    ;
 
     public Set<Locale> getContentLocales() {
         return Stream.of(getSubject(), getTextBody(), getHtmlBody()).filter(Objects::nonNull)
@@ -159,6 +155,10 @@ public class MessageTemplate extends MessageTemplate_Base implements Comparable<
 
     public static Set<MessageTemplate> all() {
         return Sets.newHashSet(MessagingSystem.getInstance().getTemplateSet());
+    }
+
+    public static Set<MessageTemplate> undeclared() {
+        return MessagingSystem.getInstance().getTemplateSet().stream().filter(t->!t.isDeclared()).collect(Collectors.toSet());
     }
 
     public static MessageTemplate get(String id) {

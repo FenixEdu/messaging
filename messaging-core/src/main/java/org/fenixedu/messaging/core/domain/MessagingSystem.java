@@ -76,11 +76,6 @@ public class MessagingSystem extends MessagingSystem_Base {
     }
 
     @Atomic(mode = TxMode.WRITE)
-    public static void pruneMessages() {
-        getInstance().getSenderSet().forEach(Sender::pruneMessages);
-    }
-
-    @Atomic(mode = TxMode.WRITE)
     public static MessageDispatchReport dispatch(Message message) {
         MessageDispatchReport report = null;
         if (dispatcher != null) {
@@ -93,8 +88,17 @@ public class MessagingSystem extends MessagingSystem_Base {
         return report;
     }
 
+    public static MessageDispatcher getMessageDispatcher(MessageDispatcher dispatcher) {
+        return MessagingSystem.dispatcher;
+    }
+
     public static void setMessageDispatcher(MessageDispatcher dispatcher) {
         MessagingSystem.dispatcher = dispatcher;
+    }
+
+    public static Set<Message> getPendingMessages() {
+        // FIXME remove when the framework supports read-only properties
+        return getInstance().getMessagePendingDispatchSet();
     }
 
     public static Sender systemSender() {
