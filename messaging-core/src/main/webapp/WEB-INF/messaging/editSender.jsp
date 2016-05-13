@@ -60,8 +60,9 @@
 		<div class="col-sm-10">
 			<div class="input-group form-inline">
 				<span class="input-group-addon" style="text-align: left;">
-					<input type="checkbox" name="policy" id="policy-unlimited" value="-1" ${senderBean.unlimitedPolicy ? "checked" : ""}>&nbsp;
-					<label style="margin: 0;" for="policy-unlimited"><spring:message code="label.sender.policy.unlimited"/></label>
+					<input type="checkbox" name="policy" id="policy-all" value="-1"
+					${senderBean.allPolicy ? "checked" : ""}>&nbsp;
+					<label style="margin: 0;" for="policy-all"><spring:message code="label.sender.policy.all"/></label>
 				</span>
 				<span class="input-group-addon">
 					<input type="checkbox" name="policy" id="policy-period" value="" ${senderBean.periodPolicy.isEmpty() ? "" : "checked"}>&nbsp;
@@ -70,10 +71,15 @@
 				<spring:message code="hint.period" var="placeholder"/>
 				<input id="policy-period-value" type="text" pattern= "(\d+Y)?(\d+M)?(\d+W)?(\d+D)?(T(?=.)(\d+H)?(\d+M)?(\d+S)?)?" class="form-control" value="${senderBean.periodPolicy.isEmpty() ? '' : senderBean.periodPolicy}" placeholder="${placeholder}"/>
 				<span class="input-group-addon">
-					<input type="checkbox"  name="policy" id="policy-amount" value="" ${senderBean.amountPolicy >= 0 ? "checked" : ""}>&nbsp;
+					<input type="checkbox"  name="policy" id="policy-amount" value="" ${senderBean.amountPolicy > 0 ? "checked" : ""}>&nbsp;
 					<label style="margin: 0;" for="policy-amount"><spring:message code="label.sender.policy.amount"/></label>
 				</span>
-				<input id="policy-amount-value" type="number" min="0" class="form-control" value="${senderBean.amountPolicy >= 0 ? senderBean.amountPolicy : ''}"/>
+				<input id="policy-amount-value" type="number" min="1" class="form-control" value="${senderBean.amountPolicy > 0 ? senderBean.amountPolicy : ''}"/>
+				<span class="input-group-addon" style="text-align: left;">
+					<input type="checkbox" name="policy" id="policy-none" value="M0"
+						${senderBean.nonePolicy ? "checked" : ""}>&nbsp;
+					<label style="margin: 0;" for="policy-none"><spring:message code="label.sender.policy.none"/></label>
+				</span>
 			</div>
 		</div>
 	</div>
@@ -82,10 +88,12 @@
 		<div class="col-sm-10">
 			<div class="btn-group btn-group-xs" data-toggle="buttons">
 				<label class="html-switch btn btn-${senderBean.htmlEnabled ? 'primary active' : 'default'}">
-					<input type="radio" name="htmlEnabled" id="yes" value="true" ${senderBean.htmlEnabled ? 'checked' : ''}> Yes
+					<input type="radio" name="htmlEnabled" id="yes" value="true" ${senderBean.htmlEnabled ? 'checked' : ''}>
+					<spring:message code="label.on"/>
 				</label>
 				<label class="html-switch btn btn-${senderBean.htmlEnabled  ? 'default' : 'primary active'}">
-					<input type="radio" name="htmlEnabled" id="no" value="false" ${senderBean.htmlEnabled ? '' : 'checked'}> No
+					<input type="radio" name="htmlEnabled" id="no" value="false" ${senderBean.htmlEnabled ? '' : 'checked'}>
+					<spring:message code="label.off"/>
 				</label>
 			</div>
 		</div>
@@ -106,8 +114,9 @@
 		}
 	});
 
-	//message deletion policy choice
-	var nullPolicy = $('#policy-unlimited'),
+	//message storage policy choice
+	var allPolicy = $('#policy-all'),
+		nonePolicy = $('#policy-none'),
 		periodPolicy = $('#policy-period').attr('aux-data-mark','P'),
 		amountPolicy = $('#policy-amount').attr('aux-data-mark','M'),
 		policyParts = $([periodPolicy, amountPolicy]).map(function () {return this.toArray();});
@@ -118,13 +127,38 @@
 			return $('#'+checkbox.attr('id')+'-value');
 	},	policyPartValues = policyParts.map(function(){ return getValue($(this)).toArray();});
 
-	nullPolicy.change(function() {
+	function allUnchecked(){
+		return !allPolicy.is(':checked') && !nonePolicy.is(':checked') &&
+				policyParts.filter(function(){;return $(this).is(':checked')}).first().get().length === 0;
+	}
+
+	allPolicy.change(function() {
 		var checked = $(this).is(':checked');
-		policyParts.prop('checked', !checked);
-		policyPartValues.prop('required', !checked).prop('disabled', checked);
+		if(checked) {
+			nonePolicy.prop('checked', false);
+			policyParts.prop('checked', false);
+			policyPartValues.prop('required', false).prop('disabled', true);
+		} else if(allUnchecked()) {
+			nonePolicy.prop('checked', true);
+		}
+	});
+	nonePolicy.change(function() {
+		var checked = $(this).is(':checked');
+		if(checked) {
+			allPolicy.prop('checked', false);
+			policyParts.prop('checked', false);
+			policyPartValues.prop('required', false).prop('disabled', true);
+		} else if(allUnchecked()) {
+			allPolicy.prop('checked', true);
+		}
 	});
 	policyParts.change(function(){
-		nullPolicy.prop('checked', policyParts.filter(function(){;return $(this).is(':checked')}).first().get().length === 0);
+		if(allUnchecked()) {
+			allPolicy.prop('checked', true);
+		} else {
+			allPolicy.prop('checked', false);
+			nonePolicy.prop('checked', false);
+		}
 		var checkbox = $(this), checked = checkbox.is(':checked');
 		getValue(checkbox).prop('required', checked).prop('disabled', !checked);
 	}).change();
