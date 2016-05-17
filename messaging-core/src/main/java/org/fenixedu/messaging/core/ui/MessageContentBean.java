@@ -23,11 +23,11 @@ public class MessageContentBean implements Serializable {
     public MessageContentBean() {
     }
 
-    public MessageContentBean(MessageTemplateDeclaration d) {
-        if (d != null) {
-            subject = d.getDefaultSubject();
-            textBody = d.getDefaultTextBody();
-            htmlBody = d.getDefaultHtmlBody();
+    public MessageContentBean(MessageTemplateDeclaration declaration) {
+        if (declaration != null) {
+            subject = declaration.getDefaultSubject();
+            textBody = declaration.getDefaultTextBody();
+            htmlBody = declaration.getDefaultHtmlBody();
         } else {
             subject = new LocalizedString();
             textBody = new LocalizedString();
@@ -35,13 +35,11 @@ public class MessageContentBean implements Serializable {
         }
     }
 
-    public MessageContentBean(MessageTemplate t) {
-        subject = t.getSubject();
-        textBody = t.getTextBody();
-        htmlBody = t.getHtmlBody();
+    public MessageContentBean(MessageTemplate template) {
+        copy(template);
     }
 
-    protected Collection<String> validate() {
+    public Collection<String> validate() {
         Collection<String> errors = Lists.newArrayList();
 
         if (getSubject() == null || getSubject().isEmpty()) {
@@ -88,20 +86,13 @@ public class MessageContentBean implements Serializable {
         this.htmlBody = htmlBody;
     }
 
-    public void copy(MessageTemplate template) {
-        if (getSubject() == null) {
-            subject = template.getSubject();
-        }
-
-        if (getTextBody() == null) {
-            textBody = template.getTextBody();
-        }
-        if (getHtmlBody() == null) {
-            htmlBody = template.getHtmlBody();
-        }
+    void copy(MessageTemplate template) {
+        subject = template.getSubject();
+        textBody = template.getTextBody();
+        htmlBody = template.getHtmlBody();
     }
 
-    public boolean edit(MessageTemplate template) {
+    boolean edit(MessageTemplate template) {
         validate();
         if (getErrors().isEmpty()) {
             atomic(() -> {

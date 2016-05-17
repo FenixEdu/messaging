@@ -24,7 +24,6 @@
  */
 package org.fenixedu.messaging.core.ui;
 
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Set;
@@ -60,8 +59,8 @@ public class MessageBean extends MessageContentBean {
     private static final long serialVersionUID = 336571169494160668L;
 
     private Sender sender;
-    private String replyTo;
-    private Set<String> singleRecipients, recipients;
+    private String replyTo, singleRecipients;
+    private Set<String> recipients;
     private Locale preferredLocale = I18N.getLocale();
 
     public Sender getSender() {
@@ -91,41 +90,63 @@ public class MessageBean extends MessageContentBean {
     public Set<Group> getRecipientGroups() {
         Set<String> recipientExpressions = getRecipients();
         if (recipientExpressions != null) {
-            Base64.Decoder decoder = Base64.getDecoder();
-            return recipientExpressions.stream().map(e -> Group.parse(new String(decoder.decode(e)))).collect(Collectors.toSet());
+            return recipientExpressions.stream().map(Group::parse).collect(Collectors.toSet());
         }
         return null;
     }
 
     public void setRecipientGroups(Set<Group> recipients) {
         if (recipients != null) {
-            Base64.Encoder encoder = Base64.getEncoder();
-            this.recipients = recipients.stream().map(g -> encoder.encodeToString(g.getExpression().getBytes()))
-                    .collect(Collectors.toSet());
+            this.recipients = recipients.stream().map(Group::getExpression).collect(Collectors.toSet());
         } else {
             this.recipients = null;
         }
     }
 
     public String getSingleRecipients() {
-        return MessagingSystem.Util.toEmailListString(singleRecipients);
-    }
-
-    public void setSingleRecipients(String singleRecipients) {
-        this.singleRecipients = MessagingSystem.Util.toEmailSet(singleRecipients);
-    }
-
-    public Set<String> getSingleRecipientsSet() {
         return singleRecipients;
     }
 
-    public void setSingleRecipientsSet(Set<String> singleRecipients) {
+    public void setSingleRecipients(String singleRecipients) {
         this.singleRecipients = singleRecipients;
+    }
+
+    public String getReplyTo() {
+        return replyTo;
+    }
+
+    public void setReplyTo(String replyTo) {
+        this.replyTo = replyTo;
+    }
+
+    Message send() {
+        Collection<String> errors = validate();
+        if (errors.isEmpty()) {
+            Sender sender = getSender();
+            Set<Group> recipients = getRecipientGroups();
+            String bccs = getSingleRecipients();
+            MessageBuilder messageBuilder = Message.from(sender).preferredLocale(preferredLocale).replyTo(replyTo);
+            TemplateMessageBuilder templateBuilder =
+                    messageBuilder.template("org.fenixedu.messaging.message.wrapper").parameter("sender", sender.getName())
+                            .parameter("subjectContent", getSubject()).parameter("textContent", getTextBody())
+                            .parameter("htmlContent", getHtmlBody());
+            if (recipients != null) {
+                templateBuilder.parameter("recipients",
+                        recipients.stream().map(Group::getPresentationName).sorted().collect(Collectors.toList()));
+                messageBuilder.bcc(recipients);
+            }
+            if (bccs != null) {
+                messageBuilder.singleBcc(bccs);
+            }
+            return templateBuilder.and().send();
+        }
+        return null;
     }
 
     @Override
     public Collection<String> validate() {
         Collection<String> errors = Lists.newArrayList();
+        Sender sender = getSender();
         if (getSender() == null) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.sender.empty"));
         }
@@ -137,20 +158,25 @@ public class MessageBean extends MessageContentBean {
         if ((recipients == null || recipients.isEmpty()) && Strings.isNullOrEmpty(singleRecipients)) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipients.empty"));
         }
-
         if (recipients != null && !recipients.isEmpty()) {
-            try {
-                Base64.Decoder decoder = Base64.getDecoder();
-                recipients.forEach(e -> Group.parse(new String(decoder.decode(e))));
-            } catch (DomainException e) {
-                String[] args = e.getArgs();
-                errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.erroneous",
-                        args != null && args.length > 0 ? args[0] : ""));
-            }
+            Set<Group> allowedRecipients = sender != null ? sender.getRecipients() : null;
+            recipients.stream().forEach(expression -> {
+                try {
+                    Group recipient = Group.parse(expression);
+                    if (sender != null && !allowedRecipients.contains(recipient)) {
+                        errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.forbidden",
+                                recipient.getPresentationName()));
+                    }
+                } catch (DomainException e) {
+                    String[] args = e.getArgs();
+                    errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.erroneous",
+                            args != null && args.length > 0 ? args[0] : ""));
+                }
+            });
         }
 
         if (!Strings.isNullOrEmpty(singleRecipients)) {
-            String[] emails = singleRecipients.split(",");
+            Set<String> emails = MessagingSystem.Util.toEmailSet(singleRecipients);
             for (String emailString : emails) {
                 final String email = emailString.trim();
                 if (!MessagingSystem.Util.isValidEmail(email)) {
@@ -170,47 +196,5 @@ public class MessageBean extends MessageContentBean {
 
         setErrors(errors);
         return errors;
-    }
-
-    public String getReplyTo() {
-        return replyTo;
-    }
-
-    public void setReplyTo(String replyTo) {
-        this.replyTo = replyTo;
-    }
-
-    Message send() {
-        Collection<String> errors = validate();
-        if (errors.isEmpty()) {
-            Sender sender = getSender();
-            Set<Group> recipients = getRecipientGroups();
-            MessageBuilder messageBuilder = Message.from(sender).preferredLocale(preferredLocale);
-            TemplateMessageBuilder templateBuilder =
-                    messageBuilder.template("org.fenixedu.messaging.message.wrapper").parameter("sender", sender.getName());
-            if (recipients != null && !recipients.isEmpty()) {
-                templateBuilder.parameter("recipients",
-                        recipients.stream().map(r -> r.getPresentationName()).sorted().collect(Collectors.toList()));
-                messageBuilder.bcc(recipients);
-            }
-            if (getSubject() != null && !getSubject().isEmpty()) {
-                templateBuilder.parameter("subjectContent", getSubject());
-            }
-            if (getTextBody() != null && !getTextBody().isEmpty()) {
-                templateBuilder.parameter("textContent", getTextBody());
-            }
-            if (getHtmlBody() != null && !getHtmlBody().isEmpty()) {
-                templateBuilder.parameter("htmlContent", getHtmlBody());
-            }
-            messageBuilder = templateBuilder.and();
-            if (singleRecipients != null) {
-                messageBuilder.singleBcc(singleRecipients);
-            }
-            if (!Strings.isNullOrEmpty(replyTo)) {
-                messageBuilder.replyTo(replyTo);
-            }
-            return messageBuilder.send();
-        }
-        return null;
     }
 }
