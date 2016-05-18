@@ -6,12 +6,10 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -89,11 +87,6 @@ public class MessageTemplate extends MessageTemplate_Base implements Comparable<
         return BundleUtil.getLocalizedString(bundle, key);
     }
 
-    private static String content(LocalizedString ls, Locale l) {
-        String content = ls.getContent(l);
-        return content != null ? content : ls.getContent();
-    }
-
     protected MessageTemplate(DeclareMessageTemplate declaration) {
         super();
         setMessagingSystem(MessagingSystem.getInstance());
@@ -122,34 +115,27 @@ public class MessageTemplate extends MessageTemplate_Base implements Comparable<
     }
 
     public LocalizedString getCompiledSubject(Map<String, Object> context) {
-        return compile(getSubject(), context);
+        return compile(getId(), getSubject(), context);
     }
 
     public LocalizedString getCompiledTextBody(Map<String, Object> context) {
-        return compile(getTextBody(), context);
+        return compile(getId(), getTextBody(), context);
     }
 
     public LocalizedString getCompiledHtmlBody(Map<String, Object> context) {
-        return compile(getHtmlBody(), context);
+        return compile(getId(), getHtmlBody(), context);
     }
 
-    private LocalizedString compile(LocalizedString template, Map<String, Object> rawContext) {
-        List<String> localizable = rawContext.keySet().stream().filter(k -> rawContext.get(k) instanceof LocalizedString)
-                .collect(Collectors.toList());
-        Map<String, Object> context = new HashMap<>(rawContext);
-
+    private static LocalizedString compile(String id, LocalizedString template, Map<String, Object> context) {
         LocalizedString.Builder builder = new LocalizedString.Builder();
         for (Locale locale : template.getLocales()) {
-            context.putAll(localizable.stream().collect(
-                    Collectors.toMap(Function.identity(), key -> content((LocalizedString) rawContext.get(key), locale))));
             try (StringWriter writer = new StringWriter()) {
                 engine.getTemplate(template.getContent(locale)).evaluate(writer, context, locale);
                 builder.with(locale, writer.toString());
             } catch (PebbleException | IOException e) {
-                throw MessagingDomainException.malformedTemplate(e, getId());
+                throw MessagingDomainException.malformedTemplate(e, id);
             }
         }
-        ;
         return builder.build();
     }
 
@@ -169,10 +155,8 @@ public class MessageTemplate extends MessageTemplate_Base implements Comparable<
         declareAnnotations.put(decl.id(), decl);
     }
 
-    ;
-
-    protected static void reifyDeclared(Set<MessageTemplate> knownTemplates) {
-        knownTemplates.forEach(t -> {
+    public static void reifyDeclarations() {
+        all().forEach(t -> {
             declareAnnotations.computeIfPresent(t.getId(), (id, declaration) -> {
                 declarations.put(id, new MessageTemplateDeclaration(declaration));
                 return null;

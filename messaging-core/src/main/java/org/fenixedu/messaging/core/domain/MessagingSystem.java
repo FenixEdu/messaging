@@ -65,7 +65,7 @@ public class MessagingSystem extends MessagingSystem_Base {
             instance = new MessagingSystem();
             instance.setSystemSender(Sender.from("system@fenixedu.org").as("System Sender").build());
         }
-        MessageTemplate.reifyDeclared(instance.getTemplateSet());
+        MessageTemplate.reifyDeclarations();
     }
 
     public static MessagingSystem getInstance() {

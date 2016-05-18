@@ -132,7 +132,7 @@ public class MessageBean extends MessageContentBean {
                             .parameter("htmlContent", getHtmlBody());
             if (recipients != null) {
                 templateBuilder.parameter("recipients",
-                        recipients.stream().map(Group::getPresentationName).sorted().collect(Collectors.toList()));
+                        recipients.stream().map(Group::getPresentationName).collect(Collectors.toList()));
                 messageBuilder.bcc(recipients);
             }
             if (bccs != null) {
