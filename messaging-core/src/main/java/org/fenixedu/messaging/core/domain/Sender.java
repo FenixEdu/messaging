@@ -197,7 +197,7 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
         return getName();
     }
 
-    protected void pruneMessages() {
+    public void pruneMessages() {
         getPolicy().pruneMessages(this);
     }
 

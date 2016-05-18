@@ -22,7 +22,7 @@
  *   along with the E-mail Module. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package org.fenixedu.messaging.emaildispatch;
+package org.fenixedu.messaging.emaildispatch.task;
 
 import org.fenixedu.bennu.scheduler.CronTask;
 import org.fenixedu.bennu.scheduler.annotation.Task;
