@@ -40,7 +40,7 @@ public class MessageTemplate extends MessageTemplate_Base implements Comparable<
     static {
         final Builder builder = new PebbleEngine.Builder();
         builder.loader(new StringLoader());
-        engine = builder.build();
+        engine = builder.autoEscaping(false).build();
     }
 
     public static class MessageTemplateDeclaration {
