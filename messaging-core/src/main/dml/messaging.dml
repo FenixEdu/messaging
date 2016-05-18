@@ -1,6 +1,6 @@
 package org.fenixedu.messaging.core.domain;
 
-valueType org.fenixedu.messaging.core.domain.MessageDeletionPolicy as MessageDeletionPolicy {
+valueType org.fenixedu.messaging.core.domain.MessageStoragePolicy as MessageStoragePolicy {
 	externalizeWith {
 		String serialize();
 	}
@@ -15,7 +15,7 @@ class Sender {
 	public String name;
 	public String address;
 	public String replyTo;
-	public MessageDeletionPolicy policy;
+	public MessageStoragePolicy policy;
 }
 
 class Message {

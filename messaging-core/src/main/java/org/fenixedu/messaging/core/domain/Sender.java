@@ -63,7 +63,7 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
         private String address, name = null, replyTo = null;
         private boolean htmlEnabled = false;
         private Group members = Group.nobody();
-        private MessageDeletionPolicy policy = MessageDeletionPolicy.keepAll();
+        private MessageStoragePolicy policy = MessageStoragePolicy.keepAll();
         private Set<Group> recipients = new HashSet<>();
 
         protected SenderBuilder(String address) {
@@ -93,33 +93,33 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
             return this;
         }
 
-        public SenderBuilder deletionPolicy(MessageDeletionPolicy policy) {
+        public SenderBuilder storagePolicy(MessageStoragePolicy policy) {
             this.policy = requireNonNull(policy);
             return this;
         }
 
         public SenderBuilder keepMessages(int amount) {
-            this.policy = MessageDeletionPolicy.keep(amount);
+            this.policy = MessageStoragePolicy.keep(amount);
             return this;
         }
 
         public SenderBuilder keepMessages(Period period) {
-            this.policy = MessageDeletionPolicy.keep(period);
+            this.policy = MessageStoragePolicy.keep(period);
             return this;
         }
 
         public SenderBuilder keepMessages(int amount, Period period) {
-            this.policy = MessageDeletionPolicy.keep(amount, period);
+            this.policy = MessageStoragePolicy.keep(amount, period);
             return this;
         }
 
         public SenderBuilder keepAllMessages() {
-            this.policy = MessageDeletionPolicy.keepAll();
+            this.policy = MessageStoragePolicy.keepAll();
             return this;
         }
 
         public SenderBuilder keepNoMessages() {
-            this.policy = MessageDeletionPolicy.keepAll();
+            this.policy = MessageStoragePolicy.keepAll();
             return this;
         }
 
@@ -211,7 +211,10 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
     }
 
     public static Set<Sender> available() {
-        final User user = Authenticate.getUser();
+        return available(Authenticate.getUser());
+    }
+
+    public static Set<Sender> available(User user) {
         return MessagingSystem.getInstance().getSenderSet().stream().filter(sender -> sender.getMembers().isMember(user))
                 .collect(Collectors.toSet());
     }

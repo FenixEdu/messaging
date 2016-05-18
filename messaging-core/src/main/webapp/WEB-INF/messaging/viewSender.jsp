@@ -74,10 +74,10 @@
 			<td>
 				<c:choose>
 				<c:when test="${ sender.htmlEnabled }">
-				<spring:message code="label.yes"/>
+				<spring:message code="label.enabled"/>
 				</c:when>
 				<c:otherwise>
-				<spring:message code="label.no"/>
+				<spring:message code="label.disabled"/>
 				</c:otherwise>
 				</c:choose>
 			</td>

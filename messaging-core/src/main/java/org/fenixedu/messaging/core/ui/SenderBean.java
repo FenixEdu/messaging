@@ -4,7 +4,6 @@ import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -12,7 +11,7 @@ import java.util.stream.Stream;
 import org.fenixedu.bennu.core.domain.exceptions.BennuCoreDomainException;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
-import org.fenixedu.messaging.core.domain.MessageDeletionPolicy;
+import org.fenixedu.messaging.core.domain.MessageStoragePolicy;
 import org.fenixedu.messaging.core.domain.MessagingSystem;
 import org.fenixedu.messaging.core.domain.Sender;
 
@@ -23,7 +22,7 @@ import com.google.common.collect.Sets;
 public class SenderBean {
     protected static final String BUNDLE = "MessagingResources";
 
-    private Boolean htmlEnabled, unlimitedPolicy;
+    private Boolean htmlEnabled, allPolicy, nonePolicy;
     private String name, address, members, replyTo, policy, periodPolicy = "";
     private int amountPolicy = -1;
     private Collection<String> recipients, errors;
@@ -35,7 +34,7 @@ public class SenderBean {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.address.empty"));
         }
         if (!MessagingSystem.Util.isValidEmail(address)) {
-            errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.address.invalid"));
+            errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.address.invalid", address));
         }
         if (getHtmlEnabled() == null) {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.html.required"));
@@ -47,7 +46,7 @@ public class SenderBean {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.policy.empty"));
         } else {
             try {
-                MessageDeletionPolicy.internalize(getPolicy());
+                MessageStoragePolicy.internalize(getPolicy());
             } catch (IllegalArgumentException e) {
                 errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.policy.invalid"));
             }
@@ -79,8 +78,12 @@ public class SenderBean {
         return errors;
     }
 
-    public Boolean getUnlimitedPolicy() {
-        return unlimitedPolicy;
+    public Boolean getAllPolicy() {
+        return allPolicy;
+    }
+
+    public Boolean getNonePolicy() {
+        return nonePolicy;
     }
 
     public String getPeriodPolicy() {
@@ -112,22 +115,23 @@ public class SenderBean {
     }
 
     public void setPolicy(String[] parts) {
-        setPolicy(MessageDeletionPolicy.internalize(parts));
+        setPolicy(MessageStoragePolicy.internalize(parts));
     }
 
     public void setPolicy(String policy) {
-        setPolicy(MessageDeletionPolicy.internalize(policy));
+        setPolicy(MessageStoragePolicy.internalize(policy));
     }
 
-    public void setPolicy(MessageDeletionPolicy policy) {
+    public void setPolicy(MessageStoragePolicy policy) {
         this.policy = policy.serialize();
-        unlimitedPolicy = policy.isUnlimited();
+        allPolicy = policy.isKeepAll();
+        nonePolicy = policy.isKeepNone();
         amountPolicy = policy.getAmount() == null ? -1 : policy.getAmount();
         periodPolicy = policy.getPeriod() == null ? "" : policy.getPeriod().toString().substring(1);
     }
 
     public Set<String> getRecipients() {
-        return recipients == null ? null : Sets.newHashSet(recipients);
+        return recipients == null ? Sets.newHashSet() : Sets.newHashSet(recipients);
     }
 
     public String getReplyTo() {
@@ -142,7 +146,7 @@ public class SenderBean {
         this.htmlEnabled = htmlEnabled;
     }
 
-    public void setname(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -169,58 +173,37 @@ public class SenderBean {
     Sender newSender() {
         Sender sender = null;
         if (validate().isEmpty()) {
-            Stream<Group> recipients = getRecipients() != null ? getRecipients().stream().map(Group::parse) : null;
+            Stream<Group> recipients = getRecipients().stream().map(Group::parse);
             sender = Sender.from(getAddress()).as(getName()).members(Group.parse(getMembers()))
-                    .deletionPolicy(MessageDeletionPolicy.internalize(getPolicy())).htmlEnabled(getHtmlEnabled())
+                    .storagePolicy(MessageStoragePolicy.internalize(getPolicy())).htmlEnabled(getHtmlEnabled())
                     .replyTo(getReplyTo()).recipients(recipients).build();
         }
         return sender;
     }
 
-    void copy(Sender sender) {
+    protected void copy(Sender sender) {
         if (sender != null) {
-            if (getName() == null) {
-                setname(sender.getName());
-            }
-            if (getAddress() == null) {
-                setAddress(sender.getAddress());
-            }
-            if (getPolicy() == null) {
-                setPolicy(sender.getPolicy());
-            }
-            if (getMembers() == null) {
-                setMembers(sender.getMembers().getExpression());
-            }
-            if (getHtmlEnabled() == null) {
-                setHtmlEnabled(sender.getHtmlEnabled());
-            }
-            if (getReplyTo() == null) {
-                setReplyTo(sender.getReplyTo());
-            }
-            if (getRecipients() == null) {
-                setRecipients(sender.getRecipients().stream().map(Group::getExpression).collect(Collectors.toSet()));
-            }
+            setName(sender.getName());
+            setAddress(sender.getAddress());
+            setPolicy(sender.getPolicy());
+            setMembers(sender.getMembers().getExpression());
+            setHtmlEnabled(sender.getHtmlEnabled());
+            setReplyTo(sender.getReplyTo());
+            setRecipients(sender.getRecipients().stream().map(Group::getExpression).collect(Collectors.toSet()));
         }
     }
 
     @Atomic(mode = TxMode.WRITE)
-    Collection<String> configure(Sender sender) {
+    protected Collection<String> configure(Sender sender) {
         Collection<String> errors = validate();
         if (errors.isEmpty()) {
             sender.setName(getName());
             sender.setAddress(getAddress());
-            sender.setPolicy(MessageDeletionPolicy.internalize(getPolicy()));
+            sender.setPolicy(MessageStoragePolicy.internalize(getPolicy()));
             sender.setMembers(Group.parse(getMembers()));
             sender.setHtmlEnabled(getHtmlEnabled());
-            String replyTo = getReplyTo();
-            if (replyTo != null) {
-                sender.setReplyTo(replyTo);
-            }
-            if (getRecipients() != null) {
-                sender.setRecipients(getRecipients().stream().map(Group::parse).collect(Collectors.toSet()));
-            } else {
-                sender.setRecipients(Collections.emptySet());
-            }
+            sender.setReplyTo(getReplyTo());
+            sender.setRecipients(getRecipients().stream().map(Group::parse).collect(Collectors.toSet()));
         }
         return errors;
     }

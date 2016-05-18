@@ -12,7 +12,7 @@ import org.fenixedu.bennu.core.bootstrap.annotations.Section;
 import org.fenixedu.bennu.core.domain.exceptions.BennuCoreDomainException;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.messaging.core.bootstrap.MessagingSystemBootstrap.SystemSenderSection;
-import org.fenixedu.messaging.core.domain.MessageDeletionPolicy;
+import org.fenixedu.messaging.core.domain.MessageStoragePolicy;
 import org.fenixedu.messaging.core.domain.MessagingSystem;
 import org.fenixedu.messaging.core.domain.Sender;
 
@@ -59,7 +59,7 @@ public class MessagingSystemBootstrap {
             sender.setName(name);
             sender.setAddress(address);
             sender.setMembers(group);
-            sender.setPolicy(MessageDeletionPolicy.keepAll());
+            sender.setPolicy(MessageStoragePolicy.keepAll());
             sender.addRecipient(Group.anyone());
         }
         return errors;
