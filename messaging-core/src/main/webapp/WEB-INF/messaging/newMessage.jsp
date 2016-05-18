@@ -79,7 +79,7 @@ ${portal.toolkit()}
 	<div id="htmlMessage" class="form-group">
 		<label class="control-label col-sm-2" for="htmlBody"><spring:message code="label.message.body.html"/>:</label>
 		<div class="col-sm-10">
-			<textarea class="form-control" id="htmlBody" name="htmlBody" bennu-html-editor bennu-localized-string/>${messageBean.htmlBody.json()}</textarea>
+			<textarea class="form-control" id="htmlBody" name="htmlBody" bennu-html-editor bennu-localized-string>${messageBean.htmlBody.json()}</textarea>
 		</div>
 	</div>
 	<div class="form-group">
@@ -119,7 +119,7 @@ ${portal.toolkit()}
 		element.append(labelEl);
 	}
 
-	function populateCheckboxes(info, path, element, named) {
+	function populateCheckboxes(info, path, element) {
 		element.parent().hide();
 		var checked = recallCheckboxes(element),
 			data = info[path];
@@ -132,11 +132,13 @@ ${portal.toolkit()}
 		}
 	}
 
+	var currentSenderReplyTo;
 	function senderUpdate(sender){
 		if(sender){
 			$.getJSON('senders/' + sender, function(info){
-				if(info.replyTo) {
+				if(info.replyTo && (!$('#replyTo').val() || $('#replyTo').val() == currentSenderReplyTo)) {
 					$('#replyTo').val(info.replyTo);
+					currentSenderReplyTo = info.replyTo;
 				}
 				populateCheckboxes(info, 'recipients', $('#recipients'));
 				if(!$('#recipients').is(':empty')){
@@ -144,12 +146,17 @@ ${portal.toolkit()}
 				}
 				if(info.html){
 					$('#htmlMessage').show();
+					$('#htmlBody').attr('name','htmlBody');
 				} else {
 					$('#htmlMessage').hide();
+					$('#htmlBody').removeAttr('name');
 				}
 			});
 		} else {
 			$('#recipients-container').hide();
+			if($('#replyTo').val() == currentSenderReplyTo) {
+				$('#replyTo').val(currentSenderReplyTo = '');
+			}
 		}
 	}
 

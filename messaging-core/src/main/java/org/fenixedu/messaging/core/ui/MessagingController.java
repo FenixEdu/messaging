@@ -24,7 +24,6 @@
  */
 package org.fenixedu.messaging.core.ui;
 
-import java.util.Base64;
 import java.util.Locale;
 import java.util.Set;
 
@@ -92,13 +91,12 @@ public class MessagingController {
             throw MessagingDomainException.forbidden();
         }
 
-        Base64.Encoder encoder = Base64.getEncoder();
         JsonObject info = new JsonObject();
         JsonArray array = new JsonArray();
         for (Group g : sender.getRecipients()) {
             JsonObject group = new JsonObject();
             group.addProperty("name", g.getPresentationName());
-            group.addProperty("expression", encoder.encodeToString(g.getExpression().getBytes()));
+            group.addProperty("expression", g.getExpression());
             array.add(group);
         }
         info.add("recipients", array);
