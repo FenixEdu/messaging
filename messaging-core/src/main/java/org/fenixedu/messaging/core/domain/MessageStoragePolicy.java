@@ -84,7 +84,7 @@ public class MessageStoragePolicy implements Serializable {
                 if (keepAmount != null) {
                     keep = keep.sorted().limit(keepAmount);
                 }
-                keep.forEach(sent::remove);
+                sent.removeAll(keep.collect(Collectors.toSet()));
             }
             sent.forEach(Message::delete);
         }
