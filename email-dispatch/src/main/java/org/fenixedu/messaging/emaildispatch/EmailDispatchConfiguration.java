@@ -16,11 +16,8 @@ public class EmailDispatchConfiguration {
         @ConfigurationProperty(key = "mail.smtp.port")
         public String mailSmtpPort();
 
-        @ConfigurationProperty(key = "mailSender.max.recipients", defaultValue = "2")
+        @ConfigurationProperty(key = "mailSender.max.recipients", defaultValue = "50")
         public Integer mailSenderMaxRecipients();
-
-        @ConfigurationProperty(key = "mailingList.host.name")
-        public String mailingListHostName();
 
         @ConfigurationProperty(
                 key = "mailSender.bcc.recipients",

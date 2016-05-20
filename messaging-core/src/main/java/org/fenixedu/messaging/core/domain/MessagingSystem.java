@@ -40,11 +40,16 @@ import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.domain.UserProfile;
 import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
+import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.messaging.core.dispatch.MessageDispatcher;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
+
+import static org.fenixedu.messaging.core.bootstrap.MessagingSystemBootstrap.defaultSystemSenderAddress;
+import static org.fenixedu.messaging.core.bootstrap.MessagingSystemBootstrap.defaultSystemSenderMembers;
+import static org.fenixedu.messaging.core.bootstrap.MessagingSystemBootstrap.defaultSystemSenderName;
 
 /**
  * @author Luis Cruz
@@ -63,8 +68,11 @@ public class MessagingSystem extends MessagingSystem_Base {
         instance = Bennu.getInstance().getMessagingSystem();
         if (instance == null) {
             instance = new MessagingSystem();
-            instance.setSystemSender(Sender.from("system@fenixedu.org").as("System Sender").build());
+            Sender sender = Sender.from(defaultSystemSenderAddress).as(defaultSystemSenderName)
+                    .members(Group.parse(defaultSystemSenderMembers)).recipients(Group.anyone()).build();
+            instance.setSystemSender(sender);
         }
+
         MessageTemplate.reifyDeclarations();
     }
 

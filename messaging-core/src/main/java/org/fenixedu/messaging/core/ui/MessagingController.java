@@ -35,6 +35,7 @@ import org.fenixedu.bennu.spring.portal.SpringFunctionality;
 import org.fenixedu.messaging.core.domain.Message;
 import org.fenixedu.messaging.core.domain.Sender;
 import org.fenixedu.messaging.core.exception.MessagingDomainException;
+import org.fenixedu.messaging.core.ui.access.SendersGroup;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -54,14 +55,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-@SpringApplication(path = "messaging", title = "title.messaging", group = "logged", hint = "Messaging")
-@SpringFunctionality(app = MessagingController.class, title = "title.messaging.sending")
+@SpringApplication(path = "messaging", title = "title.messaging", group = "senders | #managers", hint = "Messaging")
+@SpringFunctionality(app = MessagingController.class, title = "title.messaging.sending", accessGroup = "senders")
 @RequestMapping("/messaging")
 public class MessagingController {
 
     @RequestMapping(value = { "", "/" })
     public RedirectView redirectToSending() {
-        return new RedirectView("/messaging/senders", true);
+        return SendersGroup.get().isMember(Authenticate.getUser()) ? new RedirectView("/messaging/senders",
+                true) : new RedirectView("/messaging/config");
     }
 
     @RequestMapping(value = { "/senders", "/senders/" })
