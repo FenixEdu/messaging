@@ -92,7 +92,7 @@ ${portal.toolkit()}
 				<spring:message code="label.message.sent.by"/>
 			</th>
 			<td>
-				${message.user.profile.displayName}
+				${message.creator.profile.displayName}
 			</td>
 		</tr>
 		<c:if test="${not empty message.replyTo}">
@@ -219,7 +219,7 @@ ${portal.toolkit()}
 			</td>
 		</tr>
 		</c:if>
-		<c:if test="${deletable}">
+		<c:if test="${message.deletable}">
 		<tr>
 			<th></th>
 			<td>

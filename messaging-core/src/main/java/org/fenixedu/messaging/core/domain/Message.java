@@ -46,10 +46,13 @@ import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.core.domain.MessagingSystem.Util;
 import org.fenixedu.messaging.core.exception.MessagingDomainException;
+import org.fenixedu.messaging.core.template.DeclareMessageTemplate;
+import org.fenixedu.messaging.core.template.TemplateParameter;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Strings;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Objects.requireNonNull;
 import static org.fenixedu.messaging.core.domain.MessagingSystem.Util.builderSetAdd;
 import static org.fenixedu.messaging.core.domain.MessagingSystem.Util.builderSetCopy;
@@ -93,7 +96,23 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
     }
 
+    @DeclareMessageTemplate(id = "org.fenixedu.messaging.message.wrapper",
+            description = "message.template.message.wrapper.description", subject = "message.template.message.wrapper.subject",
+            text = "message.template.message.wrapper.text", html = "message.template.message.wrapper.html", parameters = {
+            @TemplateParameter(id = "sender", description = "message.template.message.wrapper.parameter.sender"),
+            @TemplateParameter(id = "creator", description = "message.template.message.wrapper.parameter.creator"),
+            @TemplateParameter(id = "replyTo", description = "message.template.message.wrapper.parameter.replyTo"),
+            @TemplateParameter(id = "preferredLocale", description = "message.template.message.wrapper.parameter.preferredLocale"),
+            @TemplateParameter(id = "subject", description = "message.template.message.wrapper.parameter.subject"),
+            @TemplateParameter(id = "textBody", description = "message.template.message.wrapper.parameter.textBody"),
+            @TemplateParameter(id = "htmlBody", description = "message.template.message.wrapper.parameter.htmlBody"),
+            @TemplateParameter(id = "tos", description = "message.template.message.wrapper.parameter.tos"),
+            @TemplateParameter(id = "ccs", description = "message.template.message.wrapper.parameter.ccs"),
+            @TemplateParameter(id = "bccs", description = "message.template.message.wrapper.parameter.bccs"),
+            @TemplateParameter(id = "singleBccs", description = "message.template.message.wrapper.parameter.singleBccs") },
+            bundle = "MessagingResources")
     public static final class MessageBuilder implements Serializable {
+        private boolean wrapped = false;
         private static final long serialVersionUID = 525424959825814582L;
         private Sender sender;
         private LocalizedString subject = new LocalizedString(), textBody = new LocalizedString(), htmlBody =
@@ -104,10 +123,25 @@ public final class Message extends Message_Base implements Comparable<Message> {
         private Set<String> singleBccs = new HashSet<>();
 
         protected MessageBuilder(Sender sender) {
+            from(sender);
+        }
+
+        public MessageBuilder from(Sender sender) {
             if (sender == null) {
                 throw MessagingDomainException.nullSender();
             }
             this.sender = sender;
+            return this;
+        }
+
+        public MessageBuilder wrapped() {
+            wrapped = true;
+            return this;
+        }
+
+        public MessageBuilder unwrapped() {
+            wrapped = false;
+            return this;
         }
 
         public MessageBuilder subject(LocalizedString subject) {
@@ -262,14 +296,22 @@ public final class Message extends Message_Base implements Comparable<Message> {
             Message message = new Message();
             message.setSender(sender);
             message.setReplyTo(replyTo);
-            this.tos.stream().map(Group::toPersistentGroup).forEach(message::addTo);
-            this.ccs.stream().map(Group::toPersistentGroup).forEach(message::addCc);
-            this.bccs.stream().map(Group::toPersistentGroup).forEach(message::addBcc);
+            message.setPreferredLocale(preferredLocale);
+            tos.stream().map(Group::toPersistentGroup).forEach(message::addTo);
+            ccs.stream().map(Group::toPersistentGroup).forEach(message::addCc);
+            bccs.stream().map(Group::toPersistentGroup).forEach(message::addBcc);
             message.setSingleBccs(Strings.emptyToNull(Util.toEmailListString(singleBccs)));
+            if (wrapped) {
+                template("org.fenixedu.messaging.message.wrapper").parameter("sender", sender)
+                        .parameter("creator", Authenticate.getUser()).parameter("replyTo", replyTo)
+                        .parameter("preferredLocale", preferredLocale).parameter("subject", subject)
+                        .parameter("textBody", textBody).parameter("htmlBody", htmlBody).parameter("tos", newArrayList(tos))
+                        .parameter("ccs", newArrayList(ccs)).parameter("bccs", newArrayList(bccs))
+                        .parameter("singleBccs", newArrayList(singleBccs)).and();
+            }
             message.setSubject(subject);
             message.setTextBody(textBody);
             message.setHtmlBody(htmlBody);
-            message.setPreferredLocale(preferredLocale);
             return message;
         }
     }
@@ -288,13 +330,13 @@ public final class Message extends Message_Base implements Comparable<Message> {
         setMessagingSystem(messagingSystem);
         setMessagingSystemFromPendingDispatch(messagingSystem);
         setCreated(new DateTime());
-        setUser(Authenticate.getUser());
+        setCreator(Authenticate.getUser());
     }
 
     @Override
-    public User getUser() {
+    public User getCreator() {
         // FIXME remove when the framework supports read-only properties
-        return super.getUser();
+        return super.getCreator();
     }
 
     @Override
@@ -393,26 +435,22 @@ public final class Message extends Message_Base implements Comparable<Message> {
             getDispatchReport().delete();
         }
         setSender(null);
-        setUser(null);
+        setCreator(null);
         setMessagingSystemFromPendingDispatch(null);
         setMessagingSystem(null);
         deleteDomainObject();
     }
 
-    public boolean safeDelete() {
+    public void safeDelete() {
         if (isDeletable()) {
             delete();
-            return true;
+        } else {
+            throw MessagingDomainException.forbidden();
         }
-        return false;
     }
 
     public boolean isDeletable() {
-        return isCreatorLoggedIn() && getDispatchReport() == null;
-    }
-
-    public boolean isCreatorLoggedIn() {
-        return getUser().equals(Authenticate.getUser());
+        return getCreator().equals(Authenticate.getUser()) && getDispatchReport() == null;
     }
 
     @Override
