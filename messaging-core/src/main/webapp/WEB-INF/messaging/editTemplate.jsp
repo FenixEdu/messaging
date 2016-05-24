@@ -60,7 +60,7 @@ ${portal.toolkit()}
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="htmlBody"><spring:message code="label.message.body.html"/>:</label>
 		<div class="col-sm-10">
-			<textarea class="form-control" id="htmlBody" name="htmlBody" bennu-html-editor bennu-localized-string/>${templateBean.htmlBody.json()}</textarea>
+			<textarea class="form-control" id="htmlBody" name="htmlBody" bennu-html-editor bennu-localized-string>${templateBean.htmlBody.json()}</textarea>
 		</div>
 	</div>
 	<div class="form-group">

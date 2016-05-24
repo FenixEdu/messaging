@@ -60,23 +60,23 @@
 		<div class="col-sm-10">
 			<div class="input-group form-inline">
 				<span class="input-group-addon" style="text-align: left;">
-					<input type="checkbox" name="policy" id="policy-all" value="-1"
+					<input type="checkbox" name="policy" id="policy-all" value="A"
 					${senderBean.allPolicy ? "checked" : ""}>&nbsp;
 					<label style="margin: 0;" for="policy-all"><spring:message code="label.sender.policy.all"/></label>
 				</span>
 				<span class="input-group-addon">
-					<input type="checkbox" name="policy" id="policy-period" value="" ${senderBean.periodPolicy.isEmpty() ? "" : "checked"}>&nbsp;
+					<input type="checkbox" name="policy" id="policy-period" value="${senderBean.periodPolicy}" ${senderBean.periodPolicy.isEmpty() ? "" : "checked"}>&nbsp;
 					<label style="margin: 0;" for="policy-period"><spring:message code="label.sender.policy.period"/></label>
 				</span>
 				<spring:message code="hint.period" var="placeholder"/>
-				<input id="policy-period-value" type="text" pattern= "(\d+Y)?(\d+M)?(\d+W)?(\d+D)?(T(?=.)(\d+H)?(\d+M)?(\d+S)?)?" class="form-control" value="${senderBean.periodPolicy.isEmpty() ? '' : senderBean.periodPolicy}" placeholder="${placeholder}"/>
+				<input id="policy-period-value" type="text" pattern="(\d+Y)?(\d+M)?(\d+W)?(\d+D)?(T(?=.)(\d+H)?(\d+M)?(\d+S)?)?" class="form-control" value="${senderBean.periodPolicy}" placeholder="${placeholder}"/>
 				<span class="input-group-addon">
-					<input type="checkbox"  name="policy" id="policy-amount" value="" ${senderBean.amountPolicy > 0 ? "checked" : ""}>&nbsp;
+					<input type="checkbox" name="policy" id="policy-amount" value="${senderBean.amountPolicy > 0 ? 'Q'.concat(senderBean.amountPolicy) : ''}" ${senderBean.amountPolicy > 0 ? "checked" : ""}>&nbsp;
 					<label style="margin: 0;" for="policy-amount"><spring:message code="label.sender.policy.amount"/></label>
 				</span>
 				<input id="policy-amount-value" type="number" min="1" class="form-control" value="${senderBean.amountPolicy > 0 ? senderBean.amountPolicy : ''}"/>
 				<span class="input-group-addon" style="text-align: left;">
-					<input type="checkbox" name="policy" id="policy-none" value="M0"
+					<input type="checkbox" name="policy" id="policy-none" value="N"
 						${senderBean.nonePolicy ? "checked" : ""}>&nbsp;
 					<label style="margin: 0;" for="policy-none"><spring:message code="label.sender.policy.none"/></label>
 				</span>
@@ -118,7 +118,7 @@
 	var allPolicy = $('#policy-all'),
 		nonePolicy = $('#policy-none'),
 		periodPolicy = $('#policy-period').attr('aux-data-mark','P'),
-		amountPolicy = $('#policy-amount').attr('aux-data-mark','M'),
+		amountPolicy = $('#policy-amount').attr('aux-data-mark','Q'),
 		policyParts = $([periodPolicy, amountPolicy]).map(function () {return this.toArray();});
 
 	var getCheckbox = function (value) {
@@ -129,7 +129,7 @@
 
 	function allUnchecked(){
 		return !allPolicy.is(':checked') && !nonePolicy.is(':checked') &&
-				policyParts.filter(function(){;return $(this).is(':checked')}).first().get().length === 0;
+				policyParts.filter(function(){return $(this).is(':checked');}).first().get().length === 0;
 	}
 
 	allPolicy.change(function() {

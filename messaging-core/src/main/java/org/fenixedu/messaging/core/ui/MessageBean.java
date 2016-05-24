@@ -33,27 +33,15 @@ import org.fenixedu.bennu.core.domain.exceptions.DomainException;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.I18N;
+import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.core.domain.Message;
 import org.fenixedu.messaging.core.domain.Message.MessageBuilder;
-import org.fenixedu.messaging.core.domain.Message.TemplateMessageBuilder;
 import org.fenixedu.messaging.core.domain.MessagingSystem;
 import org.fenixedu.messaging.core.domain.Sender;
-import org.fenixedu.messaging.core.template.DeclareMessageTemplate;
-import org.fenixedu.messaging.core.template.TemplateParameter;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
-@DeclareMessageTemplate(id = "org.fenixedu.messaging.message.wrapper",
-        description = "message.template.message.wrapper.description", subject = "message.template.message.wrapper.subject",
-        text = "message.template.message.wrapper.text", html = "message.template.message.wrapper.html", parameters = {
-        @TemplateParameter(id = "subjectContent",
-                description = "message.template.message.wrapper.parameter.subjectContent"),
-        @TemplateParameter(id = "textContent", description = "message.template.message.wrapper.parameter.textContent"),
-        @TemplateParameter(id = "htmlContent", description = "message.template.message.wrapper.parameter.htmlContent"),
-        @TemplateParameter(id = "sender", description = "message.template.message.wrapper.parameter.sender"),
-        @TemplateParameter(id = "recipients", description = "message.template.message.wrapper.parameter.recipients") },
-        bundle = "MessagingResources")
 public class MessageBean extends MessageContentBean {
 
     private static final long serialVersionUID = 336571169494160668L;
@@ -122,23 +110,25 @@ public class MessageBean extends MessageContentBean {
     Message send() {
         Collection<String> errors = validate();
         if (errors.isEmpty()) {
-            Sender sender = getSender();
+            MessageBuilder builder =
+                    Message.from(getSender()).replyTo(replyTo).preferredLocale(preferredLocale).subject(getSubject());
+            LocalizedString content = getTextBody();
+            if (content != null) {
+                builder.textBody(content);
+            }
+            content = getHtmlBody();
+            if (content != null) {
+                builder.htmlBody(content);
+            }
             Set<Group> recipients = getRecipientGroups();
-            String bccs = getSingleRecipients();
-            MessageBuilder messageBuilder = Message.from(sender).preferredLocale(preferredLocale).replyTo(replyTo);
-            TemplateMessageBuilder templateBuilder =
-                    messageBuilder.template("org.fenixedu.messaging.message.wrapper").parameter("sender", sender.getName())
-                            .parameter("subjectContent", getSubject()).parameter("textContent", getTextBody())
-                            .parameter("htmlContent", getHtmlBody());
             if (recipients != null) {
-                templateBuilder.parameter("recipients",
-                        recipients.stream().map(Group::getPresentationName).collect(Collectors.toList()));
-                messageBuilder.bcc(recipients);
+                builder.bcc(recipients);
             }
+            String bccs = getSingleRecipients();
             if (bccs != null) {
-                messageBuilder.singleBcc(bccs);
+                builder.singleBcc(bccs);
             }
-            return templateBuilder.and().send();
+            return builder.wrapped().send();
         }
         return null;
     }

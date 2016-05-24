@@ -28,6 +28,7 @@ import com.mitchellbosecke.pebble.PebbleEngine.Builder;
 import com.mitchellbosecke.pebble.error.PebbleException;
 import com.mitchellbosecke.pebble.loader.StringLoader;
 
+import static java.util.Objects.requireNonNull;
 import static pt.ist.fenixframework.FenixFramework.atomic;
 
 public class MessageTemplate extends MessageTemplate_Base implements Comparable<MessageTemplate> {
@@ -144,7 +145,7 @@ public class MessageTemplate extends MessageTemplate_Base implements Comparable<
     }
 
     public static Set<MessageTemplate> undeclared() {
-        return MessagingSystem.getInstance().getTemplateSet().stream().filter(t->!t.isDeclared()).collect(Collectors.toSet());
+        return MessagingSystem.getInstance().getTemplateSet().stream().filter(t -> !t.isDeclared()).collect(Collectors.toSet());
     }
 
     public static MessageTemplate get(String id) {
@@ -175,6 +176,21 @@ public class MessageTemplate extends MessageTemplate_Base implements Comparable<
             setHtmlBody(declaration.getDefaultHtmlBody());
             setTextBody(declaration.getDefaultTextBody());
         }
+    }
+
+    @Override
+    public void setSubject(LocalizedString subject) {
+        super.setSubject(requireNonNull(subject));
+    }
+
+    @Override
+    public void setTextBody(LocalizedString textBody) {
+        super.setTextBody(requireNonNull(textBody));
+    }
+
+    @Override
+    public void setHtmlBody(LocalizedString htmlBody) {
+        super.setHtmlBody(requireNonNull(htmlBody));
     }
 
     @Atomic

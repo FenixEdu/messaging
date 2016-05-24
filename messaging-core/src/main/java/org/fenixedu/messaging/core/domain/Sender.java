@@ -67,10 +67,15 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
         private Set<Group> recipients = new HashSet<>();
 
         protected SenderBuilder(String address) {
+            from(address);
+        }
+
+        public SenderBuilder from(String address) {
             if (!isValidEmail(address)) {
                 throw MessagingDomainException.invalidAddress();
             }
             this.address = address;
+            return this;
         }
 
         public SenderBuilder as(String name) {
@@ -160,6 +165,29 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
     public Set<Message> getMessageSet() {
         // FIXME remove when framework supports read-only relations
         return super.getMessageSet();
+    }
+
+    @Override
+    public void setAddress(String address) {
+        if (!isValidEmail(address)) {
+            throw MessagingDomainException.invalidAddress();
+        }
+        super.setAddress(address);
+    }
+
+    @Override
+    public void setName(String name) {
+        super.setName(requireNonNull(name));
+    }
+
+    @Override
+    public void setReplyTo(String replyTo) {
+        super.setReplyTo(isValidEmail(replyTo) ? replyTo : null);
+    }
+
+    @Override
+    public void setPolicy(MessageStoragePolicy policy) {
+        super.setPolicy(requireNonNull(policy));
     }
 
     public Group getMembers() {

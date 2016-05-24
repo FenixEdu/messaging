@@ -97,8 +97,10 @@ public class MessageContentBean implements Serializable {
         if (getErrors().isEmpty()) {
             atomic(() -> {
                 template.setSubject(getSubject());
-                template.setTextBody(getTextBody());
-                template.setHtmlBody(getHtmlBody());
+                LocalizedString content = getTextBody();
+                template.setTextBody(content != null ?  content : new LocalizedString());
+                content = getHtmlBody();
+                template.setHtmlBody(content != null ?  content : new LocalizedString());
             });
             return true;
         }

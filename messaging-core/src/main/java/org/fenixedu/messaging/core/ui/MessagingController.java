@@ -138,12 +138,11 @@ public class MessagingController {
     }
 
     @RequestMapping(value = "/messages/{message}", method = RequestMethod.GET)
-    public String viewMessage(Model model, @PathVariable Message message, boolean created) {
+    public String viewMessage(Model model, @PathVariable Message message) {
         if (!allowedSender(message.getSender())) {
             throw MessagingDomainException.forbidden();
         }
         model.addAttribute("locales", getSupportedLocales(message));
-        model.addAttribute("deletable", message.isDeletable());
         model.addAttribute("message", message);
         return "/messaging/viewMessage";
     }
@@ -158,9 +157,7 @@ public class MessagingController {
     @RequestMapping(value = "/messages/{message}/delete", method = RequestMethod.POST)
     public String deleteMessage(@PathVariable Message message, Model model) {
         Sender sender = message.getSender();
-        if (!message.safeDelete()) {
-            throw MessagingDomainException.forbidden();
-        }
+        message.safeDelete();
         return viewSender(sender, model, 1, 10);
     }
 
