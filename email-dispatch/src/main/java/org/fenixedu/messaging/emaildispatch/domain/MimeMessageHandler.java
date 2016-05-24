@@ -50,8 +50,6 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
         properties.put("mail.smtp.name", conf.mailSmtpName());
         properties.put("mail.smtp.port", conf.mailSmtpPort());
         properties.put("mailSender.max.recipients", conf.mailSenderMaxRecipients());
-        properties.put("mailingList.host.name", conf.mailingListHostName());
-        properties.put("mail.debug", "true");
         SESSION = Session.getDefaultInstance(properties, null);
         return SESSION;
     }

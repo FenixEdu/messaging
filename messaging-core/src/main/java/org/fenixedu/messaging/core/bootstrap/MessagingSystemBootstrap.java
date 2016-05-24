@@ -12,7 +12,6 @@ import org.fenixedu.bennu.core.bootstrap.annotations.Section;
 import org.fenixedu.bennu.core.domain.exceptions.BennuCoreDomainException;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.messaging.core.bootstrap.MessagingSystemBootstrap.SystemSenderSection;
-import org.fenixedu.messaging.core.domain.MessageStoragePolicy;
 import org.fenixedu.messaging.core.domain.MessagingSystem;
 import org.fenixedu.messaging.core.domain.Sender;
 
@@ -24,6 +23,9 @@ import com.google.common.collect.Lists;
 public class MessagingSystemBootstrap {
 
     private static final String BUNDLE = "MessagingResources";
+    public static final String defaultSystemSenderAddress = "system@messaging.fenixedu.org",
+            defaultSystemSenderName = "System Sender",
+            defaultSystemSenderMembers = "#managers";
 
     @Bootstrap
     public static List<BootstrapError> bootstrapSystemSender(SystemSenderSection section) {
@@ -59,23 +61,23 @@ public class MessagingSystemBootstrap {
             sender.setName(name);
             sender.setAddress(address);
             sender.setMembers(group);
-            sender.setPolicy(MessageStoragePolicy.keepAll());
-            sender.addRecipient(Group.anyone());
         }
         return errors;
     }
 
     @Section(name = "title.bootstrapper.systemsender", description = "title.bootstrapper.systemsender.description",
             bundle = BUNDLE)
-    public static interface SystemSenderSection {
-        @Field(name = "label.bootstrapper.systemsender.name", defaultValue = "System Sender", order = 1)
-        public String getName();
+    public interface SystemSenderSection {
+        @Field(name = "label.bootstrapper.systemsender.name", defaultValue = defaultSystemSenderName, order = 1)
+        String getName();
 
-        @Field(name = "label.bootstrapper.systemsender.address", defaultValue = "system@fenixedu.org",
+        @Field(name = "label.bootstrapper.systemsender.address", defaultValue = defaultSystemSenderAddress,
                 fieldType = FieldType.EMAIL, order = 2)
-        public String getAddress();
+        String getAddress();
 
-        @Field(name = "label.bootstrapper.systemsender.group", hint = "hint.bootstrapper.systemsender.group", defaultValue = "nobody", order = 3)
-        public String getGroupExpression();
+        @Field(name = "label.bootstrapper.systemsender.group", hint = "hint.bootstrapper.systemsender.group", defaultValue =
+                defaultSystemSenderMembers,
+                order = 3)
+        String getGroupExpression();
     }
 }
