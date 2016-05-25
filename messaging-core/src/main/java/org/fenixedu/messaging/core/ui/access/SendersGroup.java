@@ -13,18 +13,19 @@ import org.joda.time.DateTime;
 @GroupOperator("senders")
 public class SendersGroup extends GroupStrategy {
 
+    private static final String BUNDLE = "MessagingResources";
     private static SendersGroup SENDERS = new SendersGroup();
     public static Group get() {
         return SENDERS;
     }
 
-    SendersGroup() {
+    public SendersGroup() {
         super();
     }
 
     @Override
     public String getPresentationName() {
-        return BundleUtil.getString("resources.MessagingResources", "label.messaging.group.senders");
+        return BundleUtil.getString(BUNDLE, "label.messaging.group.senders");
     }
 
     @Override
