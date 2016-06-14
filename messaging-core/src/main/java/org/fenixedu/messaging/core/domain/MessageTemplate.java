@@ -152,7 +152,7 @@ public class MessageTemplate extends MessageTemplate_Base implements Comparable<
         return MessagingSystem.getInstance().getTemplateSet().stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null);
     }
 
-    public static void declare(DeclareMessageTemplate decl) { //XXX should only be used in servlet initialization
+    public static void declare(DeclareMessageTemplate decl) {
         declareAnnotations.put(decl.id(), decl);
     }
 

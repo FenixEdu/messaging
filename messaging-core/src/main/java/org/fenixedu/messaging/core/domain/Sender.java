@@ -38,7 +38,6 @@ import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.domain.groups.PersistentGroup;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
-import org.fenixedu.messaging.core.exception.MessagingDomainException;
 import org.joda.time.Period;
 
 import com.google.common.base.Strings;
@@ -71,8 +70,8 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
         }
 
         public SenderBuilder from(String address) {
-            if (!isValidEmail(address)) {
-                throw MessagingDomainException.invalidAddress();
+            if (!isValidEmail(requireNonNull(address))) {
+                throw new IllegalArgumentException("Invalid sender address.");
             }
             this.address = address;
             return this;
@@ -169,8 +168,8 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
 
     @Override
     public void setAddress(String address) {
-        if (!isValidEmail(address)) {
-            throw MessagingDomainException.invalidAddress();
+        if (!isValidEmail(requireNonNull(address))) {
+            throw new IllegalArgumentException("Invalid sender address.");
         }
         super.setAddress(address);
     }

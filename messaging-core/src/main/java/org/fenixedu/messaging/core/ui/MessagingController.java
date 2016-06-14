@@ -159,7 +159,11 @@ public class MessagingController {
     @RequestMapping(value = "/messages/{message}/delete", method = RequestMethod.POST)
     public String deleteMessage(@PathVariable Message message, Model model) {
         Sender sender = message.getSender();
-        message.safeDelete();
+        try {
+            message.safeDelete();
+        } catch (IllegalStateException e) {
+            throw MessagingDomainException.forbidden();
+        }
         return viewSender(sender, model, 1, 10);
     }
 
