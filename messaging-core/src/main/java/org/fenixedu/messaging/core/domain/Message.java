@@ -45,7 +45,6 @@ import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.core.domain.MessagingSystem.Util;
-import org.fenixedu.messaging.core.exception.MessagingDomainException;
 import org.fenixedu.messaging.core.template.DeclareMessageTemplate;
 import org.fenixedu.messaging.core.template.TemplateParameter;
 import org.joda.time.DateTime;
@@ -72,7 +71,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
         protected TemplateMessageBuilder(String key, MessageBuilder messageBuilder) {
             this.template = MessageTemplate.get(key);
             if (this.template == null) {
-                throw MessagingDomainException.missingTemplate(key);
+                throw new IllegalArgumentException("Unknown template key.");
             }
             this.messageBuilder = requireNonNull(messageBuilder);
         }
@@ -127,10 +126,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
         }
 
         public MessageBuilder from(Sender sender) {
-            if (sender == null) {
-                throw MessagingDomainException.nullSender();
-            }
-            this.sender = sender;
+            this.sender = requireNonNull(sender);
             return this;
         }
 
@@ -445,7 +441,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
         if (isDeletable()) {
             delete();
         } else {
-            throw MessagingDomainException.forbidden();
+            throw new IllegalStateException("Message is not deletable by current user at this time.");
         }
     }
 

@@ -53,20 +53,8 @@ public class MessagingDomainException extends DomainException {
         return new MessagingDomainException(e, BUNDLE, "error.template.malformed", key);
     }
 
-    public static MessagingDomainException nullSender() {
-        return new MessagingDomainException(BUNDLE, "error.message.null.sender");
-    }
-
-    public static MessagingDomainException invalidAddress() {
-        return new MessagingDomainException(BUNDLE, "error.sender.invalid.address");
-    }
-
     public static MessagingDomainException forbidden() {
         return new MessagingDomainException(Response.Status.FORBIDDEN, BUNDLE, "error.not.authorized");
-    }
-
-    public static MessagingDomainException missingTemplate(String key) {
-        return new MessagingDomainException(Response.Status.NOT_FOUND, BUNDLE, "error.template.missing", key);
     }
 
 }
