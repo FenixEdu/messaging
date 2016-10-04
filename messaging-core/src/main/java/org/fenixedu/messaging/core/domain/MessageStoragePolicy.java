@@ -36,7 +36,7 @@ public class MessageStoragePolicy implements Serializable {
 
     protected MessageStoragePolicy(Integer amount, Period period) {
         this.period = period;
-        if(amount.intValue() < 0) {
+        if(amount != null && amount < 0) {
             throw new IllegalArgumentException("Message storage policy amount cannot be negative.");
         }
         this.amount = amount;
