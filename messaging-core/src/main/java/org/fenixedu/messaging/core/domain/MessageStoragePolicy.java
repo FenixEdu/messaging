@@ -3,11 +3,12 @@ package org.fenixedu.messaging.core.domain;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.collections.map.ReferenceMap;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.I18N;
 import org.joda.time.DateTime;
@@ -23,10 +24,9 @@ public class MessageStoragePolicy implements Serializable {
     private static final Joiner PRESENTATION_JOINER = Joiner.on(" "), SERIALIZATION_JOINER = Joiner.on(",");
     private static final MessageStoragePolicy ALL = new MessageStoragePolicy(null, null), NONE =
             new MessageStoragePolicy(0, null);
-    private static final ReferenceMap POLICIES;
+    private static final Map<String, MessageStoragePolicy> POLICIES = new ConcurrentHashMap<String, MessageStoragePolicy>();
 
     static {
-        POLICIES = new ReferenceMap();
         POLICIES.put(ALL_PREFIX, ALL);
         POLICIES.put(NONE_PREFIX, NONE);
     }

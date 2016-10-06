@@ -24,8 +24,9 @@
  */
 package org.fenixedu.messaging.core.domain;
 
-import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.Atomic.TxMode;
+import static org.fenixedu.messaging.core.bootstrap.MessagingSystemBootstrap.defaultSystemSenderAddress;
+import static org.fenixedu.messaging.core.bootstrap.MessagingSystemBootstrap.defaultSystemSenderMembers;
+import static org.fenixedu.messaging.core.bootstrap.MessagingSystemBootstrap.defaultSystemSenderName;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,7 +36,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.validator.routines.EmailValidator;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+
 import org.fenixedu.bennu.core.domain.Bennu;
 import org.fenixedu.bennu.core.domain.User;
 import org.fenixedu.bennu.core.domain.UserProfile;
@@ -47,9 +50,8 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 
-import static org.fenixedu.messaging.core.bootstrap.MessagingSystemBootstrap.defaultSystemSenderAddress;
-import static org.fenixedu.messaging.core.bootstrap.MessagingSystemBootstrap.defaultSystemSenderMembers;
-import static org.fenixedu.messaging.core.bootstrap.MessagingSystemBootstrap.defaultSystemSenderName;
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
 
 /**
  * @author Luis Cruz
@@ -118,8 +120,13 @@ public class MessagingSystem extends MessagingSystem_Base {
         private static final String MAIL_LIST_SEPARATOR = "\\s*,\\s*";
         private static final Joiner MAIL_LIST_JOINER = Joiner.on(",").skipNulls();
 
-        public static boolean isValidEmail(String address) {
-            return EmailValidator.getInstance().isValid(address);
+        public static boolean isValidEmail(final String email) {
+            try {
+                new InternetAddress(email).validate();
+                return true;
+            } catch (AddressException ex) {
+                return false;
+            }
         }
 
         public static Set<String> toEmailSet(Collection<PersistentGroup> groups) {
