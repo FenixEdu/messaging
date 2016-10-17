@@ -121,6 +121,9 @@ public class MessagingSystem extends MessagingSystem_Base {
         private static final Joiner MAIL_LIST_JOINER = Joiner.on(",").skipNulls();
 
         public static boolean isValidEmail(final String email) {
+            if (email == null) {
+                return false;
+            }
             try {
                 new InternetAddress(email).validate();
                 return true;
