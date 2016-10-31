@@ -12,7 +12,7 @@
     <name>Messaging Core</name>
 
     <properties>
-        <version.org.fenixedu.bennu>4.0.0.RC2</version.org.fenixedu.bennu>
+        <version.org.fenixedu.bennu>4.0.1</version.org.fenixedu.bennu>
         <version.com.mitchellbosecke.pebble>2.2.1</version.com.mitchellbosecke.pebble>
         <version.javax.mail.mail>1.4.7</version.javax.mail.mail>
     </properties>
