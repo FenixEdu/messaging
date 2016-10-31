@@ -1,10 +1,9 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
-import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.Atomic.TxMode;
-
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -37,6 +36,9 @@ import org.joda.time.DateTime;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
 
 public final class MimeMessageHandler extends MimeMessageHandler_Base {
     private static final int MAX_RECIPIENTS = EmailDispatchConfiguration.getConfiguration().mailSenderMaxRecipients();
@@ -93,7 +95,11 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
             @Override
             protected void updateMessageID() throws MessagingException {
                 setHeader("Message-ID", getMessageID());
-                setHeader("Date", message.getCreated().toString());
+                setHeader("Date", formatDate(message.getCreated().getMillis()));
+            }
+
+            private String formatDate(final long millis) {
+                return new SimpleDateFormat("E, d MMM yyyy HH:mm:ss Z", Locale.US).format(new Date(millis));
             }
         };
 
