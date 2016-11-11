@@ -1,9 +1,7 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -95,12 +93,9 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
             @Override
             protected void updateMessageID() throws MessagingException {
                 setHeader("Message-ID", getMessageID());
-                setHeader("Date", formatDate(message.getCreated().getMillis()));
+                setSentDate(message.getCreated().toDate());
             }
 
-            private String formatDate(final long millis) {
-                return new SimpleDateFormat("E, d MMM yyyy HH:mm:ss Z", Locale.US).format(new Date(millis));
-            }
         };
 
         InternetAddress fromAddr = new InternetAddress(getFrom());
@@ -176,14 +171,15 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
             Collection<String> bccs) {
         Collection<MimeMessageHandler> handlers = new ArrayList<>();
         List<String> all =
-                Stream.of(tos, ccs, bccs).filter(Objects::nonNull).flatMap(Collection::stream).collect(Collectors.toList()),
-                partial;
+                Stream.of(tos, ccs, bccs).filter(Objects::nonNull).flatMap(Collection::stream).collect(Collectors.toList());
+        List<String> partial;
         List<List<String>> split = Lists.partition(all, MAX_RECIPIENTS);
         MimeMessageHandler handler;
 
-        int nHandlers = split.size(), nRecipients = all.size(), nTos = tos != null ? tos.size() : 0, nCcs =
-                ccs != null ? ccs.size() : 0, nVisible = nTos + nCcs;
-        int ccStart, bccStart, mixedTos = nTos % MAX_RECIPIENTS, mixedVisible = nVisible % MAX_RECIPIENTS;
+        int nHandlers = split.size(), nRecipients = all.size(), nTos = tos != null ? tos.size() : 0,
+                nCcs = ccs != null ? ccs.size() : 0, nVisible = nTos + nCcs;
+        int ccStart, bccStart;
+        int mixedTos = nTos % MAX_RECIPIENTS, mixedVisible = nVisible % MAX_RECIPIENTS;
         if (nTos == nRecipients && mixedTos != 0) {
             ccStart = bccStart = nHandlers;
         } else if (nVisible == nRecipients && mixedVisible != 0) {
