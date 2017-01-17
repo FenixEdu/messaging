@@ -21,7 +21,9 @@ public class MessageTask extends CronTask {
                 dispatched++;
             }
         }
-        taskLog("Dispatched %d messages\n", dispatched);
+        if (dispatched > 0) {
+            taskLog("Dispatched %d messages\n", dispatched);
+        }
 
         int pruned = 0;
         for (Sender sender : Sender.all()) {
@@ -33,6 +35,8 @@ public class MessageTask extends CronTask {
                 pruned += diff;
             }
         }
-        taskLog("Pruned %d messages\n", pruned);
+        if (pruned > 0) {
+            taskLog("Pruned %d messages\n", pruned);
+        }
     }
 }
