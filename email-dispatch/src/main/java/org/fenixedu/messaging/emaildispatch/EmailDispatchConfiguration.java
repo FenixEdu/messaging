@@ -19,6 +19,9 @@ public class EmailDispatchConfiguration {
         @ConfigurationProperty(key = "mailSender.max.recipients", defaultValue = "50")
         public Integer mailSenderMaxRecipients();
 
+        @ConfigurationProperty(key = "mail.mime.id.suffix", defaultValue = "email-dispatch")
+        public String mailMimeMessageIdSuffix();
+
         @ConfigurationProperty(
                 key = "mailSender.bcc.recipients",
                 defaultValue = "false",
