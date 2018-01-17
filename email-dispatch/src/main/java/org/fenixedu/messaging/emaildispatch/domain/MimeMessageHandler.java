@@ -69,10 +69,10 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
     }
 
     protected String getFrom() {
-        Sender sender = getReport().getMessage().getSender();
-        String name = sender.getName();
-        String from = sender.getAddress();
-        return Strings.isNullOrEmpty(name) ? from : name.replace(',', ' ').trim() + " <" + from + ">";
+        final Sender sender = getReport().getMessage().getSender();
+        final String name = sender.getName();
+        final String from = sender.getAddress();
+        return Strings.isNullOrEmpty(name) ? from : String.format("\"%s\" <%s>", name.replace(',', ' ').trim() , from);
     }
 
     protected MimeMessage mimeMessage() throws AddressException, MessagingException {
