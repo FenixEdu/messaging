@@ -40,6 +40,7 @@ import pt.ist.fenixframework.Atomic.TxMode;
 
 public final class MimeMessageHandler extends MimeMessageHandler_Base {
     private static final int MAX_RECIPIENTS = EmailDispatchConfiguration.getConfiguration().mailSenderMaxRecipients();
+    private static final String MIME_MESSAGE_ID_SUFFIX = EmailDispatchConfiguration.getConfiguration().mailMimeMessageIdSuffix();
 
     private static Session SESSION = null;
 
@@ -78,14 +79,14 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
     protected MimeMessage mimeMessage() throws AddressException, MessagingException {
         Message message = getReport().getMessage();
         Locale locale = getLocale();
-        String[] languages = { locale.toLanguageTag() };
+        String[] languages = {locale.toLanguageTag()};
         MimeMessage mimeMessage = new MimeMessage(session()) {
             private String fenixMessageId = null;
 
             @Override
             public String getMessageID() throws MessagingException {
                 if (fenixMessageId == null) {
-                    fenixMessageId = getExternalId() + "." + new DateTime().getMillis() + "@fenix";
+                    fenixMessageId = getExternalId() + "." + new DateTime().getMillis() + "@" + MIME_MESSAGE_ID_SUFFIX;
                 }
                 return fenixMessageId;
             }
@@ -107,7 +108,7 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
 
         String replyTo = message.getReplyTo();
         if (!Strings.isNullOrEmpty(replyTo)) {
-            Address[] replyTos = { new InternetAddress(replyTo) };
+            Address[] replyTos = {new InternetAddress(replyTo)};
             mimeMessage.setReplyTo(replyTos);
         }
 
@@ -157,7 +158,7 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
     }
 
     public static Collection<MimeMessageHandler> create(Map<Locale, Set<String>> tos, Map<Locale, Set<String>> ccs,
-            Map<Locale, Set<String>> bccs) {
+                                                        Map<Locale, Set<String>> bccs) {
         return Stream.of(tos, ccs, bccs).flatMap(m -> m.keySet().stream()).distinct()
                 .flatMap(locale -> bestEffortCreate(locale, tos.get(locale), ccs.get(locale), bccs.get(locale)).stream())
                 .collect(Collectors.toSet());
@@ -168,7 +169,7 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
      * Note however that this intent is somewhat wasted when there are multiple preferred locales among Tos and Ccs due to the
      * locale separation */
     private static Collection<MimeMessageHandler> bestEffortCreate(Locale locale, Collection<String> tos, Collection<String> ccs,
-            Collection<String> bccs) {
+                                                                   Collection<String> bccs) {
         Collection<MimeMessageHandler> handlers = new ArrayList<>();
         List<String> all =
                 Stream.of(tos, ccs, bccs).filter(Objects::nonNull).flatMap(Collection::stream).collect(Collectors.toList());
