@@ -24,14 +24,32 @@
  */
 package org.fenixedu.messaging.core.ui;
 
+import static java.util.Objects.requireNonNull;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+
+import java.security.Key;
+import java.util.Base64;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
+
+import org.fenixedu.bennu.MessagingConfiguration;
+import org.fenixedu.bennu.MessagingConfiguration.ConfigurationProperties;
 import org.fenixedu.bennu.core.domain.exceptions.DomainException;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
+import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.core.domain.Message;
@@ -40,15 +58,20 @@ import org.fenixedu.messaging.core.domain.MessagingSystem;
 import org.fenixedu.messaging.core.domain.Sender;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 public class MessageBean extends MessageContentBean {
 
     private static final long serialVersionUID = 336571169494160668L;
+    private static final String KEY_SENDER = "sender", KEY_EXPRESSION = "expression", KEY_JWT = "jwt", KEY_NAME = "name";
 
     private Sender sender;
+    private boolean senderLocked = false;
     private String replyTo, singleRecipients;
-    private Set<String> recipients;
+    private Set<String> selectedRecipients = new HashSet<>();
+    private Set<String> adHocRecipients = new HashSet<>();
     private Locale preferredLocale = I18N.getLocale();
 
     public Sender getSender() {
@@ -59,44 +82,12 @@ public class MessageBean extends MessageContentBean {
         this.sender = sender;
     }
 
-    public Locale getPreferredLocale() {
-        return preferredLocale;
+    public boolean isSenderLocked() {
+        return senderLocked;
     }
 
-    public void setPreferredLocale(Locale preferredLocale) {
-        this.preferredLocale = preferredLocale;
-    }
-
-    public Set<String> getRecipients() {
-        return recipients;
-    }
-
-    public void setRecipients(Set<String> recipients) {
-        this.recipients = recipients;
-    }
-
-    public Set<Group> getRecipientGroups() {
-        Set<String> recipientExpressions = getRecipients();
-        if (recipientExpressions != null) {
-            return recipientExpressions.stream().map(Group::parse).collect(Collectors.toSet());
-        }
-        return null;
-    }
-
-    public void setRecipientGroups(Set<Group> recipients) {
-        if (recipients != null) {
-            this.recipients = recipients.stream().map(Group::getExpression).collect(Collectors.toSet());
-        } else {
-            this.recipients = null;
-        }
-    }
-
-    public String getSingleRecipients() {
-        return singleRecipients;
-    }
-
-    public void setSingleRecipients(String singleRecipients) {
-        this.singleRecipients = singleRecipients;
+    public void setSenderLocked(boolean senderLocked) {
+        this.senderLocked = senderLocked;
     }
 
     public String getReplyTo() {
@@ -107,11 +98,63 @@ public class MessageBean extends MessageContentBean {
         this.replyTo = replyTo;
     }
 
+    public String getSingleRecipients() {
+        return singleRecipients;
+    }
+
+    public void setSingleRecipients(String singleRecipients) {
+        this.singleRecipients = singleRecipients;
+    }
+
+    public Set<String> getSelectedRecipients() {
+        return selectedRecipients;
+    }
+
+    public void setSelectedRecipients(Set<String> recipients) {
+        this.selectedRecipients = recipients;
+    }
+
+    public Set<String> getAdHocRecipients() {
+        return adHocRecipients;
+    }
+
+    public void setAdHocRecipients(Set<String> adHocRecipients) {
+        this.adHocRecipients = adHocRecipients;
+    }
+
+    public Locale getPreferredLocale() {
+        return preferredLocale;
+    }
+
+    public void setPreferredLocale(Locale preferredLocale) {
+        this.preferredLocale = preferredLocale;
+    }
+
+    public void setLockedSender(final Sender sender) {
+        setSender(sender);
+        setSenderLocked(true);
+    }
+
+    public void selectRecipient(Group recipient) {
+        requireNonNull(recipient);
+        selectedRecipients.add(Base64.getEncoder().encodeToString(buildRecipientJson(null, recipient).toString().getBytes()));
+    }
+
+    public void addAdHocRecipient(Group recipient) {
+        addAdHocRecipient(sender, recipient);
+    }
+
+    public void addAdHocRecipient(Sender sender, Group recipient) {
+        requireNonNull(recipient);
+        requireNonNull(sender);
+        adHocRecipients.add(Base64.getEncoder().encodeToString(buildRecipientJson(sender, recipient).toString().getBytes()));
+    }
+
     Message send() {
         Collection<String> errors = validate();
         if (errors.isEmpty()) {
             MessageBuilder builder =
-                    Message.from(getSender()).replyTo(replyTo).preferredLocale(preferredLocale).subject(getSubject());
+                    Message.from(getSender()).replyTo(getReplyTo()).preferredLocale(getPreferredLocale()).subject(getSubject());
             LocalizedString content = getTextBody();
             if (content != null) {
                 builder.textBody(content);
@@ -120,7 +163,7 @@ public class MessageBean extends MessageContentBean {
             if (content != null) {
                 builder.htmlBody(content);
             }
-            Set<Group> recipients = getRecipientGroups();
+            Set<Group> recipients = getGroupRecipients();
             if (recipients != null) {
                 builder.bcc(recipients);
             }
@@ -133,58 +176,117 @@ public class MessageBean extends MessageContentBean {
         return null;
     }
 
+    private Set<Group> getGroupRecipients() {
+        return getSelectedRecipients().stream().map(b64 -> new String(Base64.getDecoder().decode(b64.getBytes())))
+                .map(json -> new JsonParser().parse(json).getAsJsonObject().getAsJsonPrimitive(KEY_JWT).getAsString())
+                .map(MessageBean::parseJWT).map(claims -> claims.get(KEY_EXPRESSION, String.class)).map(Group::parse)
+                .collect(Collectors.toSet());
+    }
+
     @Override
     public Collection<String> validate() {
-        Collection<String> errors = Lists.newArrayList();
+        Collection<String> errors = super.validate();
         Sender sender = getSender();
-        if (getSender() == null) {
-            errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.sender.empty"));
-        }
+        String singleRecipients = getSingleRecipients(), replyTo = getReplyTo();
+        Set<String> jsonRecipients = getSelectedRecipients();
+        boolean hasGroupRecipients = jsonRecipients != null && !jsonRecipients.isEmpty(), hasSingleRecipients =
+                !Strings.isNullOrEmpty(singleRecipients);
 
-        errors.addAll(super.validate());
-
-        String singleRecipients = getSingleRecipients();
-        Set<String> recipients = getRecipients();
-        if ((recipients == null || recipients.isEmpty()) && Strings.isNullOrEmpty(singleRecipients)) {
+        if (!(hasGroupRecipients || hasSingleRecipients)) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipients.empty"));
         }
-        if (recipients != null && !recipients.isEmpty()) {
-            Set<Group> allowedRecipients = sender != null ? sender.getRecipients() : null;
-            recipients.stream().forEach(expression -> {
+
+        if (hasSingleRecipients) {
+            MessagingSystem.Util.toEmailSet(singleRecipients).stream().map(String::trim)
+                    .filter(email -> !MessagingSystem.Util.isValidEmail(email)).forEach(email -> errors
+                    .add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.single.invalid", email)));
+        }
+
+        if (hasGroupRecipients) {
+            jsonRecipients.forEach(b64 -> {
                 try {
-                    Group recipient = Group.parse(expression);
-                    if (sender != null && !allowedRecipients.contains(recipient)) {
+                    String json = new String(Base64.getDecoder().decode(b64.getBytes()));
+                    Claims claims =
+                            parseJWT(new JsonParser().parse(json).getAsJsonObject().getAsJsonPrimitive(KEY_JWT).getAsString());
+                    Group recipient = Group.parse(claims.get(KEY_EXPRESSION, String.class));
+                    if (sender != null && !sender.getExternalId().equals(claims.get(KEY_SENDER, String.class))) {
                         errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.forbidden",
                                 recipient.getPresentationName()));
                     }
-                } catch (DomainException e) {
-                    String[] args = e.getArgs();
-                    errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.erroneous",
-                            args != null && args.length > 0 ? args[0] : ""));
+                } catch (ExpiredJwtException e) {
+                    errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.token.expired"));
+                } catch (DomainException | JsonSyntaxException | IllegalArgumentException | IllegalStateException | JwtException e) {
+                    errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.token.erroneous"));
                 }
             });
         }
 
-        if (!Strings.isNullOrEmpty(singleRecipients)) {
-            Set<String> emails = MessagingSystem.Util.toEmailSet(singleRecipients);
-            for (String emailString : emails) {
-                final String email = emailString.trim();
-                if (!MessagingSystem.Util.isValidEmail(email)) {
-                    errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.single.invalid", email));
-                }
-            }
-        }
-
-        String replyTo = getReplyTo();
         if (!(Strings.isNullOrEmpty(replyTo) || MessagingSystem.Util.isValidEmail(replyTo))) {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.replyTo.invalid", replyTo));
         }
 
-        if (getHtmlBody() != null && !getHtmlBody().isEmpty() && !sender.getHtmlEnabled()) {
-            errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.html.forbidden"));
+        if (sender == null) {
+            errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.sender.empty"));
+        } else {
+            if (!sender.getMembers().isMember(Authenticate.getUser())) {
+                errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.sender.user.forbidden"));
+            }
+            if (getHtmlBody() != null && !getHtmlBody().isEmpty() && !sender.getHtmlEnabled()) {
+                errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.html.forbidden"));
+            }
         }
 
         setErrors(errors);
         return errors;
+    }
+
+    private static Claims parseJWT(String jwt) {
+        String secretKey = requireNonNull(MessagingConfiguration.getConfiguration().jwtKey());
+        return Jwts.parser().setSigningKey(DatatypeConverter.parseBase64Binary(secretKey)).parseClaimsJws(jwt).getBody();
+    }
+
+    /**
+     * Defines the standard JSON format for an authorized recipient. Use to build the JSON representation of the recipients to be
+     * provided to the interface (ad hoc/white-listed for a given sender) or to be pre-selected in the interface.
+     * The full representation is inefficient when used for pre-selected recipients. In that case only the group expression is
+     * required for the interface to match with the provided recipient's data.
+     *
+     * The client-side may safely return the selected recipients to the server as just the expression and JWT.
+     * The JWT already contains the sender and expression information, however the redundant parameters should be provided by the
+     * server regardless since decoding the jwt in the client is dicey. Doing it prevents encryption and exposes
+     * other implementation details (such as the use of compression).
+     *
+     * @param recipient
+     *         The group to be allowed as a recipient
+     * @param sender
+     *         The sender that is being authorized to use this recipient
+     * @throws NullPointerException
+     *         if recipient parameter or system configuration's secret key is not defined
+     */
+    static JsonObject buildRecipientJson(Sender sender, Group recipient) {
+        requireNonNull(recipient);
+        ConfigurationProperties config = MessagingConfiguration.getConfiguration();
+        requireNonNull(config.jwtKey());
+        JsonObject json = new JsonObject();
+
+        String expression = recipient.getExpression();
+        json.addProperty(KEY_EXPRESSION, expression);
+        json.addProperty(KEY_NAME, recipient.getPresentationName());
+
+        if (sender != null) {
+            String senderId = sender.getExternalId();
+            SignatureAlgorithm algorithm = SignatureAlgorithm.forName(config.jwtAlgorithm());
+            long millis = System.currentTimeMillis();
+            Date now = new Date(millis);
+            Key signingKey = new SecretKeySpec(DatatypeConverter.parseBase64Binary(config.jwtKey()), algorithm.getJcaName());
+
+            String jwt =
+                    Jwts.builder().claim(KEY_EXPRESSION, expression).claim(KEY_SENDER, sender.getExternalId()).setIssuedAt(now)
+                            .setExpiration(new Date(millis + config.jwtTTL())).signWith(algorithm, signingKey).compact();
+
+            json.addProperty(KEY_SENDER, senderId);
+            json.addProperty(KEY_JWT, jwt);
+        }
+        return json;
     }
 }

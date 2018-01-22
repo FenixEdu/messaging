@@ -27,7 +27,6 @@ package org.fenixedu.messaging.core.ui;
 import java.util.Locale;
 import java.util.Set;
 
-import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.bennu.core.util.CoreConfiguration;
 import org.fenixedu.bennu.spring.portal.SpringApplication;
@@ -67,8 +66,8 @@ public class MessagingController {
     }
 
     @RequestMapping(value = { "/senders", "/senders/" })
-    public String listSenders(Model model, @RequestParam(value = "page", defaultValue = "1") int page, @RequestParam(
-            value = "items", defaultValue = "10") int items) {
+    public String listSenders(Model model, @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "items", defaultValue = "10") int items) {
         PaginationUtils.paginate(model, "messaging/senders", "senders", Sender.available(), items, page);
         return "/messaging/listSenders";
     }
@@ -95,12 +94,8 @@ public class MessagingController {
 
         JsonObject info = new JsonObject();
         JsonArray array = new JsonArray();
-        for (Group g : sender.getRecipients()) {
-            JsonObject group = new JsonObject();
-            group.addProperty("name", g.getPresentationName());
-            group.addProperty("expression", g.getExpression());
-            array.add(group);
-        }
+        sender.getRecipients().stream().map(recipient -> MessageBean.buildRecipientJson(sender, recipient))
+                .forEach(array::add);
         info.add("recipients", array);
         String replyTo = sender.getReplyTo();
         if (!Strings.isNullOrEmpty(replyTo)) {
