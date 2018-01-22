@@ -166,6 +166,6 @@ relation MessageUser {
 		multiplicity *;
 	}
 	protected .org.fenixedu.bennu.core.domain.User playsRole creator {
-		multiplicity 1..1;
+		multiplicity 0..1;
 	}
 }
