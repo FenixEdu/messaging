@@ -116,7 +116,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
         private Sender sender;
         private LocalizedString subject = new LocalizedString(), textBody = new LocalizedString(), htmlBody =
                 new LocalizedString();
-        private String replyTo = null;
+        private Set<String> replyTo = null;
         private Locale preferredLocale = I18N.getLocale();
         private Set<Group> tos = new HashSet<>(), ccs = new HashSet<>(), bccs = new HashSet<>();
         private Set<String> singleBccs = new HashSet<>();
@@ -278,20 +278,30 @@ public final class Message extends Message_Base implements Comparable<Message> {
             return this;
         }
 
-        public MessageBuilder replyToSender() {
-            return replyTo(sender.getReplyTo());
+        public MessageBuilder replyTo(Collection<String> replyTos) {
+            builderSetCopy(requireNonNull(replyTos), Util::isValidEmail, this.replyTo);
+            return this;
         }
 
-        public MessageBuilder replyTo(String replyTo) {
-            this.replyTo = MessagingSystem.Util.isValidEmail(replyTo) ? replyTo : null;
+        public MessageBuilder replyTo(Stream<String> replyTos) {
+            builderSetAdd(requireNonNull(replyTos), Util::isValidEmail, this.replyTo);
             return this;
+        }
+
+        public MessageBuilder replyTo(String... replyTos) {
+            builderSetAdd(requireNonNull(replyTos), Util::isValidEmail, this.replyTo);
+            return this;
+        }
+
+        public MessageBuilder replyToSender() {
+            return replyTo(sender.getReplyTo());
         }
 
         @Atomic(mode = TxMode.WRITE)
         public Message send() {
             Message message = new Message();
             message.setSender(sender);
-            message.setReplyTo(replyTo);
+            message.setReplyTo(Strings.emptyToNull(Util.toEmailListString(replyTo)));
             message.setPreferredLocale(preferredLocale);
             tos.stream().map(Group::toPersistentGroup).forEach(message::addTo);
             ccs.stream().map(Group::toPersistentGroup).forEach(message::addCc);
@@ -411,6 +421,10 @@ public final class Message extends Message_Base implements Comparable<Message> {
 
     public Set<String> getSingleBccsSet() {
         return toEmailSet(getSingleBccs());
+    }
+
+    public Set<String> getReplyTosSet() {
+        return toEmailSet(getReplyTo());
     }
 
     public Set<Locale> getContentLocales() {
