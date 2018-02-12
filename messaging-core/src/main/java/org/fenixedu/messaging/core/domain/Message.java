@@ -108,7 +108,8 @@ public final class Message extends Message_Base implements Comparable<Message> {
             @TemplateParameter(id = "tos", description = "message.template.message.wrapper.parameter.tos"),
             @TemplateParameter(id = "ccs", description = "message.template.message.wrapper.parameter.ccs"),
             @TemplateParameter(id = "bccs", description = "message.template.message.wrapper.parameter.bccs"),
-            @TemplateParameter(id = "singleBccs", description = "message.template.message.wrapper.parameter.singleBccs") },
+            @TemplateParameter(id = "singleBccs", description = "message.template.message.wrapper.parameter.singleBccs"),
+            @TemplateParameter(id = "singleTos", description = "message.template.message.wrapper.parameter.singleTos") },
             bundle = "MessagingResources")
     public static final class MessageBuilder implements Serializable {
         private boolean wrapped = false;
@@ -119,7 +120,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
         private String replyTo = null;
         private Locale preferredLocale = I18N.getLocale();
         private Set<Group> tos = new HashSet<>(), ccs = new HashSet<>(), bccs = new HashSet<>();
-        private Set<String> singleBccs = new HashSet<>();
+        private Set<String> singleBccs = new HashSet<>(), singleTos = new HashSet<>();
 
         protected MessageBuilder(Sender sender) {
             from(sender);
@@ -263,18 +264,33 @@ public final class Message extends Message_Base implements Comparable<Message> {
             return this;
         }
 
-        public MessageBuilder singleBcc(Collection<String> bccs) {
+        public MessageBuilder singleBccs(Collection<String> bccs) {
             builderSetCopy(requireNonNull(bccs), Util::isValidEmail, this.singleBccs);
             return this;
         }
 
-        public MessageBuilder singleBcc(Stream<String> bccs) {
+        public MessageBuilder singleBccs(Stream<String> bccs) {
             builderSetAdd(requireNonNull(bccs), Util::isValidEmail, this.singleBccs);
             return this;
         }
 
-        public MessageBuilder singleBcc(String... bccs) {
+        public MessageBuilder singleBccs(String... bccs) {
             builderSetAdd(requireNonNull(bccs), Util::isValidEmail, this.singleBccs);
+            return this;
+        }
+
+        public MessageBuilder singleTos(Collection<String> tos) {
+            builderSetCopy(requireNonNull(tos), Util::isValidEmail, this.singleTos);
+            return this;
+        }
+
+        public MessageBuilder singleTos(Stream<String> tos) {
+            builderSetAdd(requireNonNull(tos), Util::isValidEmail, this.singleTos);
+            return this;
+        }
+
+        public MessageBuilder singleTos(String... tos) {
+            builderSetAdd(requireNonNull(tos), Util::isValidEmail, this.singleTos);
             return this;
         }
 
@@ -297,13 +313,15 @@ public final class Message extends Message_Base implements Comparable<Message> {
             ccs.stream().map(Group::toPersistentGroup).forEach(message::addCc);
             bccs.stream().map(Group::toPersistentGroup).forEach(message::addBcc);
             message.setSingleBccs(Strings.emptyToNull(Util.toEmailListString(singleBccs)));
+            message.setSingleTos(Strings.emptyToNull(Util.toEmailListString(singleTos)));
             if (wrapped) {
                 template("org.fenixedu.messaging.message.wrapper").parameter("sender", sender)
                         .parameter("creator", Authenticate.getUser()).parameter("replyTo", replyTo)
                         .parameter("preferredLocale", preferredLocale).parameter("subject", subject)
                         .parameter("textBody", textBody).parameter("htmlBody", htmlBody).parameter("tos", newArrayList(tos))
                         .parameter("ccs", newArrayList(ccs)).parameter("bccs", newArrayList(bccs))
-                        .parameter("singleBccs", newArrayList(singleBccs)).and();
+                        .parameter("singleBccs", newArrayList(singleBccs))
+                        .parameter("singleTos", newArrayList(singleTos)).and();
             }
             message.setSubject(subject);
             message.setTextBody(textBody);
@@ -388,7 +406,9 @@ public final class Message extends Message_Base implements Comparable<Message> {
     }
 
     public Set<String> getTos() {
-        return toEmailSet(getToSet());
+        Set<String> tos = toEmailSet(getToSet());
+        tos.addAll(getSingleTosSet());
+        return tos;
     }
 
     public Set<Group> getCcGroups() {
@@ -411,6 +431,10 @@ public final class Message extends Message_Base implements Comparable<Message> {
 
     public Set<String> getSingleBccsSet() {
         return toEmailSet(getSingleBccs());
+    }
+
+    public Set<String> getSingleTosSet() {
+        return toEmailSet(getSingleTos());
     }
 
     public Set<Locale> getContentLocales() {

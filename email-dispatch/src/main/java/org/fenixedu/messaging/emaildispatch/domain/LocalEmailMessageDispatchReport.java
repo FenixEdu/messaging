@@ -102,6 +102,10 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
             tosByLocale = Maps.newHashMap();
             ccsByLocale = Maps.newHashMap();
             bccsByLocale = emailsByMessageLocale(bccs, validator, defLocale, messageLocales);
+
+            Set<String> singleTos = message.getSingleTosSet().stream().filter(validator).collect(Collectors.toSet());
+            bccsByLocale.computeIfAbsent(message.getPreferredLocale(), k -> new HashSet<>()).addAll(singleTos);
+
             Set<String> singleBccs = message.getSingleBccsSet().stream().filter(validator).collect(Collectors.toSet());
             bccsByLocale.computeIfAbsent(message.getPreferredLocale(), k -> new HashSet<>()).addAll(singleBccs);
         } else {
@@ -109,6 +113,12 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
             ccs.removeAll(tos);
             bccs.removeAll(tos);
             bccs.removeAll(ccs);
+
+            Set<String> singleTos = message.getSingleTosSet();
+            tos.stream().map(UserProfile::getEmail).forEach(singleTos::remove);
+            ccs.stream().map(UserProfile::getEmail).forEach(singleTos::remove);
+            bccs.stream().map(UserProfile::getEmail).forEach(singleTos::remove);
+
             Set<String> singleBccs = message.getSingleBccsSet();
             tos.stream().map(UserProfile::getEmail).forEach(singleBccs::remove);
             ccs.stream().map(UserProfile::getEmail).forEach(singleBccs::remove);
@@ -117,6 +127,10 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
             tosByLocale = emailsByMessageLocale(tos, validator, defLocale, messageLocales);
             ccsByLocale = emailsByMessageLocale(ccs, validator, defLocale, messageLocales);
             bccsByLocale = emailsByMessageLocale(bccs, validator, defLocale, messageLocales);
+
+            singleTos = singleTos.stream().filter(validator).collect(Collectors.toSet());
+            tosByLocale.computeIfAbsent(message.getPreferredLocale(), k -> new HashSet<>()).addAll(singleTos);
+
             singleBccs = singleBccs.stream().filter(validator).collect(Collectors.toSet());
             bccsByLocale.computeIfAbsent(message.getPreferredLocale(), k -> new HashSet<>()).addAll(singleBccs);
         }

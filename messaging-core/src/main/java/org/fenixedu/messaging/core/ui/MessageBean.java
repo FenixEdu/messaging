@@ -126,7 +126,7 @@ public class MessageBean extends MessageContentBean {
             }
             String bccs = getSingleRecipients();
             if (bccs != null) {
-                builder.singleBcc(bccs);
+                builder.singleBccs(bccs);
             }
             return builder.wrapped().send();
         }
