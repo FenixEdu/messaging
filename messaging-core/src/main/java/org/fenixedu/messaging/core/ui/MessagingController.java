@@ -55,6 +55,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
+import javax.servlet.http.HttpServletRequest;
+
 @SpringApplication(path = "messaging", title = "title.messaging", group = "senders | #managers", hint = "Messaging")
 @SpringFunctionality(app = MessagingController.class, title = "title.messaging.sending", accessGroup = "senders")
 @RequestMapping("/messaging")
@@ -111,7 +113,12 @@ public class MessagingController {
     }
 
     @RequestMapping(value = "/message", method = RequestMethod.GET)
-    public String newMessage(Model model, @ModelAttribute("messageBean") MessageBean messageBean) {
+    public String newMessage(Model model, @ModelAttribute("messageBean") MessageBean messageBean, HttpServletRequest request) {
+
+        messageBean = MessagingUtils.getMessageBeanFromSession(request).orElse(messageBean);
+
+        MessagingUtils.clearMessageBeanFromSession(request);
+
         if (messageBean.getSender() != null && !allowedSender(messageBean.getSender())) {
             throw MessagingDomainException.forbidden();
         }
@@ -124,7 +131,7 @@ public class MessagingController {
 
     @RequestMapping(value = "/message", method = RequestMethod.POST)
     public ModelAndView sendMessage(Model model, @ModelAttribute("messageBean") MessageBean messageBean,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes, HttpServletRequest request) {
         if (messageBean != null) {
             if (allowedSender(messageBean.getSender())) {
                 Message message = messageBean.send();
@@ -136,7 +143,7 @@ public class MessagingController {
                 throw MessagingDomainException.forbidden();
             }
         }
-        return new ModelAndView(newMessage(model, messageBean));
+        return new ModelAndView(newMessage(model, messageBean, request));
     }
 
     @RequestMapping(value = "/messages/{message}", method = RequestMethod.GET)
