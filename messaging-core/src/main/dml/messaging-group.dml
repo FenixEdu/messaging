@@ -1,0 +1,23 @@
+package org.fenixedu.bennu.core.domain.groups;
+
+class PersistentNamedGroup extends PersistentGroup {
+    LocalizedString name;
+}
+
+relation PersistentNamedGroupGroup {
+    protected PersistentNamedGroup playsRole namedGroup {
+        multiplicity 0..*;
+    }
+    protected PersistentGroup playsRole group {
+        multiplicity 1..1;
+    }
+}
+
+relation NamedGroupsRoot {
+	protected .org.fenixedu.bennu.core.domain.Bennu playsRole rootForNamedGroups {
+		multiplicity 1..1;
+	}
+	public PersistentNamedGroup playsRole namedGroups {
+		multiplicity 0..*;
+	}
+}
