@@ -446,7 +446,10 @@ public final class Message extends Message_Base implements Comparable<Message> {
     }
 
     public boolean isDeletable() {
-        return getCreator().equals(Authenticate.getUser()) && getDispatchReport() == null;
+        if (getCreator() != null) {
+            return getCreator().equals(Authenticate.getUser()) && getDispatchReport() == null;
+        }
+        return true;
     }
 
     @Override
