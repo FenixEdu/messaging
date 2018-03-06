@@ -22,14 +22,25 @@ ${portal.toolkit()}
 <form:form modelAttribute="messageBean" role="form" class="form-horizontal" action="${pageContext.request.contextPath}/messaging/message" method="post">
 	${csrf.field()}
 	<div class="form-group">
+		<c:forEach var="adHocRecipient" items="${messageBean.adHocRecipients}">
+			<form:input type="hidden" path="adHocRecipients" value="${adHocRecipient}"/>
+		</c:forEach>
+		<form:input type="hidden" path="senderLocked" value="${messageBean.senderLocked}"/>
 		<label class="control-label col-sm-2" for="senderSelect"><spring:message code="label.message.sender"/>:</label>
 		<div class="col-sm-10">
+		<c:if test="${not messageBean.senderLocked or empty messageBean.sender}">
 			<form:select class="form-control" id="senderSelect" path="sender" required="true">
 				<form:option class="form-control" value=""><spring:message code="hint.sender.select"/></form:option>
-				<c:forEach  var="sender" items="${sort:uniqueSort(senders)}">
-				<form:option class="form-control" value="${sender.externalId}">${sender.name} (${sender.address})</form:option>
+				<c:forEach var="sender" items="${sort:uniqueSort(senders)}">
+					<form:option class="form-control" value="${sender.externalId}">${sender.name} (${sender.address})</form:option>
 				</c:forEach>
 			</form:select>
+		</c:if>
+		<c:if test="${not empty messageBean.sender and messageBean.senderLocked}">
+			<form:input type="hidden" path="sender" value="${messageBean.sender.externalId}"/>
+			<form:input path="" type="text" class="form-control" id="senderSelect" readonly="true"
+						value="${messageBean.sender.name} (${messageBean.sender.address})"/>
+		</c:if>
 		</div>
 	</div>
 	<div class="form-group">
@@ -42,8 +53,8 @@ ${portal.toolkit()}
 	<div id="recipients-container" class="form-group">
 		<label class="control-label col-sm-2"><spring:message code="label.message.recipients"/>:</label>
 		<div id="recipients" class="form-inline col-sm-10">
-		<c:forEach  var="recipient" items="${sort:uniqueSort(messageBean.recipients)}">
-			<input style="display:none;" type="checkbox" value="${recipient}" checked/>
+		<c:forEach  var="recipient" items="${sort:uniqueSort(messageBean.selectedRecipients)}">
+			<input style="display:none;" type="checkbox" value='<c:out value="${recipient}"/>' checked/>
 		</c:forEach>
 		</div>
 	</div>
@@ -90,14 +101,29 @@ ${portal.toolkit()}
 </form:form>
 <script>
 (function(){
-	function recallCheckboxes(container){
-		var checked = [];
-		container.children("input:checked").each(function() {
-			checked.push($(this).val());
-		});
-		container.empty();
-		return checked;
-	}
+	var recipientsEl = $('#recipients'),
+		recipientsContainerEl = $('#recipients-container'),
+		replyToEl = $('#replyTo'),
+		htmlMessageEl = $('#htmlMessage'),
+		htmlBodyEL = $('#htmlBody'),
+		senderSelectEl = $('#senderSelect');
+	var originalSender = "${messageBean.sender.externalId}",
+		adHocRecipients = [];
+
+	function readRecipient(recipient) {
+        try {
+            return JSON.parse(atob(recipient));
+        } catch(e) { console.log("An erroneous recipient was discarded: " + recipient); }
+    }
+
+    function writeRecipient(recipient) {
+	    return btoa(JSON.stringify({expression: recipient.expression, jwt: recipient.jwt}));
+    }
+	var recipient;
+    <c:forEach var="recipient" items="${messageBean.adHocRecipients}">
+		recipient = readRecipient("${recipient}");
+		if(recipient){ adHocRecipients.push(recipient); }
+    </c:forEach>
 
 	function nameCompare(a, b) {
 		a = a && a['name'] || "";
@@ -107,28 +133,40 @@ ${portal.toolkit()}
 		return 0;
 	}
 
-	function appendCheckbox(element, checked, name, label, value){
-		var id = name + '-' + value,
+	function appendRecipientCheckbox(recipient, checked){
+		var value = writeRecipient(recipient);
+		var id = 'recipients-' + recipient.expression,
 			labelEl = $('<label style="margin-right: 5px;" class="input-group input-group-sm" for="'+id+'"></label>'),
-			checkboxEl = $('<input/>', { type: 'checkbox', id: id, value: value, name: name, checked: checked.indexOf(value) >= 0 }),
+			checkboxEl = $('<input/>', { type: 'checkbox', id: id, value: value, name: 'selectedRecipients', checked: checked }),
 			addonEl = $('<span class="input-group-addon"></span>'),
-			spanEl = $('<span class="form-control">'+label+'</span>');
+			spanEl = $('<span class="form-control">'+recipient.name+'</span>');
 		addonEl.append(checkboxEl);
 		labelEl.append(addonEl);
 		labelEl.append(spanEl);
-		element.append(labelEl);
+		recipientsEl.append(labelEl);
 	}
 
-	function populateCheckboxes(info, path, element) {
-		element.parent().hide();
-		var checked = recallCheckboxes(element),
-			data = info[path];
-		if(data.length !== 0) {
-			element.parent().show();
-			data.sort(nameCompare)
-				.forEach(function(item){
-					appendCheckbox(element, checked, path, item.name, item.expression);
-				});
+	function recallRecipients(){
+		var checked = [];
+		recipientsEl.find("input:checked").each(function() {
+            var recipient = readRecipient($(this).val());
+            if(recipient){ checked.push(recipient); }
+		});
+		recipientsEl.empty();
+		return checked;
+	}
+
+	function populateRecipients(providedRecipients) {
+		recipientsContainerEl.hide();
+		if(providedRecipients.length !== 0) {
+			var selectedRecipients = recallRecipients();
+			providedRecipients.sort(nameCompare).forEach(function(provided){
+				var checked = !!$.grep(selectedRecipients, function(selected){
+					return selected.expression === provided.expression;
+				}).length;
+				appendRecipientCheckbox(provided, checked);
+			});
+			recipientsContainerEl.show();
 		}
 	}
 
@@ -136,33 +174,35 @@ ${portal.toolkit()}
 	function senderUpdate(sender){
 		if(sender){
 			$.getJSON('senders/' + sender, function(info){
-				if(info.replyTo && (!$('#replyTo').val() || $('#replyTo').val() == currentSenderReplyTo)) {
-					$('#replyTo').val(info.replyTo);
+				if(info.replyTo && (!replyToEl.val() || replyToEl.val() == currentSenderReplyTo)) {
+					replyToEl.val(info.replyTo);
 					currentSenderReplyTo = info.replyTo;
 				}
-				populateCheckboxes(info, 'recipients', $('#recipients'));
-				if(!$('#recipients').is(':empty')){
-					$('#recipients-container').show();
-				}
+				var expressions = $.map(info.recipients, function(recipient) { return recipient.expression; }),
+					relevantAdHocRecipients = $.grep(adHocRecipients, function(recipient) {
+						return recipient.sender === sender && expressions.indexOf(recipient.expression) < 0;
+					});
+				populateRecipients(info.recipients.concat(relevantAdHocRecipients));
 				if(info.html){
-					$('#htmlMessage').show();
-					$('#htmlBody').attr('name','htmlBody');
+					htmlMessageEl.show();
+					htmlBodyEL.attr('name','htmlBody');
 				} else {
-					$('#htmlMessage').hide();
-					$('#htmlBody').removeAttr('name');
+					htmlMessageEl.hide();
+					htmlBodyEL.removeAttr('name');
 				}
 			});
 		} else {
-			$('#recipients-container').hide();
-			if($('#replyTo').val() == currentSenderReplyTo) {
-				$('#replyTo').val(currentSenderReplyTo = '');
+			recipientsContainerEl.hide();
+			if(replyToEl.val() == currentSenderReplyTo) {
+				replyToEl.val(currentSenderReplyTo = '');
 			}
 		}
 	}
 
-	$('#senderSelect').change(function(){
+	senderSelectEl.change(function(){
 		senderUpdate(this.value);
 	});
-	senderUpdate(<c:out value="${messageBean.sender.externalId}"/>);
+
+	senderUpdate(originalSender);
 })();
 </script>
