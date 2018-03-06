@@ -115,6 +115,53 @@ public class MessagingSystem extends MessagingSystem_Base {
         return getInstance().getSystemSender();
     }
 
+    public boolean isOptOutAvailable(User user){
+        return getOptOutAvailable().isMember(user);
+    }
+
+    public boolean isOptedOut(User user){
+        return getOptedOutGroup().isMember(user);
+    }
+
+    public boolean isOptedIn(User user){
+        return !isOptedOut(user);
+    }
+
+    private Group getOptSomethingGroup(PersistentGroup persistentGroup) {
+        if (persistentGroup == null){
+            return Group.nobody();
+        }
+        return persistentGroup.toGroup();
+    }
+
+    public Group getOptedOutGroup() {
+        return getOptSomethingGroup(getPersistentOptedOutGroup());
+    }
+
+    public Group getOptOutAvailable() {
+        return getOptSomethingGroup(getPersistentOptOutAvailableGroup());
+    }
+
+    public void setOptOutAvailable(Group group){
+        setPersistentOptOutAvailableGroup(group == null ? null : group.toPersistentGroup());
+    }
+
+    public void setOptedOutGroup(Group group){
+        setPersistentOptedOutGroup(group == null ? null : group.toPersistentGroup());
+    }
+
+    public void optOut(User user){
+        if (user != null){
+            setOptedOutGroup(getOptedOutGroup().grant(user));
+        }
+    }
+
+    public void optIn(User user){
+        if (user != null){
+            setOptedOutGroup(getOptedOutGroup().revoke(user));
+        }
+    }
+
     public static final class Util {
 
         private static final String MAIL_LIST_SEPARATOR = "\\s*,\\s*";

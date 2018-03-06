@@ -144,7 +144,9 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
     }
 
     private static Set<UserProfile> getProfiles(Set<Group> groups) {
-        return groups.stream().flatMap(g -> g.getMembers()).map(User::getProfile).filter(Objects::nonNull)
+        return groups.stream().flatMap(Group::getMembers)
+                .filter(MessagingSystem.getInstance()::isOptedIn)
+                .map(User::getProfile).filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
 
