@@ -169,3 +169,21 @@ relation MessageUser {
 		multiplicity 0..1;
 	}
 }
+
+relation MessagingSystemOptOutAvailableGroup {
+	protected MessagingSystem playsRole messagingSystemOptOutAvailable {
+		multiplicity 0..1;
+	}
+	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole persistentOptOutAvailableGroup {
+		multiplicity 0..1;
+	}
+}
+
+relation MessagingSystemOptedOutGroup {
+	protected MessagingSystem playsRole messagingSystemOptedOut {
+		multiplicity 0..1;
+	}
+	protected .org.fenixedu.bennu.core.domain.groups.PersistentGroup playsRole persistentOptedOutGroup {
+		multiplicity 0..1;
+	}
+}
