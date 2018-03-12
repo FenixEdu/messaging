@@ -51,9 +51,9 @@
 				<spring:message code="label.sender.recipients"/>
 			</th>
 			<td>
-				<div style="overflow-y:auto; max-height:85px; display:block;">
+				<div style="overflow-y:auto; max-height:100px; display:block;">
 				<c:forEach items="${sort:uniqueSort(sender.recipients)}" var="recipient">
-					<code style="display: inline-block; margin: 2px;">${recipient.presentationName}</code>
+					<code style="display: inline-block; margin: 2px; white-space: initial;">${recipient.presentationName}</code>
 				</c:forEach>
 				</div>
 			</td>

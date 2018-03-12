@@ -1,7 +1,9 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@ taglib uri="org.fenixedu.messaging.tags.sorter" prefix="sort" %>
+
 
 <c:choose>
 <c:when test="${configure}">
@@ -19,6 +21,17 @@
 	<spring:message code="action.new.sender"/>
 </a>
 </c:if>
+
+<c:if test="${empty senders}">
+    <h4><spring:message code="title.senders.empty"/></h4>
+</c:if>
+
+<div class="input-group input-group-sm" style="margin-top: 20px; margin-bottom: 5px;">
+    <spring:message code="hint.sender.search" var="placeholder"/>
+    <input id="filter-select" class="form-control" style="text-align: left; width: 400px; padding: 0 5px;" type="text"
+           value="${search}" placeholder="${placeholder}"/>
+</div>
+
 <c:if test="${not empty senders}">
 <table class="table table-hover table-condensed">
 	<thead>
@@ -63,12 +76,6 @@
 		</tr>
 	</c:forEach>
 	</tbody>
-	<tfoot>
-		<tr>
-			<td colspan="3">
-				<%@ include file="pagination.jsp" %>
-			</td>
-		</tr>
-	</tfoot>
 </table>
 </c:if>
+<%@ include file="pagination.jsp" %>
