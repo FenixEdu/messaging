@@ -43,6 +43,11 @@
             <artifactId>javax.mail-api</artifactId>
             <version>${version.javax.mail.javax.mail-api}</version>
         </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.7.0</version>
+        </dependency>
     </dependencies>
 
     <repositories>
