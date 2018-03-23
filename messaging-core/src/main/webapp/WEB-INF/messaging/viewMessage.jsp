@@ -159,6 +159,18 @@ ${portal.toolkit()}
 				</td>
 			</tr>
 		</c:if>
+		<c:if test="${not empty message.file}">
+			<tr>
+				<th class="col-md-2" scope="row">
+					<spring:message code="label.message.attachments"/>
+				</th>
+				<td>
+					<c:forEach items="${files}" var="entry">
+						<code style="display: inline-block; margin: 2px;"><a href=${entry.value}>${entry.key}</a></code>
+					</c:forEach>
+				</td>
+			</tr>
+		</c:if>
 		<tr>
 			<th class="col-md-2" scope="row">
 				<spring:message code="label.message.locale.preferred"/>

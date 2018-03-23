@@ -50,6 +50,7 @@ import org.fenixedu.bennu.core.domain.exceptions.DomainException;
 import org.fenixedu.bennu.core.groups.Group;
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.bennu.core.security.Authenticate;
+import org.fenixedu.bennu.io.domain.GenericFile;
 import org.fenixedu.commons.i18n.I18N;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.core.domain.Message;
@@ -73,6 +74,7 @@ public class MessageBean extends MessageContentBean {
     private Set<String> selectedRecipients = new HashSet<>();
     private Set<String> adHocRecipients = new HashSet<>();
     private Locale preferredLocale = I18N.getLocale();
+    private Set<GenericFile> attachments = new HashSet<>();
 
     public Sender getSender() {
         return sender;
@@ -122,6 +124,10 @@ public class MessageBean extends MessageContentBean {
         this.adHocRecipients = adHocRecipients;
     }
 
+    public Set<GenericFile> getAttachments() { return attachments; }
+
+    public void setAttachments(Set<GenericFile> attachments) { this.attachments = attachments; }
+
     public Locale getPreferredLocale() {
         return preferredLocale;
     }
@@ -150,6 +156,10 @@ public class MessageBean extends MessageContentBean {
         adHocRecipients.add(Base64.getEncoder().encodeToString(buildRecipientJson(sender, recipient).toString().getBytes()));
     }
 
+    public void addAttachment(GenericFile file){
+        attachments.add(file);
+    }
+
     Message send() {
         Collection<String> errors = validate();
         if (errors.isEmpty()) {
@@ -171,6 +181,10 @@ public class MessageBean extends MessageContentBean {
             if (bccs != null) {
                 builder.singleBcc(bccs);
             }
+            Set<GenericFile> attachments = getAttachments();
+            if (attachments != null){
+                builder.attachment(attachments);
+            }
             return builder.wrapped().send();
         }
         return null;
@@ -189,8 +203,10 @@ public class MessageBean extends MessageContentBean {
         Sender sender = getSender();
         String singleRecipients = getSingleRecipients(), replyTo = getReplyTo();
         Set<String> jsonRecipients = getSelectedRecipients();
-        boolean hasGroupRecipients = jsonRecipients != null && !jsonRecipients.isEmpty(), hasSingleRecipients =
-                !Strings.isNullOrEmpty(singleRecipients);
+        Set<GenericFile> attachments = getAttachments();
+        boolean hasGroupRecipients = jsonRecipients != null && !jsonRecipients.isEmpty();
+        boolean hasSingleRecipients = !Strings.isNullOrEmpty(singleRecipients);
+        boolean hasAttachments = !attachments.isEmpty();
 
         if (!(hasGroupRecipients || hasSingleRecipients)) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipients.empty"));
@@ -233,6 +249,14 @@ public class MessageBean extends MessageContentBean {
             }
             if (getHtmlBody() != null && !getHtmlBody().isEmpty() && !sender.getHtmlEnabled()) {
                 errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.html.forbidden"));
+            }
+        }
+
+        if (hasAttachments){
+            for (GenericFile genericFile : attachments) {
+                if (!genericFile.isAccessible(Authenticate.getUser())) {
+                    errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.file.forbidden"));
+                }
             }
         }
 

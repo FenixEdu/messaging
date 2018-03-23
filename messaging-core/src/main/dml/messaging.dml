@@ -44,6 +44,27 @@ class MessageDispatchReport {
 	public int failedCount;
 }
 
+class MessageFile extends .org.fenixedu.bennu.io.domain.GenericFile {
+}
+
+relation MessageFiles {
+    protected Message playsRole message {
+        multiplicity 0..*;
+    }
+    protected .org.fenixedu.bennu.io.domain.GenericFile playsRole file {
+        multiplicity 0..*;
+    }
+}
+
+relation SenderFiles {
+    protected Sender playsRole sender {
+        multiplicity 1..1;
+    }
+    protected MessageFile playsRole uploadedFile {
+        multiplicity 0..*;
+    }
+}
+
 relation MessagingSystemRoot {
 	protected .org.fenixedu.bennu.core.domain.Bennu playsRole bennu {
 		multiplicity 1..1;
