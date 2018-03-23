@@ -154,7 +154,11 @@ public class MessageBean extends MessageContentBean {
         Collection<String> errors = validate();
         if (errors.isEmpty()) {
             MessageBuilder builder =
-                    Message.from(getSender()).replyTo(getReplyTo()).preferredLocale(getPreferredLocale()).subject(getSubject());
+                    Message.from(getSender()).preferredLocale(getPreferredLocale()).subject(getSubject());
+            String replyTos = getReplyTo();
+            if (replyTos != null){
+                builder.replyTo(MessagingSystem.Util.toEmailSet(replyTos));
+            }
             LocalizedString content = getTextBody();
             if (content != null) {
                 builder.textBody(content);
@@ -169,7 +173,7 @@ public class MessageBean extends MessageContentBean {
             }
             String bccs = getSingleRecipients();
             if (bccs != null) {
-                builder.singleBcc(bccs);
+                builder.singleBcc(MessagingSystem.Util.toEmailSet(bccs));
             }
             return builder.wrapped().send();
         }
@@ -187,8 +191,10 @@ public class MessageBean extends MessageContentBean {
     public Collection<String> validate() {
         Collection<String> errors = super.validate();
         Sender sender = getSender();
-        String singleRecipients = getSingleRecipients(), replyTo = getReplyTo();
+        String singleRecipients = getSingleRecipients();
+        String replyTos = getReplyTo();
         Set<String> jsonRecipients = getSelectedRecipients();
+        boolean hasReplyTos = !Strings.isNullOrEmpty(replyTos);
         boolean hasGroupRecipients = jsonRecipients != null && !jsonRecipients.isEmpty(), hasSingleRecipients =
                 !Strings.isNullOrEmpty(singleRecipients);
 
@@ -221,8 +227,10 @@ public class MessageBean extends MessageContentBean {
             });
         }
 
-        if (!(Strings.isNullOrEmpty(replyTo) || MessagingSystem.Util.isValidEmail(replyTo))) {
-            errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.replyTo.invalid", replyTo));
+        if (hasReplyTos){
+            MessagingSystem.Util.toEmailSet(replyTos).stream().map(String::trim)
+                    .filter(email -> !MessagingSystem.Util.isValidEmail(email))
+                    .forEach(email -> errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.single.invalid", email)));
         }
 
         if (sender == null) {

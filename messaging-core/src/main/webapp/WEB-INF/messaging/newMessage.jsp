@@ -46,8 +46,8 @@ ${portal.toolkit()}
 	<div class="form-group">
 		<label class="control-label col-sm-2"><spring:message code="label.message.replyTo"/>:</label>
 		<div class="col-sm-10">
-			<spring:message code="hint.email" var="placeholder"/>
-			<form:input type="email" class="form-control" id="replyTo" path="replyTo" value="${messageBean.replyTo}" placeholder="${placeholder}"/>
+			<spring:message code="hint.email.list" var="placeholder"/>
+			<form:input type="email" multiple="multiple" class="form-control" id="replyTo" path="replyTo" value="${messageBean.replyTo}" placeholder="${placeholder}"/>
 		</div>
 	</div>
 	<div id="recipients-container" class="form-group">
