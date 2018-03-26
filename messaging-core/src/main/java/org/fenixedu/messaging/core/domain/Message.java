@@ -116,7 +116,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
         private Sender sender;
         private LocalizedString subject = new LocalizedString(), textBody = new LocalizedString(), htmlBody =
                 new LocalizedString();
-        private Set<String> replyTo = null;
+        private Set<String> replyTo = new HashSet<>();
         private Locale preferredLocale = I18N.getLocale();
         private Set<Group> tos = new HashSet<>(), ccs = new HashSet<>(), bccs = new HashSet<>();
         private Set<String> singleBccs = new HashSet<>();
