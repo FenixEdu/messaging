@@ -2,11 +2,13 @@ package org.fenixedu.messaging.core.ui;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.fenixedu.bennu.spring.portal.SpringFunctionality;
 import org.fenixedu.messaging.core.domain.MessagingSystem;
 import org.fenixedu.messaging.core.domain.Sender;
 import org.fenixedu.messaging.core.exception.MessagingDomainException;
+import org.springframework.http.MediaType;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,15 +32,19 @@ public class SenderConfigController {
     }
 
     @RequestMapping(value = { "/senders", "/senders/" })
-    public String listSenders(Model model, @RequestParam(value = "page", defaultValue = "1") int page, @RequestParam(
-            value = "items", defaultValue = "10") int items) {
+    public String listSenders(Model model, @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "items", defaultValue = "10") int items,
+            @RequestParam(value = "search", defaultValue = "") String search) {
         model.addAttribute("configure", true);
         Sender systemSender = MessagingSystem.systemSender();
         model.addAttribute("sender", systemSender);
         model.addAttribute("system", true);
-        Set<Sender> senderSet = Sender.all();
+        Set<Sender> senderSet = Sender.all().stream()
+                .filter(s -> s.getName().toLowerCase().contains(search.toLowerCase()))
+                .collect(Collectors.toSet());
         senderSet.remove(systemSender);
         PaginationUtils.paginate(model, "messaging/config/senders", "senders", senderSet, items, page);
+        model.addAttribute("search", search);
         return "messaging/listSenders";
     }
 
@@ -84,7 +90,7 @@ public class SenderConfigController {
         if (MessagingSystem.systemSender().equals(sender)) {
             throw MessagingDomainException.forbidden();
         }
-        atomic(() -> sender.delete());
-        return listSenders(model, 1, 10);
+        atomic(sender::delete);
+        return "redirect:/messaging/config/senders";
     }
 }

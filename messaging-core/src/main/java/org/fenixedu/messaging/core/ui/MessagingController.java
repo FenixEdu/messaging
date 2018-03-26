@@ -26,6 +26,7 @@ package org.fenixedu.messaging.core.ui;
 
 import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.bennu.core.util.CoreConfiguration;
@@ -69,8 +70,13 @@ public class MessagingController {
 
     @RequestMapping(value = { "/senders", "/senders/" })
     public String listSenders(Model model, @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "items", defaultValue = "10") int items) {
-        PaginationUtils.paginate(model, "messaging/senders", "senders", Sender.available(), items, page);
+            @RequestParam(value = "items", defaultValue = "10") int items,
+            @RequestParam(value = "search", defaultValue = "") String search) {
+        Set<Sender> senders = Sender.available().stream()
+                .filter(s -> s.getName().toLowerCase().contains(search.toLowerCase()))
+                .collect(Collectors.toSet());
+        PaginationUtils.paginate(model, "messaging/senders", "senders", senders, items, page);
+        model.addAttribute("search", search);
         return "/messaging/listSenders";
     }
 
@@ -87,9 +93,7 @@ public class MessagingController {
     }
 
     @RequestMapping(value = "/senders/{sender}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public
-    @ResponseBody
-    ResponseEntity<String> viewSenderInfo(@PathVariable Sender sender) {
+    public @ResponseBody ResponseEntity<String> viewSenderInfo(@PathVariable Sender sender) {
         if (!allowedSender(sender)) {
             throw MessagingDomainException.forbidden();
         }
