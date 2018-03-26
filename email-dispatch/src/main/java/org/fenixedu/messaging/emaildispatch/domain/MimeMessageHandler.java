@@ -1,5 +1,7 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -11,6 +13,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
 import javax.mail.Address;
 import javax.mail.BodyPart;
 import javax.mail.Message.RecipientType;
@@ -24,6 +28,7 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
+import org.fenixedu.bennu.io.domain.GenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.core.domain.Message;
 import org.fenixedu.messaging.core.domain.MessagingSystem;
@@ -128,6 +133,29 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
             mimeMultipart.addBodyPart(bodyPart);
         }
 
+        for (final GenericFile file : message.getFileSet()) {
+            final MimeBodyPart bodyPart = new MimeBodyPart();
+            bodyPart.setDataHandler(new DataHandler(new DataSource() {
+                @Override public InputStream getInputStream() {
+                    return file.getStream();
+                }
+
+                @Override public OutputStream getOutputStream() {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override public String getContentType() {
+                    return file.getContentType();
+                }
+
+                @Override public String getName() {
+                    return file.getFilename();
+                }
+            }));
+            bodyPart.setFileName(file.getFilename());
+            mimeMultipart.addBodyPart(bodyPart);
+        }
+
         mimeMessage.setContent(mimeMultipart);
 
         String addresses = getToAddresses();
@@ -142,7 +170,6 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
         if (addresses != null) {
             mimeMessage.addRecipients(RecipientType.BCC, addresses);
         }
-
         return mimeMessage;
     }
 

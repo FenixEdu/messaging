@@ -24,6 +24,7 @@
  */
 package org.fenixedu.messaging.core.domain;
 
+import org.fenixedu.bennu.io.domain.GenericFile;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
@@ -120,6 +121,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
         private Locale preferredLocale = I18N.getLocale();
         private Set<Group> tos = new HashSet<>(), ccs = new HashSet<>(), bccs = new HashSet<>();
         private Set<String> singleBccs = new HashSet<>();
+        private Set<GenericFile> files = new HashSet<>();
 
         protected MessageBuilder(Sender sender) {
             from(sender);
@@ -293,6 +295,22 @@ public final class Message extends Message_Base implements Comparable<Message> {
             return this;
         }
 
+        public MessageBuilder attachment(Collection<GenericFile> files) {
+            builderSetCopy(requireNonNull(files), Objects::nonNull, this.files);
+            return this;
+        }
+
+        public MessageBuilder attachment(Stream<GenericFile> files) {
+            builderSetAdd(requireNonNull(files), Objects::nonNull, this.files);
+            return this;
+        }
+
+        public MessageBuilder attachment(GenericFile... files) {
+            builderSetAdd(requireNonNull(files), Objects::nonNull, this.files);
+            return this;
+        }
+
+
         public MessageBuilder replyToSender() {
             return replyTo(sender.getReplyTo());
         }
@@ -315,6 +333,7 @@ public final class Message extends Message_Base implements Comparable<Message> {
                         .parameter("ccs", newArrayList(ccs)).parameter("bccs", newArrayList(bccs))
                         .parameter("singleBccs", newArrayList(singleBccs)).and();
             }
+            files.forEach(message::addFile);
             message.setSubject(subject);
             message.setTextBody(textBody);
             message.setHtmlBody(htmlBody);
@@ -391,6 +410,11 @@ public final class Message extends Message_Base implements Comparable<Message> {
     public Locale getPreferredLocale() {
         // FIXME remove when the framework supports read-only properties
         return super.getPreferredLocale();
+    }
+
+    @Override
+    public Set<GenericFile> getFileSet() {
+        return super.getFileSet();
     }
 
     public Set<Group> getToGroups() {

@@ -24,15 +24,21 @@
  */
 package org.fenixedu.messaging.core.ui;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.bennu.core.util.CoreConfiguration;
+import org.fenixedu.bennu.io.domain.GenericFile;
+import org.fenixedu.bennu.io.domain.GenericFile_Base;
+import org.fenixedu.bennu.io.servlet.FileDownloadServlet;
 import org.fenixedu.bennu.spring.portal.SpringApplication;
 import org.fenixedu.bennu.spring.portal.SpringFunctionality;
 import org.fenixedu.messaging.core.domain.Message;
+import org.fenixedu.messaging.core.domain.MessageFile;
 import org.fenixedu.messaging.core.domain.Sender;
 import org.fenixedu.messaging.core.exception.MessagingDomainException;
 import org.fenixedu.messaging.core.ui.access.SendersGroup;
@@ -46,6 +52,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
@@ -56,6 +63,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 import javax.servlet.http.HttpServletRequest;
+
+import static pt.ist.fenixframework.FenixFramework.atomic;
 
 @SpringApplication(path = "messaging", title = "title.messaging", group = "senders | #managers", hint = "Messaging")
 @SpringFunctionality(app = MessagingController.class, title = "title.messaging.sending", accessGroup = "senders")
@@ -152,6 +161,11 @@ public class MessagingController {
         }
         model.addAttribute("locales", getSupportedLocales(message));
         model.addAttribute("message", message);
+        Map<String, String> messageFiles = new HashMap<>();
+        for (GenericFile genericFile : message.getFileSet()) {
+            messageFiles.put(genericFile.getFilename(), FileDownloadServlet.getDownloadUrl(genericFile));
+        }
+        model.addAttribute("files", messageFiles);
         return "/messaging/viewMessage";
     }
 
@@ -171,6 +185,19 @@ public class MessagingController {
             throw MessagingDomainException.forbidden();
         }
         return viewSender(sender, model, 1, 10);
+    }
+
+    @RequestMapping(value = "/messages/uploadFile", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public @ResponseBody ResponseEntity<String> uploadAttachment(@RequestParam Sender sender, @RequestParam("file") MultipartFile file) throws Exception {
+        if (!allowedSender(sender)){
+            throw MessagingDomainException.forbidden();
+        }
+        MessageFile messageFile = atomic(() -> new MessageFile(sender, file.getName(),file.getOriginalFilename(), file.getBytes()));
+
+        JsonObject info = new JsonObject();
+        info.addProperty("fileid",messageFile.getExternalId());
+        info.addProperty("filename", messageFile.getFilename());
+        return new ResponseEntity<>(info.toString(), HttpStatus.OK);
     }
 
     private boolean allowedSender(Sender sender) {

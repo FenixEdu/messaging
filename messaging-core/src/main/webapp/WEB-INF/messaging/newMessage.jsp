@@ -3,7 +3,6 @@
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@ taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
 <%@ taglib uri="org.fenixedu.messaging.tags.sorter" prefix="sort" %>
-
 ${portal.toolkit()}
 
 <h2><spring:message code="title.message.new"/></h2>
@@ -94,11 +93,18 @@ ${portal.toolkit()}
 		</div>
 	</div>
 	<div class="form-group">
+		<label class="control-label col-sm-2" for="textBody"><spring:message code="label.message.attachments"/>:</label>
+		<div id="attachments-container" class="col-sm-4">
+			<input type="file" multiple="true" id="addAttachment" name="addAttachment"/>
+		</div>
+	</div>
+	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-10">
 			<button class="btn btn-primary" type="submit"><spring:message code="action.send.message"/></button>
 		</div>
 	</div>
 </form:form>
+
 <script>
 (function(){
 	var recipientsEl = $('#recipients'),
@@ -199,7 +205,52 @@ ${portal.toolkit()}
 		}
 	}
 
-	senderSelectEl.change(function(){
+	var addAttachmentEl = $('#addAttachment');
+	addAttachmentEl.change(function(event){
+        var files = event.target.files;
+        for (var i = 0; i < files.length; i++) {
+            var oMyForm = new FormData();
+            oMyForm.append("file", files[i]);
+            $.ajax({
+                url : "messages/uploadFile?sender="+senderSelectEl.val(),
+                data : oMyForm,
+                type : "POST",
+                enctype: 'multipart/form-data',
+                processData: false,
+                contentType:false,
+                cache:false,
+                headers: { '${csrf.headerName}' :  '${csrf.token}' },
+                success : function(result) {
+                    addAttachment(result.fileid, result.filename);
+                }
+            });
+        }
+	});
+
+    function addAttachment(fileid,filename) {
+        var groupBtnEl = $('<span class="input-group-btn"></span>'),
+            removeBtnEl = $('<button class="btn btn-danger" type="button"></button>'),
+            iconEl = $('<span class="glyphicon glyphicon-remove"></span>'),
+            input1El = $('<input hidden name="attachments" value="' + fileid + '"/>'),
+            input2El = $('<div class="form-control">' + filename + '</div>'),
+            inputGroupEl = $('<div class="input-group" style="margin-bottom: 10px;"></div>'),
+            groupEl = $('<div style="display: inline;"></div>');
+        removeBtnEl.append(iconEl);
+        groupBtnEl.append(removeBtnEl);
+        inputGroupEl.append(input1El).append(input2El).append(groupBtnEl);
+        groupEl.append(inputGroupEl);
+        removeBtnEl.click(function () {
+            groupEl.remove();
+        });
+        var recipientContainer = $('#attachments-container');
+        recipientContainer.append(groupEl);
+    }
+
+    <c:forEach var="attachment" items="${messageBean.attachments}">
+		addAttachment("${attachment.externalId}","${attachment.filename}");
+    </c:forEach>
+
+    senderSelectEl.change(function(){
 		senderUpdate(this.value);
 	});
 
