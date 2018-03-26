@@ -30,7 +30,7 @@ public class MessageTask extends CronTask {
             taskLog("Dispatched %d messages\n", dispatched);
         }
 
-        taskLog("%d possible senders to prune", sendersFromMessages.size());
+        taskLog("%d possible senders to prune%n", sendersFromMessages.size());
         int pruned = 0;
         for (Sender sender : sendersFromMessages){
             int diff = sender.getMessageSet().size();
