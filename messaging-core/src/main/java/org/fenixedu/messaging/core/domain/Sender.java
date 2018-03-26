@@ -27,8 +27,10 @@ package org.fenixedu.messaging.core.domain;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
+import java.text.Collator;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,6 +54,8 @@ import static org.fenixedu.messaging.core.domain.MessagingSystem.Util.isValidEma
  * @author Luis Cruz
  */
 public class Sender extends Sender_Base implements Comparable<Sender> {
+
+    private static Collator ptCollator = Collator.getInstance(Locale.forLanguageTag("pt"));
 
     protected Sender() {
         super();
@@ -252,7 +256,7 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
 
     @Override
     public int compareTo(Sender sender) {
-        int c = getName().compareTo(sender.getName());
-        return c == 0 ? sender.getExternalId().compareTo(sender.getExternalId()) : c;
+        int c = ptCollator.compare(getName(), sender.getName());
+        return c == 0 ? getExternalId().compareTo(sender.getExternalId()) : c;
     }
 }

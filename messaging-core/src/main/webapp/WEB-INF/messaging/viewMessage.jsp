@@ -101,7 +101,9 @@ ${portal.toolkit()}
 					<spring:message code="label.message.replyTo"/>
 				</th>
 				<td>
-					<code>${message.replyTo}</code>
+					<c:forEach items="${sort:uniqueSort(message.replyTosSet)}" var="replyTo">
+						<code>${replyTo}</code>
+					</c:forEach>
 				</td>
 			</tr>
 		</c:if>

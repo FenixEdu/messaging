@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <nav style="display:flex; align-items: center;">
@@ -5,13 +6,13 @@
 		<c:if test="${pages>1}">
 		<div class="input-group input-group-sm">
 			<span class="input-group-btn">
-				<a class="btn btn-info ${page <= 1 ? 'disabled' : ''}" href="${pageContext.request.contextPath}/${path}?page=${page-1}&items=${items}">&laquo;</a>
+				<a class="btn btn-info ${page <= 1 ? 'disabled' : ''}" href="${pageContext.request.contextPath}/${path}?page=${page-1}&items=${items}&search=${search}">&laquo;</a>
 			</span>
 			<span class="input-group-addon" style="padding: 0 5px;"><spring:message code="label.page"/></span>
 			<input id="page-select" class="form-control" style="text-align: right; width: 55px; padding: 0 5px;" type="number" min="1" max="${pages}" value="${page}"/>
 			<span class="input-group-addon" style="padding: 0 5px;"><spring:message code="label.of"/> ${pages}</span>
 			<span class="input-group-btn">
-				<a class="btn btn-info ${page == pages ? 'disabled' : ''}" href="${pageContext.request.contextPath}/${path}?page=${page+1}&items=${items}">&raquo;</a>
+				<a class="btn btn-info ${page == pages ? 'disabled' : ''}" href="${pageContext.request.contextPath}/${path}?page=${page+1}&items=${items}&search=${search}">&raquo;</a>
 			</span>
 		</div>
 		</c:if>
@@ -26,21 +27,28 @@
 <script>
 (function(){
 	var itemsSelect = $('#items-select'),
-		pageSelect = $('#page-select');
+		pageSelect = $('#page-select'),
+        filterSelect = $('#filter-select');
 		[${items},10,20,50,100].filter(function(val,idx,arr){
 			return idx === arr.indexOf(val);
 		}).forEach(function(val){
 			itemsSelect.append('<option value="'+val+'">'+val+'</option>')
 		});
 	itemsSelect.change(function(){
-		window.location = "${pageContext.request.contextPath}/${path}?page=${page}&items=" + itemsSelect.val();
+		window.location = "${pageContext.request.contextPath}/${path}?page=${page}&items=" + itemsSelect.val() + "&search=${search}";
 	});
 	itemsSelect.find("option[value='${items}']").attr("selected","selected");
 	pageSelect.keypress(function(e){
-		if (e.keyCode == 13) {
+		if (e.keyCode === 13) {
 			e.preventDefault();
-			window.location = "${pageContext.request.contextPath}/${path}?page=" + pageSelect.val() + "&items=${items}";
+			window.location = "${pageContext.request.contextPath}/${path}?page=" + pageSelect.val() + "&items=${items}"+ "&search=${search}";
 		}
 	});
+    filterSelect.keypress(function (e) {
+        if (e.keyCode === 13) {
+            e.preventDefault();
+            window.location = "${pageContext.request.contextPath}/${path}?search=" + filterSelect.val();
+        }
+    });
 })();
 </script>

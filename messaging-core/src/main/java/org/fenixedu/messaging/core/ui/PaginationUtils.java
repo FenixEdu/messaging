@@ -30,7 +30,8 @@ public class PaginationUtils {
     }
 
     private static <T> List<T> paginateAux(Model model, String path, String property, List<T> items, int nr, int page) {
-        if (items == null || items.isEmpty()) {
+        if (items.isEmpty()) {
+            model.addAttribute("path", path);
             return null;
         }
         nr = itemsClip(nr, items.size());
