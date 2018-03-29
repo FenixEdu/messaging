@@ -2,6 +2,7 @@ package org.fenixedu.messaging.core.ui;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Optional;
 
 import org.fenixedu.bennu.core.i18n.BundleUtil;
 import org.fenixedu.commons.i18n.LocalizedString;
@@ -23,24 +24,25 @@ public class MessageContentBean implements Serializable {
     public MessageContentBean() {
     }
 
-    public MessageContentBean(MessageTemplateDeclaration declaration) {
-        if (declaration != null) {
-            subject = declaration.getDefaultSubject();
-            textBody = declaration.getDefaultTextBody();
-            htmlBody = declaration.getDefaultHtmlBody();
-        } else {
+    public MessageContentBean(final MessageTemplateDeclaration declaration) {
+        if (declaration == null) {
             subject = new LocalizedString();
             textBody = new LocalizedString();
             htmlBody = new LocalizedString();
         }
+        else {
+            subject = declaration.getDefaultSubject();
+            textBody = declaration.getDefaultTextBody();
+            htmlBody = declaration.getDefaultHtmlBody();
+        }
     }
 
-    public MessageContentBean(MessageTemplate template) {
+    public MessageContentBean(final MessageTemplate template) {
         copy(template);
     }
 
     public Collection<String> validate() {
-        Collection<String> errors = Lists.newArrayList();
+        final Collection<String> errors = Lists.newArrayList();
 
         if (getSubject() == null || getSubject().isEmpty()) {
             errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.subject.empty"));
@@ -70,37 +72,35 @@ public class MessageContentBean implements Serializable {
         return htmlBody;
     }
 
-    protected void setErrors(Collection<String> errors) {
+    protected void setErrors(final Collection<String> errors) {
         this.errors = errors;
     }
 
-    public void setSubject(LocalizedString subject) {
+    public void setSubject(final LocalizedString subject) {
         this.subject = subject;
     }
 
-    public void setTextBody(LocalizedString textBody) {
+    public void setTextBody(final LocalizedString textBody) {
         this.textBody = textBody;
     }
 
-    public void setHtmlBody(LocalizedString htmlBody) {
+    public void setHtmlBody(final LocalizedString htmlBody) {
         this.htmlBody = htmlBody;
     }
 
-    void copy(MessageTemplate template) {
+    protected void copy(final MessageTemplate template) {
         subject = template.getSubject();
         textBody = template.getTextBody();
         htmlBody = template.getHtmlBody();
     }
 
-    boolean edit(MessageTemplate template) {
+    protected boolean edit(final MessageTemplate template) {
         validate();
         if (getErrors().isEmpty()) {
             atomic(() -> {
                 template.setSubject(getSubject());
-                LocalizedString content = getTextBody();
-                template.setTextBody(content != null ?  content : new LocalizedString());
-                content = getHtmlBody();
-                template.setHtmlBody(content != null ?  content : new LocalizedString());
+                template.setTextBody(Optional.ofNullable(getTextBody()).orElse(new LocalizedString()));
+                template.setHtmlBody(Optional.ofNullable(getHtmlBody()).orElse(new LocalizedString()));
             });
             return true;
         }
