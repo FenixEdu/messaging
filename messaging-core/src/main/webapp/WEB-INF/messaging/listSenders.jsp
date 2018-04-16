@@ -47,12 +47,12 @@
 	</thead>
 	<tbody>
 	<c:forEach items="${sort:uniqueSort(senders)}" var="sender">
-		<tr onClick="location.href='${pageContext.request.contextPath}/${path}/${sender.externalId}'">
+		<tr>
 			<td class="col-sm-5">
-				${sender.name}
+				<c:out value="${sender.name}"/>
 			</td>
 			<td class="col-sm-4">
-				<code>${sender.address}</code>
+				<code><c:out value="${sender.address}"/></code>
 			</td>
 			<td class="col-sm-3">
 				<div class="btn-group btn-group-xs pull-right">
