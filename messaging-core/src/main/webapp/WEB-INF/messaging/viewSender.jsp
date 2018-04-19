@@ -82,6 +82,21 @@
 				</c:choose>
 			</td>
 		</tr>
+		<tr>
+			<th class="col-md-2" scope="row">
+				<spring:message code="label.sender.attachmentsEnabled"/>
+			</th>
+			<td>
+				<c:choose>
+					<c:when test="${ sender.attachmentsEnabled }">
+						<spring:message code="label.enabled"/>
+					</c:when>
+					<c:otherwise>
+						<spring:message code="label.disabled"/>
+					</c:otherwise>
+				</c:choose>
+			</td>
+		</tr>
 		<c:if test="${configure}">
 		<tr>
 			<th class="col-md-2" scope="row">

@@ -99,6 +99,21 @@
 		</div>
 	</div>
 	<div class="form-group">
+		<label class="control-label col-sm-2"><spring:message code="label.sender.attachmentsEnabled"/>:</label>
+		<div class="col-sm-10">
+			<div class="btn-group btn-group-xs" data-toggle="buttons">
+				<label class="attachments-switch btn btn-${senderBean.attachmentsEnabled ? 'primary active' : 'default'}">
+					<input type="radio" name="attachmentsEnabled" id="yes" value="true" ${senderBean.attachmentsEnabled ? 'checked' : ''}>
+					<spring:message code="label.on"/>
+				</label>
+				<label class="attachments-switch btn btn-${senderBean.attachmentsEnabled  ? 'default' : 'primary active'}">
+					<input type="radio" name="attachmentsEnabled" id="no" value="false" ${senderBean.attachmentsEnabled ? '' : 'checked'}>
+					<spring:message code="label.off"/>
+				</label>
+			</div>
+		</div>
+	</div>
+	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-10">
 			<button class="btn btn-primary" type="submit"><spring:message code="action.${create ? 'create' : 'configure'}"/></button>
 		</div>
@@ -107,12 +122,20 @@
 <script>
 (function(){
 	//html sender switch
-	var switches = $('label.html-switch');
-	switches.click(function(event){
+	var html_switches = $('label.html-switch');
+	html_switches.click(function(event){
 		if(!$(event.target).hasClass('active')){
-			switches.toggleClass('btn-primary btn-default active');
+			html_switches.toggleClass('btn-primary btn-default active');
 		}
 	});
+
+    //attacments sender switch
+    var attachments_switches = $('label.attachments-switch');
+    attachments_switches.click(function(event){
+        if(!$(event.target).hasClass('active')){
+            attachments_switches.toggleClass('btn-primary btn-default active');
+        }
+    });
 
 	//message storage policy choice
 	var allPolicy = $('#policy-all'),

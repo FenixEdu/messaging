@@ -92,9 +92,9 @@ ${portal.toolkit()}
 			<textarea class="form-control" id="htmlBody" name="htmlBody" bennu-html-editor bennu-localized-string>${messageBean.htmlBody.json()}</textarea>
 		</div>
 	</div>
-	<div class="form-group">
+	<div id="attachmentsDiv" class="form-group">
 		<label class="control-label col-sm-2" for="textBody"><spring:message code="label.message.attachments"/>:</label>
-		<div id="attachments-container" class="col-sm-4">
+		<div id="attachments-container" class="col-sm-3">
 			<input type="file" multiple="true" id="addAttachment" name="addAttachment"/>
 		</div>
 	</div>
@@ -110,8 +110,6 @@ ${portal.toolkit()}
 	var recipientsEl = $('#recipients'),
 		recipientsContainerEl = $('#recipients-container'),
 		replyToEl = $('#replyTo'),
-		htmlMessageEl = $('#htmlMessage'),
-		htmlBodyEL = $('#htmlBody'),
 		senderSelectEl = $('#senderSelect');
 	var originalSender = "${messageBean.sender.externalId}",
 		adHocRecipients = [];
@@ -178,7 +176,31 @@ ${portal.toolkit()}
 
 	var currentSenderReplyTo;
 	function senderUpdate(sender){
-		if(sender){
+        function toggleHtml(info) {
+            var htmlMessageEl = $('#htmlMessage'),
+                htmlBodyEL = $('#htmlBody');
+            if (info.html) {
+                htmlMessageEl.show();
+                htmlBodyEL.attr('name', 'htmlBody');
+            } else {
+                htmlMessageEl.hide();
+                htmlBodyEL.removeAttr('name');
+            }
+        }
+
+        function toggleAttachments(info) {
+            var htmlMessageEl = $('#attachmentsDiv'),
+                htmlBodyEL = $('#addAttachment');
+            if (info.attachmentsEnabled) {
+                htmlMessageEl.show();
+                htmlBodyEL.attr('name', 'addAttachment');
+            } else {
+                htmlMessageEl.hide();
+                htmlBodyEL.removeAttr('name');
+            }
+        }
+
+        if(sender){
 			$.getJSON('senders/' + sender, function(info){
 				if(info.replyTo && (!replyToEl.val() || replyToEl.val() == currentSenderReplyTo)) {
 					replyToEl.val(info.replyTo);
@@ -189,13 +211,8 @@ ${portal.toolkit()}
 						return recipient.sender === sender && expressions.indexOf(recipient.expression) < 0;
 					});
 				populateRecipients(info.recipients.concat(relevantAdHocRecipients));
-				if(info.html){
-					htmlMessageEl.show();
-					htmlBodyEL.attr('name','htmlBody');
-				} else {
-					htmlMessageEl.hide();
-					htmlBodyEL.removeAttr('name');
-				}
+                toggleHtml(info);
+                toggleAttachments(info);
 			});
 		} else {
 			recipientsContainerEl.hide();
@@ -227,16 +244,24 @@ ${portal.toolkit()}
         }
 	});
 
-    function addAttachment(fileid,filename) {
+    function addAttachment(fileid,filename, locked) {
         var groupBtnEl = $('<span class="input-group-btn"></span>'),
             removeBtnEl = $('<button class="btn btn-danger" type="button"></button>'),
+            lockedBtnEl = $('<button class="btn btn-primary" type="button" disabled></button>'),
             iconEl = $('<span class="glyphicon glyphicon-remove"></span>'),
+            lockediconEl = $('<span class="glyphicon glyphicon-lock"></span>'),
             input1El = $('<input hidden name="attachments" value="' + fileid + '"/>'),
             input2El = $('<div class="form-control">' + filename + '</div>'),
             inputGroupEl = $('<div class="input-group" style="margin-bottom: 10px;"></div>'),
             groupEl = $('<div style="display: inline;"></div>');
-        removeBtnEl.append(iconEl);
-        groupBtnEl.append(removeBtnEl);
+        if (!locked) {
+            removeBtnEl.append(iconEl);
+            groupBtnEl.append(removeBtnEl);
+        }
+        else{
+            lockedBtnEl.append(lockediconEl);
+            groupBtnEl.append(lockedBtnEl);
+        }
         inputGroupEl.append(input1El).append(input2El).append(groupBtnEl);
         groupEl.append(inputGroupEl);
         removeBtnEl.click(function () {
@@ -246,8 +271,12 @@ ${portal.toolkit()}
         recipientContainer.append(groupEl);
     }
 
+    <c:forEach var="lockedAttachment" items="${messageBean.lockedAttachments}">
+		addAttachment("${lockedAttachment.externalId}","${lockedAttachment.filename}", true);
+    </c:forEach>
+
     <c:forEach var="attachment" items="${messageBean.attachments}">
-		addAttachment("${attachment.externalId}","${attachment.filename}");
+		addAttachment("${attachment.externalId}","${attachment.filename}", false);
     </c:forEach>
 
     senderSelectEl.change(function(){

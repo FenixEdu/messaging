@@ -69,12 +69,13 @@ public class MessageBean extends MessageContentBean {
     private static final String KEY_SENDER = "sender", KEY_EXPRESSION = "expression", KEY_JWT = "jwt", KEY_NAME = "name";
 
     private Sender sender;
-    private boolean senderLocked = false;
+    private boolean senderLocked;
     private String replyTo, singleRecipients;
     private Set<String> selectedRecipients = new HashSet<>();
     private Set<String> adHocRecipients = new HashSet<>();
     private Locale preferredLocale = I18N.getLocale();
     private Set<GenericFile> attachments = new HashSet<>();
+    private Set<GenericFile> lockedAttachments = new HashSet<>();
 
     public Sender getSender() {
         return sender;
@@ -128,6 +129,14 @@ public class MessageBean extends MessageContentBean {
 
     public void setAttachments(Set<GenericFile> attachments) { this.attachments = attachments; }
 
+    public Set<GenericFile> getLockedAttachments() {
+        return lockedAttachments;
+    }
+
+    public void setLockedAttachments(final Set<GenericFile> lockedAttachments) {
+        this.lockedAttachments = lockedAttachments;
+    }
+
     public Locale getPreferredLocale() {
         return preferredLocale;
     }
@@ -158,6 +167,10 @@ public class MessageBean extends MessageContentBean {
 
     public void addAttachment(GenericFile file){
         attachments.add(file);
+    }
+
+    public void addLockedAttachment(final GenericFile file) {
+        lockedAttachments.add(file);
     }
 
     Message send() {

@@ -117,6 +117,7 @@ public class MessagingController {
             info.add("replyTo", new JsonPrimitive(replyTo));
         }
         info.addProperty("html", sender.getHtmlEnabled());
+        info.addProperty("attachmentsEnabled", sender.getAttachmentsEnabled());
         return new ResponseEntity<String>(info.toString(), HttpStatus.OK);
     }
 
