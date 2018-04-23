@@ -26,6 +26,7 @@ class Message {
 	protected DateTime created;
 	protected String replyTo;
 	protected String singleBccs;
+	protected String singleTos;
 }
 
 class MessageTemplate {
