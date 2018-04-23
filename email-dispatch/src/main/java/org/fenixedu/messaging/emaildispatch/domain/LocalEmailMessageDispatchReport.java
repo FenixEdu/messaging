@@ -134,7 +134,7 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
             Locale defLocale, Set<Locale> messageLocales) {
         Map<Locale, Set<String>> emails = new HashMap<>();
         users.stream().filter(p -> emailValidator.test(p.getEmail())).forEach(p -> {
-            Locale locale = p.getPreferredLocale();
+            Locale locale = p.getEmailLocale();
             if (locale == null || !messageLocales.contains(locale)) {
                 locale = defLocale;
             }
