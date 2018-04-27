@@ -18,6 +18,9 @@ public class MessagingConfiguration {
 
         @ConfigurationProperty(key = "messaging.jwt.api.ttl.ms", defaultValue = "1800000")
         Long jwtTTL();
+
+        @ConfigurationProperty(key = "messaging.pebble.newlineTrimming", defaultValue = "false")
+        Boolean pebbleNewlineTrim();
     }
 
     public static ConfigurationProperties getConfiguration() {
