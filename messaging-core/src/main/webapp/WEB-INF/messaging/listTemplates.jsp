@@ -43,7 +43,7 @@
 		</c:choose>
 		<tr class="${rowClass}" data-toggle="${toggle}" data-placement="left" title="${tooltip}">
 			<td class="col-sm-2">
-				<code><c:out value="${template.id}</code>"/>
+				<code><c:out value="${template.id}"/></code>
 			</td>
 			<td class="col-sm-7">
 				<c:out value="${template.declaration.description.content}"/>
