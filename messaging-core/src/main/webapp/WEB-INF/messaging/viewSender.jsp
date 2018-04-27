@@ -24,7 +24,7 @@
 				<spring:message code="label.sender.name"/>
 			</th>
 			<td>
-				${sender.name}
+				<c:out value="${sender.name}"/>
 			</td>
 		</tr>
 		<tr>
@@ -32,7 +32,7 @@
 				<spring:message code="label.sender.address"/>
 			</th>
 			<td>
-				<code>${sender.address}</code>
+				<code><c:out value="${sender.address}"/></code>
 			</td>
 		</tr>
 		<c:if test="${not empty sender.replyTo}">
@@ -41,7 +41,7 @@
 				<spring:message code="label.sender.replyTo"/>
 			</th>
 			<td>
-				<code>${sender.replyTo}</code>
+				<code><c:out value="${sender.replyTo}"/></code>
 			</td>
 		</tr>
 		</c:if>
@@ -53,7 +53,7 @@
 			<td>
 				<div style="overflow-y:auto; max-height:100px; display:block;">
 				<c:forEach items="${sort:uniqueSort(sender.recipients)}" var="recipient">
-					<code style="display: inline-block; margin: 2px; white-space: initial;">${recipient.presentationName}</code>
+					<code style="display: inline-block; margin: 2px; white-space: initial;"><c:out value="${recipient.presentationName}"/></code>
 				</c:forEach>
 				</div>
 			</td>
@@ -64,7 +64,7 @@
 				<spring:message code="label.sender.policy"/>
 			</th>
 			<td>
-				${sender.policy.toString()}
+				<c:out value="${sender.policy.toString()}"/>
 			</td>
 		</tr>
 		<tr>
@@ -74,10 +74,10 @@
 			<td>
 				<c:choose>
 				<c:when test="${ sender.htmlEnabled }">
-				<spring:message code="label.enabled"/>
+					<spring:message code="label.enabled"/>
 				</c:when>
 				<c:otherwise>
-				<spring:message code="label.disabled"/>
+					<spring:message code="label.disabled"/>
 				</c:otherwise>
 				</c:choose>
 			</td>
@@ -88,7 +88,7 @@
 				<spring:message code="label.sender.members"/>
 			</th>
 			<td>
-				<code>${sender.members.expression}</code>
+				<code><c:out value="${sender.members.expression}"/></code>
 			</td>
 		</tr>
 		</c:if>
@@ -126,37 +126,37 @@
 	</thead>
 	<tbody>
 	<c:forEach items="${sort:uniqueSort(messages)}" var="message">
-		<tr onClick="location.href='${pageContext.request.contextPath}/messaging/messages/${message.externalId}'">
-			<td class="col-sm-2">${message.created.toString("dd-MM-yyyy HH:mm:ss")}</td>
+		<tr>
+			<td class="col-sm-2"><c:out value='${message.created.toString("dd-MM-yyyy HH:mm:ss")}'/></td>
 			<td class="col-sm-6"><c:out value="${message.subject.content}"/></td>
 			<td class="col-sm-3">
 				<c:choose>
 				<c:when test="${not empty message.sent}">
-				${message.sent.toString("dd-MM-yyyy HH:mm:ss")}
+					<c:out value='${message.sent.toString("dd-MM-yyyy HH:mm:ss")}'/>
 				</c:when>
 				<c:when test="${not empty message.dispatchReport.startedDelivery}">
-				<spring:message code="label.message.status.dispatching"/>
-				<c:set var="invalid" value="${message.dispatchReport.invalidCount}"/>
-				<c:set var="failed" value="${message.dispatchReport.failedCount}"/>
-				<c:set var="delivered" value="${message.dispatchReport.deliveredCount}"/>
-				<c:set var="total" value="${message.dispatchReport.totalCount}"/>
-				<c:set var="pInvalid" value="${100 *message.dispatchReport.invalidCount/total}"/>
-				<c:set var="pFailed" value="${100 *message.dispatchReport.failedCount/total}"/>
-				<c:set var="pDelivered" value="${100 * message.dispatchReport.deliveredCount/total}"/>
-				<div class="progress" style="margin: 0;">
-					<div class="progress-bar progress-bar-danger" style="width: ${pFailed}%" data-toggle="tooltip" data-placement="bottom" title="${failed} failed messages">
-						<fmt:formatNumber type="number" maxFractionDigits="1" value="${pFailed}"/>%
+					<spring:message code="label.message.status.dispatching"/>
+					<c:set var="invalid" value="${message.dispatchReport.invalidCount}"/>
+					<c:set var="failed" value="${message.dispatchReport.failedCount}"/>
+					<c:set var="delivered" value="${message.dispatchReport.deliveredCount}"/>
+					<c:set var="total" value="${message.dispatchReport.totalCount}"/>
+					<c:set var="pInvalid" value="${100 *message.dispatchReport.invalidCount/total}"/>
+					<c:set var="pFailed" value="${100 *message.dispatchReport.failedCount/total}"/>
+					<c:set var="pDelivered" value="${100 * message.dispatchReport.deliveredCount/total}"/>
+					<div class="progress" style="margin: 0;">
+						<div class="progress-bar progress-bar-danger" style="width: ${pFailed}%" data-toggle="tooltip" data-placement="bottom" title="${failed} failed messages">
+							<fmt:formatNumber type="number" maxFractionDigits="1" value="${pFailed}"/>%
+						</div>
+						<div class="progress-bar progress-bar-warning" style="width: ${pInvalid}%" data-toggle="tooltip" data-placement="bottom" title="${invalid} invalid messages">
+							<fmt:formatNumber type="number" maxFractionDigits="1" value="${pInvalid}"/>%
+						</div>
+						<div class="progress-bar progress-bar-success" style="width: ${pDelivered}%" data-toggle="tooltip" data-placement="bottom"  title="${delivered} delivered messages">
+							<fmt:formatNumber type="number" maxFractionDigits="1" value="${pDelivered}"/>%
+						</div>
 					</div>
-					<div class="progress-bar progress-bar-warning" style="width: ${pInvalid}%" data-toggle="tooltip" data-placement="bottom" title="${invalid} invalid messages">
-						<fmt:formatNumber type="number" maxFractionDigits="1" value="${pInvalid}"/>%
-					</div>
-					<div class="progress-bar progress-bar-success" style="width: ${pDelivered}%" data-toggle="tooltip" data-placement="bottom"  title="${delivered} delivered messages">
-						<fmt:formatNumber type="number" maxFractionDigits="1" value="${pDelivered}"/>%
-					</div>
-				</div>
 				</c:when>
 				<c:otherwise>
-				<spring:message code="label.message.status.queued"/>
+					<spring:message code="label.message.status.queued"/>
 				</c:otherwise>
 				</c:choose>
 			</td>
