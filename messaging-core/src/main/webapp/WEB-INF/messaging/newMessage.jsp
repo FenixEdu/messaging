@@ -5,6 +5,9 @@
 <%@ taglib uri="org.fenixedu.messaging.tags.sorter" prefix="sort" %>
 ${portal.toolkit()}
 
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+
 <h2><spring:message code="title.message.new"/></h2>
 
 <c:if test="${not empty messageBean.errors}">
@@ -21,17 +24,12 @@ ${portal.toolkit()}
 <form:form modelAttribute="messageBean" role="form" class="form-horizontal" action="${pageContext.request.contextPath}/messaging/message" method="post">
 	${csrf.field()}
 	<div class="form-group">
-		<c:forEach var="adHocRecipient" items="${messageBean.adHocRecipients}">
-			<form:input type="hidden" path="adHocRecipients" value="${adHocRecipient}"/>
-		</c:forEach>
-		<form:input type="hidden" path="senderLocked" value="${messageBean.senderLocked}"/>
 		<label class="control-label col-sm-2" for="senderSelect"><spring:message code="label.message.sender"/>:</label>
-		<div class="col-sm-10">
+		<div class="col-sm-8">
 		<c:if test="${not messageBean.senderLocked or empty messageBean.sender}">
-			<form:select class="form-control" id="senderSelect" path="sender" required="true">
-				<form:option class="form-control" value=""><spring:message code="hint.sender.select"/></form:option>
+			<form:select class="form-control" id="selectSender" path="sender" required="true">
 				<c:forEach var="sender" items="${sort:uniqueSort(senders)}">
-					<form:option class="form-control" value="${sender.externalId}">${sender.name} (${sender.address})</form:option>
+					<form:option value="${sender.externalId}">${sender.name} (${sender.address})</form:option>
 				</c:forEach>
 			</form:select>
 		</c:if>
@@ -44,29 +42,29 @@ ${portal.toolkit()}
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2"><spring:message code="label.message.replyTo"/>:</label>
-		<div class="col-sm-10">
+		<div class="col-sm-8">
 			<spring:message code="hint.email.list" var="placeholder"/>
 			<form:input type="email" multiple="multiple" class="form-control" id="replyTo" path="replyTo" value="${messageBean.replyTo}" placeholder="${placeholder}"/>
 		</div>
 	</div>
-	<div id="recipients-container" class="form-group">
+	<div class="form-group">
 		<label class="control-label col-sm-2"><spring:message code="label.message.recipients"/>:</label>
-		<div id="recipients" class="form-inline col-sm-10">
-		<c:forEach  var="recipient" items="${sort:uniqueSort(messageBean.selectedRecipients)}">
-			<input style="display:none;" type="checkbox" value='<c:out value="${recipient}"/>' checked/>
-		</c:forEach>
+		<div class="col-sm-8">
+			<form:select class="form-control " id="selectRecipients" path="selectedRecipients" multiple="true">
+
+			</form:select>
 		</div>
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="singleRecipients"><spring:message code="label.message.recipients.single"/>:</label>
-		<div class="col-sm-10">
+		<div class="col-sm-8">
 			<spring:message code="hint.email.list" var="placeholder"/>
 			<input type="email" multiple="multiple" class="form-control" id="singleRecipients" name="singleRecipients" placeholder="${placeholder}" value="${messageBean.singleRecipients}"/>
 		</div>
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2" for=preferredLocale><spring:message code="label.message.locale.preferred"/>:</label>
-		<div class="col-sm-10">
+		<div class="col-sm-8">
 			<form:select class="form-control" id="preferredLocale" path="preferredLocale">
 			<c:forEach items="${locales}" var="locale">
 				<form:option value="${locale}">${locale.getDisplayName(locale)}</form:option>
@@ -76,19 +74,19 @@ ${portal.toolkit()}
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="subject"><spring:message code="label.message.subject"/>:</label>
-		<div class="col-sm-10">
-			<input class="form-control" id="subject" name="subject" value='<c:out value="${messageBean.subject.json()}"/>' bennu-localized-string required-any/>
+		<div class="col-sm-8">
+			<input class="form-control" id="subject" name="subject" value='<c:out value="${messageBean.subject.json()}"/>' bennu-localized-string/>
 		</div>
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="textBody"><spring:message code="label.message.body.text"/>:</label>
-		<div class="col-sm-10">
+		<div class="col-sm-8">
 			<textarea class="form-control" id="textBody" name="textBody" bennu-localized-string>${messageBean.textBody.json()}</textarea>
 		</div>
 	</div>
 	<div id="htmlMessage" class="form-group">
 		<label class="control-label col-sm-2" for="htmlBody"><spring:message code="label.message.body.html"/>:</label>
-		<div class="col-sm-10">
+		<div class="col-sm-8">
 			<textarea class="form-control" id="htmlBody" name="htmlBody" bennu-html-editor bennu-localized-string>${messageBean.htmlBody.json()}</textarea>
 		</div>
 	</div>
@@ -99,7 +97,7 @@ ${portal.toolkit()}
 		</div>
 	</div>
 	<div class="form-group">
-		<div class="col-sm-offset-2 col-sm-10">
+		<div class="col-sm-offset-2 col-sm-8">
 			<button class="btn btn-primary" type="submit"><spring:message code="action.send.message"/></button>
 		</div>
 	</div>
@@ -107,103 +105,64 @@ ${portal.toolkit()}
 
 <script>
 (function(){
-	var recipientsEl = $('#recipients'),
-		recipientsContainerEl = $('#recipients-container'),
-		replyToEl = $('#replyTo'),
-		htmlMessageEl = $('#htmlMessage'),
-		htmlBodyEL = $('#htmlBody'),
-		senderSelectEl = $('#senderSelect');
-	var originalSender = "${messageBean.sender.externalId}",
-		adHocRecipients = [];
+    $( "#selectSender").select2();
 
-	function readRecipient(recipient) {
-        try {
-            return JSON.parse(atob(recipient));
-        } catch(e) { console.log("An erroneous recipient was discarded: " + recipient); }
+    $("#selectRecipients").select2({
+        allowClear: true,
+        placeholder: "Select Recipient(s)..."
+	});
+    var senderSelectEl = $('#selectSender');
+    var recipientsSelectEl = $("#selectRecipients");
+
+    senderSelectEl.change(function(){
+        senderUpdate(this.value);
+    });
+    senderUpdate("${messageBean.sender.externalId}");
+
+    function senderUpdate(sender) {
+
+        function nameCompare(a, b) {
+            a = a && a['name'] || "";
+            b = b && b['name'] || "";
+            if(a < b) return -1;
+            if(a > b) return 1;
+            return 0;
+        }
+
+        var replyToEl = $('#replyTo');
+        var htmlMessageEl = $('#htmlMessage');
+        var htmlBodyEL = $('#htmlBody');
+        var currentSenderReplyTo;
+        $.getJSON('senders/' + sender, function (info) {
+            if (info.replyTo && (!replyToEl.val() || replyToEl.val() == currentSenderReplyTo)) {
+                replyToEl.val(info.replyTo);
+                currentSenderReplyTo = info.replyTo;
+            }
+            var result = [];
+            info.recipients.sort(nameCompare).forEach(function(recipient){
+                var value = btoa(JSON.stringify({expression: recipient.expression, jwt: recipient.jwt}));
+                result.push({ "id": value, "text": recipient.name});
+            });
+            <c:forEach var="adHocRecipient" items="${messageBean.adHocRecipients}">
+				var recipient = JSON.parse(atob("${adHocRecipient}"));
+				var value = btoa(JSON.stringify({expression: recipient.expression, jwt: recipient.jwt}));
+				result.push({ "id": value, "text": recipient.name, "selected": "true"});
+            </c:forEach>
+
+            recipientsSelectEl.empty();
+            recipientsSelectEl.select2({
+				data: result
+            });
+
+            if (info.html) {
+                htmlMessageEl.show();
+                htmlBodyEL.attr('name', 'htmlBody');
+            } else {
+                htmlMessageEl.hide();
+                htmlBodyEL.removeAttr('name');
+            }
+        });
     }
-
-    function writeRecipient(recipient) {
-	    return btoa(JSON.stringify({expression: recipient.expression, jwt: recipient.jwt}));
-    }
-	var recipient;
-    <c:forEach var="recipient" items="${messageBean.adHocRecipients}">
-		recipient = readRecipient("${recipient}");
-		if(recipient){ adHocRecipients.push(recipient); }
-    </c:forEach>
-
-	function nameCompare(a, b) {
-		a = a && a['name'] || "";
-		b = b && b['name'] || "";
-		if(a < b) return -1;
-		if(a > b) return 1;
-		return 0;
-	}
-
-	function appendRecipientCheckbox(recipient, checked){
-		var value = writeRecipient(recipient);
-		var id = 'recipients-' + recipient.expression,
-			labelEl = $('<label style="margin-right: 5px;" class="input-group input-group-sm" for="'+id+'"></label>'),
-			checkboxEl = $('<input/>', { type: 'checkbox', id: id, value: value, name: 'selectedRecipients', checked: checked }),
-			addonEl = $('<span class="input-group-addon"></span>'),
-			spanEl = $('<span class="form-control">'+recipient.name+'</span>');
-		addonEl.append(checkboxEl);
-		labelEl.append(addonEl);
-		labelEl.append(spanEl);
-		recipientsEl.append(labelEl);
-	}
-
-	function recallRecipients(){
-		var checked = [];
-		recipientsEl.find("input:checked").each(function() {
-            var recipient = readRecipient($(this).val());
-            if(recipient){ checked.push(recipient); }
-		});
-		recipientsEl.empty();
-		return checked;
-	}
-
-	function populateRecipients(providedRecipients) {
-		recipientsContainerEl.hide();
-		if(providedRecipients.length !== 0) {
-			var selectedRecipients = recallRecipients();
-			providedRecipients.sort(nameCompare).forEach(function(provided){
-				var checked = !!$.grep(selectedRecipients, function(selected){
-					return selected.expression === provided.expression;
-				}).length;
-				appendRecipientCheckbox(provided, checked);
-			});
-			recipientsContainerEl.show();
-		}
-	}
-
-	var currentSenderReplyTo;
-	function senderUpdate(sender){
-		if(sender){
-			$.getJSON('senders/' + sender, function(info){
-				if(info.replyTo && (!replyToEl.val() || replyToEl.val() == currentSenderReplyTo)) {
-					replyToEl.val(info.replyTo);
-					currentSenderReplyTo = info.replyTo;
-				}
-				var expressions = $.map(info.recipients, function(recipient) { return recipient.expression; }),
-					relevantAdHocRecipients = $.grep(adHocRecipients, function(recipient) {
-						return recipient.sender === sender && expressions.indexOf(recipient.expression) < 0;
-					});
-				populateRecipients(info.recipients.concat(relevantAdHocRecipients));
-				if(info.html){
-					htmlMessageEl.show();
-					htmlBodyEL.attr('name','htmlBody');
-				} else {
-					htmlMessageEl.hide();
-					htmlBodyEL.removeAttr('name');
-				}
-			});
-		} else {
-			recipientsContainerEl.hide();
-			if(replyToEl.val() == currentSenderReplyTo) {
-				replyToEl.val(currentSenderReplyTo = '');
-			}
-		}
-	}
 
 	var addAttachmentEl = $('#addAttachment');
 	addAttachmentEl.change(function(event){
@@ -250,10 +209,5 @@ ${portal.toolkit()}
 		addAttachment("${attachment.externalId}","${attachment.filename}");
     </c:forEach>
 
-    senderSelectEl.change(function(){
-		senderUpdate(this.value);
-	});
-
-	senderUpdate(originalSender);
 })();
 </script>

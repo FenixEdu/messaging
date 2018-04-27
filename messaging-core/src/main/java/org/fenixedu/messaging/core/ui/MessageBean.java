@@ -69,12 +69,14 @@ public class MessageBean extends MessageContentBean {
     private static final String KEY_SENDER = "sender", KEY_EXPRESSION = "expression", KEY_JWT = "jwt", KEY_NAME = "name";
 
     private Sender sender;
-    private boolean senderLocked = false;
-    private String replyTo, singleRecipients;
+    private boolean senderLocked;
+    private String replyTo;
+    private Set<JsonObject> recipients = new HashSet<>();
     private Set<String> selectedRecipients = new HashSet<>();
-    private Set<String> adHocRecipients = new HashSet<>();
+    private String singleRecipients;
     private Locale preferredLocale = I18N.getLocale();
     private Set<GenericFile> attachments = new HashSet<>();
+    private Set<String> adHocRecipients = new HashSet<>();
 
     public Sender getSender() {
         return sender;
@@ -88,7 +90,7 @@ public class MessageBean extends MessageContentBean {
         return senderLocked;
     }
 
-    public void setSenderLocked(boolean senderLocked) {
+    public void setSenderLocked(final boolean senderLocked) {
         this.senderLocked = senderLocked;
     }
 
@@ -96,7 +98,7 @@ public class MessageBean extends MessageContentBean {
         return replyTo;
     }
 
-    public void setReplyTo(String replyTo) {
+    public void setReplyTo(final String replyTo) {
         this.replyTo = replyTo;
     }
 
@@ -104,7 +106,7 @@ public class MessageBean extends MessageContentBean {
         return singleRecipients;
     }
 
-    public void setSingleRecipients(String singleRecipients) {
+    public void setSingleRecipients(final String singleRecipients) {
         this.singleRecipients = singleRecipients;
     }
 
@@ -112,7 +114,7 @@ public class MessageBean extends MessageContentBean {
         return selectedRecipients;
     }
 
-    public void setSelectedRecipients(Set<String> recipients) {
+    public void setSelectedRecipients(final Set<String> recipients) {
         this.selectedRecipients = recipients;
     }
 
@@ -120,19 +122,19 @@ public class MessageBean extends MessageContentBean {
         return adHocRecipients;
     }
 
-    public void setAdHocRecipients(Set<String> adHocRecipients) {
+    public void setAdHocRecipients(final Set<String> adHocRecipients) {
         this.adHocRecipients = adHocRecipients;
     }
 
     public Set<GenericFile> getAttachments() { return attachments; }
 
-    public void setAttachments(Set<GenericFile> attachments) { this.attachments = attachments; }
+    public void setAttachments(final Set<GenericFile> attachments) { this.attachments = attachments; }
 
     public Locale getPreferredLocale() {
         return preferredLocale;
     }
 
-    public void setPreferredLocale(Locale preferredLocale) {
+    public void setPreferredLocale(final Locale preferredLocale) {
         this.preferredLocale = preferredLocale;
     }
 
@@ -141,51 +143,59 @@ public class MessageBean extends MessageContentBean {
         setSenderLocked(true);
     }
 
-    public void selectRecipient(Group recipient) {
+    public Set<JsonObject> getRecipients() {
+        return recipients;
+    }
+
+    public void setRecipients(final Set<JsonObject> recipients) {
+        this.recipients = recipients;
+    }
+
+    public void selectRecipient(final Group recipient) {
         requireNonNull(recipient);
         selectedRecipients.add(Base64.getEncoder().encodeToString(buildRecipientJson(null, recipient).toString().getBytes()));
     }
 
-    public void addAdHocRecipient(Group recipient) {
+    public void addAdHocRecipient(final Group recipient) {
         addAdHocRecipient(sender, recipient);
     }
 
-    public void addAdHocRecipient(Sender sender, Group recipient) {
+    public void addAdHocRecipient(final Sender sender, final Group recipient) {
         requireNonNull(recipient);
         requireNonNull(sender);
         adHocRecipients.add(Base64.getEncoder().encodeToString(buildRecipientJson(sender, recipient).toString().getBytes()));
     }
 
-    public void addAttachment(GenericFile file){
+    public void addAttachment(final GenericFile file){
         attachments.add(file);
     }
 
     Message send() {
-        Collection<String> errors = validate();
+        final Collection<String> errors = validate();
         if (errors.isEmpty()) {
             MessageBuilder builder =
                     Message.from(getSender()).preferredLocale(getPreferredLocale()).subject(getSubject());
-            String replyTos = getReplyTo();
+            final String replyTos = getReplyTo();
             if (replyTos != null){
                 builder.replyTo(MessagingSystem.Util.toEmailSet(replyTos));
             }
-            LocalizedString content = getTextBody();
-            if (content != null) {
-                builder.textBody(content);
+            final LocalizedString textbody = getTextBody();
+            if (textbody != null) {
+                builder.textBody(textbody);
             }
-            content = getHtmlBody();
-            if (content != null) {
-                builder.htmlBody(content);
+            final LocalizedString htmlbody = getHtmlBody();
+            if (htmlbody != null) {
+                builder.htmlBody(htmlbody);
             }
-            Set<Group> recipients = getGroupRecipients();
+            final Set<Group> recipients = getGroupRecipients();
             if (recipients != null) {
                 builder.bcc(recipients);
             }
-            String bccs = getSingleRecipients();
+            final String bccs = getSingleRecipients();
             if (bccs != null) {
                 builder.singleBcc(MessagingSystem.Util.toEmailSet(bccs));
             }
-            Set<GenericFile> attachments = getAttachments();
+            final Set<GenericFile> attachments = getAttachments();
             if (attachments != null){
                 builder.attachment(attachments);
             }
@@ -203,16 +213,16 @@ public class MessageBean extends MessageContentBean {
 
     @Override
     public Collection<String> validate() {
-        Collection<String> errors = super.validate();
-        Sender sender = getSender();
-        String singleRecipients = getSingleRecipients();
-        String replyTos = getReplyTo();
-        Set<String> jsonRecipients = getSelectedRecipients();
-        Set<GenericFile> attachments = getAttachments();
-        boolean hasGroupRecipients = jsonRecipients != null && !jsonRecipients.isEmpty();
-        boolean hasSingleRecipients = !Strings.isNullOrEmpty(singleRecipients);
-        boolean hasAttachments = !attachments.isEmpty();
-        boolean hasReplyTos = !Strings.isNullOrEmpty(replyTos);
+        final Collection<String> errors = super.validate();
+        final Sender sender = getSender();
+        final String singleRecipients = getSingleRecipients();
+        final String replyTos = getReplyTo();
+        final Set<String> jsonRecipients = getSelectedRecipients();
+        final Set<GenericFile> attachments = getAttachments();
+        final boolean hasGroupRecipients = jsonRecipients != null && !jsonRecipients.isEmpty();
+        final boolean hasSingleRecipients = !Strings.isNullOrEmpty(singleRecipients);
+        final boolean hasAttachments = !attachments.isEmpty();
+        final boolean hasReplyTos = !Strings.isNullOrEmpty(replyTos);
 
 
         if (!(hasGroupRecipients || hasSingleRecipients)) {
@@ -226,22 +236,24 @@ public class MessageBean extends MessageContentBean {
         }
 
         if (hasGroupRecipients) {
-            jsonRecipients.forEach(b64 -> {
+            for (final String b64 : jsonRecipients) {
                 try {
-                    String json = new String(Base64.getDecoder().decode(b64.getBytes()));
-                    Claims claims =
+                    final String json = new String(Base64.getDecoder().decode(b64.getBytes()));
+                    final Claims claims =
                             parseJWT(new JsonParser().parse(json).getAsJsonObject().getAsJsonPrimitive(KEY_JWT).getAsString());
-                    Group recipient = Group.parse(claims.get(KEY_EXPRESSION, String.class));
+                    final Group recipient = Group.parse(claims.get(KEY_EXPRESSION, String.class));
                     if (sender != null && !sender.getExternalId().equals(claims.get(KEY_SENDER, String.class))) {
                         errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.forbidden",
                                 recipient.getPresentationName()));
                     }
-                } catch (ExpiredJwtException e) {
+                }
+                catch (ExpiredJwtException e) {
                     errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.token.expired"));
-                } catch (DomainException | JsonSyntaxException | IllegalArgumentException | IllegalStateException | JwtException e) {
+                }
+                catch (DomainException | JsonSyntaxException | IllegalArgumentException | IllegalStateException | JwtException e) {
                     errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.recipient.token.erroneous"));
                 }
-            });
+            }
         }
 
         if (hasReplyTos){
@@ -262,7 +274,7 @@ public class MessageBean extends MessageContentBean {
         }
 
         if (hasAttachments){
-            for (GenericFile genericFile : attachments) {
+            for (final GenericFile genericFile : attachments) {
                 if (!genericFile.isAccessible(Authenticate.getUser())) {
                     errors.add(BundleUtil.getString(BUNDLE, "error.message.validation.file.forbidden"));
                 }
@@ -273,8 +285,8 @@ public class MessageBean extends MessageContentBean {
         return errors;
     }
 
-    private static Claims parseJWT(String jwt) {
-        String secretKey = requireNonNull(MessagingConfiguration.getConfiguration().jwtKey());
+    private static Claims parseJWT(final String jwt) {
+        final String secretKey = requireNonNull(MessagingConfiguration.getConfiguration().jwtKey());
         return Jwts.parser().setSigningKey(DatatypeConverter.parseBase64Binary(secretKey)).parseClaimsJws(jwt).getBody();
     }
 
@@ -296,24 +308,24 @@ public class MessageBean extends MessageContentBean {
      * @throws NullPointerException
      *         if recipient parameter or system configuration's secret key is not defined
      */
-    static JsonObject buildRecipientJson(Sender sender, Group recipient) {
+    static JsonObject buildRecipientJson(final Sender sender, final Group recipient) {
         requireNonNull(recipient);
-        ConfigurationProperties config = MessagingConfiguration.getConfiguration();
+        final ConfigurationProperties config = MessagingConfiguration.getConfiguration();
         requireNonNull(config.jwtKey());
-        JsonObject json = new JsonObject();
+        final JsonObject json = new JsonObject();
 
-        String expression = recipient.getExpression();
+        final String expression = recipient.getExpression();
         json.addProperty(KEY_EXPRESSION, expression);
         json.addProperty(KEY_NAME, recipient.getPresentationName());
 
         if (sender != null) {
-            String senderId = sender.getExternalId();
-            SignatureAlgorithm algorithm = SignatureAlgorithm.forName(config.jwtAlgorithm());
-            long millis = System.currentTimeMillis();
-            Date now = new Date(millis);
-            Key signingKey = new SecretKeySpec(DatatypeConverter.parseBase64Binary(config.jwtKey()), algorithm.getJcaName());
+            final String senderId = sender.getExternalId();
+            final SignatureAlgorithm algorithm = SignatureAlgorithm.forName(config.jwtAlgorithm());
+            final long millis = System.currentTimeMillis();
+            final Date now = new Date(millis);
+            final Key signingKey = new SecretKeySpec(DatatypeConverter.parseBase64Binary(config.jwtKey()), algorithm.getJcaName());
 
-            String jwt =
+            final String jwt =
                     Jwts.builder().claim(KEY_EXPRESSION, expression).claim(KEY_SENDER, sender.getExternalId()).setIssuedAt(now)
                             .setExpiration(new Date(millis + config.jwtTTL())).signWith(algorithm, signingKey).compact();
 
