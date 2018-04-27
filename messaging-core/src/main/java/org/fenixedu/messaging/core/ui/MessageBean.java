@@ -76,6 +76,7 @@ public class MessageBean extends MessageContentBean {
     private String singleRecipients;
     private Locale preferredLocale = I18N.getLocale();
     private Set<GenericFile> attachments = new HashSet<>();
+    private Set<GenericFile> lockedAttachments = new HashSet<>();
     private Set<String> adHocRecipients = new HashSet<>();
 
     public Sender getSender() {
@@ -130,6 +131,14 @@ public class MessageBean extends MessageContentBean {
 
     public void setAttachments(final Set<GenericFile> attachments) { this.attachments = attachments; }
 
+    public Set<GenericFile> getLockedAttachments() {
+        return lockedAttachments;
+    }
+
+    public void setLockedAttachments(final Set<GenericFile> lockedAttachments) {
+        this.lockedAttachments = lockedAttachments;
+    }
+
     public Locale getPreferredLocale() {
         return preferredLocale;
     }
@@ -168,6 +177,10 @@ public class MessageBean extends MessageContentBean {
 
     public void addAttachment(final GenericFile file){
         attachments.add(file);
+    }
+
+    public void addLockedAttachment(final GenericFile file) {
+        lockedAttachments.add(file);
     }
 
     Message send() {

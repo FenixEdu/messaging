@@ -64,10 +64,11 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
 
     public static final class SenderBuilder {
         private String address, name = null, replyTo = null;
-        private boolean htmlEnabled = false;
+        private boolean htmlEnabled;
         private Group members = Group.nobody();
         private MessageStoragePolicy policy = MessageStoragePolicy.keepAll();
         private Set<Group> recipients = new HashSet<>();
+        private boolean attachmentsEnabled;
 
         protected SenderBuilder(String address) {
             from(address);
@@ -146,6 +147,11 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
             return this;
         }
 
+        public SenderBuilder attachmentsEnabled(final boolean attachmentsEnabled) {
+            this.attachmentsEnabled = attachmentsEnabled;
+            return this;
+        }
+
         @Atomic(mode = TxMode.WRITE)
         public Sender build() {
             Sender sender = new Sender();
@@ -156,6 +162,7 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
             sender.setMembers(members);
             sender.setPolicy(policy);
             sender.setRecipients(recipients);
+            sender.setAttachmentsEnabled(attachmentsEnabled);
             return sender;
         }
     }

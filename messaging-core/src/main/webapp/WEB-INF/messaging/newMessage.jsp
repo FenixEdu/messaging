@@ -90,9 +90,9 @@ ${portal.toolkit()}
 			<textarea class="form-control" id="htmlBody" name="htmlBody" bennu-html-editor bennu-localized-string>${messageBean.htmlBody.json()}</textarea>
 		</div>
 	</div>
-	<div class="form-group">
+	<div id="attachmentsDiv" class="form-group">
 		<label class="control-label col-sm-2" for="textBody"><spring:message code="label.message.attachments"/>:</label>
-		<div id="attachments-container" class="col-sm-4">
+		<div id="attachments-container" class="col-sm-3">
 			<input type="file" multiple="true" id="addAttachment" name="addAttachment"/>
 		</div>
 	</div>
@@ -105,7 +105,29 @@ ${portal.toolkit()}
 
 <script>
 (function(){
-    $( "#selectSender").select2();
+  $( "#selectSender").select2();
+
+  var recipientsEl = $('#recipients'),
+		recipientsContainerEl = $('#recipients-container'),
+		replyToEl = $('#replyTo'),
+		senderSelectEl = $('#senderSelect');
+	var originalSender = "${messageBean.sender.externalId}",
+		adHocRecipients = [];
+
+	function readRecipient(recipient) {
+        try {
+            return JSON.parse(atob(recipient));
+        } catch(e) { console.log("An erroneous recipient was discarded: " + recipient); }
+    }
+
+    function writeRecipient(recipient) {
+	    return btoa(JSON.stringify({expression: recipient.expression, jwt: recipient.jwt}));
+    }
+	var recipient;
+    <c:forEach var="recipient" items="${messageBean.adHocRecipients}">
+		recipient = readRecipient("${recipient}");
+		if(recipient){ adHocRecipients.push(recipient); }
+    </c:forEach>
 
     $("#selectRecipients").select2({
         allowClear: true,
@@ -154,6 +176,11 @@ ${portal.toolkit()}
 				data: result
             });
 
+	var currentSenderReplyTo;
+	function senderUpdate(sender){
+        function toggleHtml(info) {
+            var htmlMessageEl = $('#htmlMessage'),
+                htmlBodyEL = $('#htmlBody');
             if (info.html) {
                 htmlMessageEl.show();
                 htmlBodyEL.attr('name', 'htmlBody');
@@ -161,6 +188,42 @@ ${portal.toolkit()}
                 htmlMessageEl.hide();
                 htmlBodyEL.removeAttr('name');
             }
+        }
+
+        function toggleAttachments(info) {
+            var htmlMessageEl = $('#attachmentsDiv'),
+                htmlBodyEL = $('#addAttachment');
+            if (info.attachmentsEnabled) {
+                htmlMessageEl.show();
+                htmlBodyEL.attr('name', 'addAttachment');
+            } else {
+                htmlMessageEl.hide();
+                htmlBodyEL.removeAttr('name');
+            }
+        }
+
+        if(sender){
+			$.getJSON('senders/' + sender, function(info){
+				if(info.replyTo && (!replyToEl.val() || replyToEl.val() == currentSenderReplyTo)) {
+					replyToEl.val(info.replyTo);
+					currentSenderReplyTo = info.replyTo;
+				}
+				var expressions = $.map(info.recipients, function(recipient) { return recipient.expression; }),
+					relevantAdHocRecipients = $.grep(adHocRecipients, function(recipient) {
+						return recipient.sender === sender && expressions.indexOf(recipient.expression) < 0;
+					});
+				populateRecipients(info.recipients.concat(relevantAdHocRecipients));
+                toggleHtml(info);
+                toggleAttachments(info);
+			});
+		} else {
+			recipientsContainerEl.hide();
+			if(replyToEl.val() == currentSenderReplyTo) {
+				replyToEl.val(currentSenderReplyTo = '');
+			}
+		}
+	}
+
         });
     }
 
@@ -186,16 +249,24 @@ ${portal.toolkit()}
         }
 	});
 
-    function addAttachment(fileid,filename) {
+    function addAttachment(fileid,filename, locked) {
         var groupBtnEl = $('<span class="input-group-btn"></span>'),
             removeBtnEl = $('<button class="btn btn-danger" type="button"></button>'),
+            lockedBtnEl = $('<button class="btn btn-primary" type="button" disabled></button>'),
             iconEl = $('<span class="glyphicon glyphicon-remove"></span>'),
+            lockediconEl = $('<span class="glyphicon glyphicon-lock"></span>'),
             input1El = $('<input hidden name="attachments" value="' + fileid + '"/>'),
             input2El = $('<div class="form-control">' + filename + '</div>'),
             inputGroupEl = $('<div class="input-group" style="margin-bottom: 10px;"></div>'),
             groupEl = $('<div style="display: inline;"></div>');
-        removeBtnEl.append(iconEl);
-        groupBtnEl.append(removeBtnEl);
+        if (!locked) {
+            removeBtnEl.append(iconEl);
+            groupBtnEl.append(removeBtnEl);
+        }
+        else{
+            lockedBtnEl.append(lockediconEl);
+            groupBtnEl.append(lockedBtnEl);
+        }
         inputGroupEl.append(input1El).append(input2El).append(groupBtnEl);
         groupEl.append(inputGroupEl);
         removeBtnEl.click(function () {
@@ -205,8 +276,12 @@ ${portal.toolkit()}
         recipientContainer.append(groupEl);
     }
 
+    <c:forEach var="lockedAttachment" items="${messageBean.lockedAttachments}">
+		addAttachment("${lockedAttachment.externalId}","${lockedAttachment.filename}", true);
+    </c:forEach>
+
     <c:forEach var="attachment" items="${messageBean.attachments}">
-		addAttachment("${attachment.externalId}","${attachment.filename}");
+		addAttachment("${attachment.externalId}","${attachment.filename}", false);
     </c:forEach>
 
 })();
