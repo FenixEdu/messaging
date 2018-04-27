@@ -27,13 +27,16 @@ package org.fenixedu.messaging.core.ui;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Strings;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonPrimitive;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.bennu.core.util.CoreConfiguration;
 import org.fenixedu.bennu.io.domain.GenericFile;
-import org.fenixedu.bennu.io.domain.GenericFile_Base;
 import org.fenixedu.bennu.io.servlet.FileDownloadServlet;
 import org.fenixedu.bennu.spring.portal.SpringApplication;
 import org.fenixedu.bennu.spring.portal.SpringFunctionality;
@@ -57,10 +60,8 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
-import com.google.common.base.Strings;
-import com.google.gson.JsonArray;
+
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -78,11 +79,11 @@ public class MessagingController {
     }
 
     @RequestMapping(value = { "/senders", "/senders/" })
-    public String listSenders(Model model, @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "items", defaultValue = "10") int items,
-            @RequestParam(value = "search", defaultValue = "") String search) {
+    public String listSenders(final Model model, @RequestParam(value = "page", defaultValue = "1") final int page,
+            @RequestParam(value = "items", defaultValue = "10") final int items,
+            @RequestParam(value = "search", defaultValue = "") final String search) {
         Set<Sender> senders = Sender.available().stream()
-                .filter(s -> s.getName().toLowerCase().contains(search.toLowerCase()))
+                .filter(sender -> sender.getName().toLowerCase().contains(search.toLowerCase()))
                 .collect(Collectors.toSet());
         PaginationUtils.paginate(model, "messaging/senders", "senders", senders, items, page);
         model.addAttribute("search", search);
@@ -90,8 +91,8 @@ public class MessagingController {
     }
 
     @RequestMapping(value = "/senders/{sender}", method = RequestMethod.GET)
-    public String viewSender(@PathVariable Sender sender, Model model, @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "items", defaultValue = "10") int items) {
+    public String viewSender(final Model model, @PathVariable final Sender sender,  @RequestParam(value = "page", defaultValue = "1") final int page,
+            @RequestParam(value = "items", defaultValue = "10") final int items) {
         if (!allowedSender(sender)) {
             throw MessagingDomainException.forbidden();
         }
@@ -102,7 +103,7 @@ public class MessagingController {
     }
 
     @RequestMapping(value = "/senders/{sender}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public @ResponseBody ResponseEntity<String> viewSenderInfo(@PathVariable Sender sender) {
+    public @ResponseBody ResponseEntity<String> viewSenderInfo(@PathVariable final Sender sender) {
         if (!allowedSender(sender)) {
             throw MessagingDomainException.forbidden();
         }
@@ -117,32 +118,37 @@ public class MessagingController {
             info.add("replyTo", new JsonPrimitive(replyTo));
         }
         info.addProperty("html", sender.getHtmlEnabled());
+        info.addProperty("attachmentsEnabled", sender.getAttachmentsEnabled());
         return new ResponseEntity<String>(info.toString(), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/message", method = RequestMethod.GET)
-    public String newMessage(Model model, @ModelAttribute("messageBean") MessageBean messageBean, HttpServletRequest request) {
+    public String newMessage(final Model model, @ModelAttribute("messageBean") MessageBean messageBean, final HttpServletRequest request) {
 
         messageBean = MessagingUtils.getMessageBeanFromSession(request).orElse(messageBean);
-
         MessagingUtils.clearMessageBeanFromSession(request);
 
-        if (messageBean.getSender() != null && !allowedSender(messageBean.getSender())) {
+        final Sender sender = Optional.ofNullable(messageBean.getSender())
+                .orElse(Sender.available().stream().findAny().orElseThrow(MessagingDomainException::forbidden));
+
+        if (!allowedSender(sender)){
             throw MessagingDomainException.forbidden();
         }
-        if (messageBean.getSender() == null) {
-            messageBean.setSender(Sender.available().stream().findAny().orElse(null));
-        }
+
+        final Set<JsonObject> collect =
+                sender.getRecipients().stream().map(recipient -> MessageBean.buildRecipientJson(sender, recipient))
+                        .collect(Collectors.toSet());
+        messageBean.setRecipients(collect);
         model.addAttribute("messageBean", messageBean);
         return "/messaging/newMessage";
     }
 
     @RequestMapping(value = "/message", method = RequestMethod.POST)
-    public ModelAndView sendMessage(Model model, @ModelAttribute("messageBean") MessageBean messageBean,
-            RedirectAttributes redirectAttributes, HttpServletRequest request) {
+    public ModelAndView sendMessage(final Model model, @ModelAttribute("messageBean") MessageBean messageBean,
+            final RedirectAttributes redirectAttributes, final HttpServletRequest request) {
         if (messageBean != null) {
             if (allowedSender(messageBean.getSender())) {
-                Message message = messageBean.send();
+                final Message message = messageBean.send();
                 if (message != null) {
                     redirectAttributes.addFlashAttribute("justCreated", true);
                     return new ModelAndView(new RedirectView("/messaging/messages/" + message.getExternalId(), true));
@@ -155,13 +161,13 @@ public class MessagingController {
     }
 
     @RequestMapping(value = "/messages/{message}", method = RequestMethod.GET)
-    public String viewMessage(Model model, @PathVariable Message message) {
+    public String viewMessage(final Model model, @PathVariable final Message message) {
         if (!allowedSender(message.getSender())) {
             throw MessagingDomainException.forbidden();
         }
         model.addAttribute("locales", getSupportedLocales(message));
         model.addAttribute("message", message);
-        Map<String, String> messageFiles = new HashMap<>();
+        final Map<String, String> messageFiles = new HashMap<>();
         for (GenericFile genericFile : message.getFileSet()) {
             messageFiles.put(genericFile.getFilename(), FileDownloadServlet.getDownloadUrl(genericFile));
         }
@@ -169,38 +175,38 @@ public class MessagingController {
         return "/messaging/viewMessage";
     }
 
-    private Set<Locale> getSupportedLocales(Message message) {
-        Set<Locale> locales = message.getContentLocales();
+    private Set<Locale> getSupportedLocales(final Message message) {
+        final Set<Locale> locales = message.getContentLocales();
         locales.addAll(CoreConfiguration.supportedLocales());
         locales.add(message.getPreferredLocale());
         return locales;
     }
 
     @RequestMapping(value = "/messages/{message}/delete", method = RequestMethod.POST)
-    public String deleteMessage(@PathVariable Message message, Model model) {
-        Sender sender = message.getSender();
+    public String deleteMessage(final Model model, @PathVariable final Message message) {
+        final Sender sender = message.getSender();
         try {
             message.safeDelete();
         } catch (IllegalStateException e) {
             throw MessagingDomainException.forbidden();
         }
-        return viewSender(sender, model, 1, 10);
+        return viewSender(model, sender, 1, 10);
     }
 
     @RequestMapping(value = "/messages/uploadFile", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public @ResponseBody ResponseEntity<String> uploadAttachment(@RequestParam Sender sender, @RequestParam("file") MultipartFile file) throws Exception {
+    public @ResponseBody ResponseEntity<String> uploadAttachment(@RequestParam final Sender sender, @RequestParam("file") final MultipartFile file) throws Exception {
         if (!allowedSender(sender)){
             throw MessagingDomainException.forbidden();
         }
-        MessageFile messageFile = atomic(() -> new MessageFile(sender, file.getName(),file.getOriginalFilename(), file.getBytes()));
+        final MessageFile messageFile = atomic(() -> new MessageFile(sender, file.getName(),file.getOriginalFilename(), file.getBytes()));
 
-        JsonObject info = new JsonObject();
+        final JsonObject info = new JsonObject();
         info.addProperty("fileid",messageFile.getExternalId());
         info.addProperty("filename", messageFile.getFilename());
         return new ResponseEntity<>(info.toString(), HttpStatus.OK);
     }
 
-    private boolean allowedSender(Sender sender) {
+    private boolean allowedSender(final Sender sender) {
         return sender.getMembers().isMember(Authenticate.getUser());
     }
 

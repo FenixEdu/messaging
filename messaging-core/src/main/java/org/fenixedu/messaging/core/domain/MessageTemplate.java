@@ -1,5 +1,6 @@
 package org.fenixedu.messaging.core.domain;
 
+import org.fenixedu.bennu.MessagingConfiguration;
 import pt.ist.fenixframework.Atomic;
 
 import java.io.IOException;
@@ -39,7 +40,9 @@ public class MessageTemplate extends MessageTemplate_Base implements Comparable<
     static {
         final Builder builder = new PebbleEngine.Builder();
         builder.loader(new StringLoader());
-        engine = builder.autoEscaping(false).build();
+        engine = builder.autoEscaping(false)
+                .newLineTrimming(MessagingConfiguration.getConfiguration().pebbleNewlineTrim())
+                .build();
     }
 
     public static class MessageTemplateDeclaration {

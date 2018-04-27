@@ -22,7 +22,7 @@ import com.google.common.collect.Sets;
 public class SenderBean {
     protected static final String BUNDLE = "MessagingResources";
 
-    private Boolean htmlEnabled, allPolicy, nonePolicy;
+    private Boolean htmlEnabled, allPolicy, nonePolicy, attachmentsEnabled;
     private String name, address, members, replyTo, policy, periodPolicy = "";
     private int amountPolicy = -1;
     private Collection<String> recipients, errors;
@@ -38,6 +38,9 @@ public class SenderBean {
         }
         if (getHtmlEnabled() == null) {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.html.required"));
+        }
+        if (getAttachmentsEnabled() == null) {
+            errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.attachmentsEnabled.required"));
         }
         if (Strings.isNullOrEmpty(getName())) {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.name.empty"));
@@ -142,6 +145,8 @@ public class SenderBean {
         return errors;
     }
 
+    public Boolean getAttachmentsEnabled() { return attachmentsEnabled; }
+
     public void setHtmlEnabled(boolean htmlEnabled) {
         this.htmlEnabled = htmlEnabled;
     }
@@ -170,13 +175,16 @@ public class SenderBean {
         this.errors = errors;
     }
 
+    public void setAttachmentsEnabled(final Boolean attachmentsEnabled) { this.attachmentsEnabled = attachmentsEnabled; }
+
     Sender newSender() {
         Sender sender = null;
         if (validate().isEmpty()) {
             Stream<Group> recipients = getRecipients().stream().map(Group::parse);
             sender = Sender.from(getAddress()).as(getName()).members(Group.parse(getMembers()))
                     .storagePolicy(MessageStoragePolicy.internalize(getPolicy())).htmlEnabled(getHtmlEnabled())
-                    .replyTo(getReplyTo()).recipients(recipients).build();
+                    .replyTo(getReplyTo()).recipients(recipients)
+                    .attachmentsEnabled(getAttachmentsEnabled()).build();
         }
         return sender;
     }
@@ -190,6 +198,7 @@ public class SenderBean {
             setHtmlEnabled(sender.getHtmlEnabled());
             setReplyTo(sender.getReplyTo());
             setRecipients(sender.getRecipients().stream().map(Group::getExpression).collect(Collectors.toSet()));
+            setAttachmentsEnabled(sender.getAttachmentsEnabled());
         }
     }
 
@@ -204,6 +213,7 @@ public class SenderBean {
             sender.setHtmlEnabled(getHtmlEnabled());
             sender.setReplyTo(getReplyTo());
             sender.setRecipients(getRecipients().stream().map(Group::parse).collect(Collectors.toSet()));
+            sender.setAttachmentsEnabled(attachmentsEnabled);
         }
         return errors;
     }

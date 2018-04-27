@@ -41,13 +41,12 @@
 			<c:set var="toggle" value=""/>
 		</c:otherwise>
 		</c:choose>
-		<tr class="${rowClass}" data-toggle="${toggle}" data-placement="left" title="${tooltip}"
-			onClick="location.href='${pageContext.request.contextPath}/messaging/config/templates/${template.externalId}'">
+		<tr class="${rowClass}" data-toggle="${toggle}" data-placement="left" title="${tooltip}">
 			<td class="col-sm-2">
-				<code>${template.id}</code>
+				<code><c:out value="${template.id}</code>"/>
 			</td>
 			<td class="col-sm-7">
-				${template.declaration.description.content}
+				<c:out value="${template.declaration.description.content}"/>
 			</td>
 			<td class="col-sm-3">
 				<div class="btn-group btn-group-xs pull-right">
