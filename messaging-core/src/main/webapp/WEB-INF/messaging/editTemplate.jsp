@@ -54,7 +54,7 @@ ${portal.toolkit()}
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="textBody"><spring:message code="label.message.body.text"/>:</label>
 		<div class="col-sm-10">
-			<textarea class="form-control" id="textBody" name="textBody" bennu-localized-string>${templateBean.textBody.json()}</textarea>
+			<textarea class="form-control" id="textBody" name="textBody" rows="15" bennu-localized-string>${templateBean.textBody.json()}</textarea>
 		</div>
 	</div>
 	<div class="form-group">

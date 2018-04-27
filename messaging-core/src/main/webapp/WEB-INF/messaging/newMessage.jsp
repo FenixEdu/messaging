@@ -80,8 +80,8 @@ ${portal.toolkit()}
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="textBody"><spring:message code="label.message.body.text"/>:</label>
-		<div class="col-sm-8">
-			<textarea class="form-control" id="textBody" name="textBody" bennu-localized-string>${messageBean.textBody.json()}</textarea>
+		<div class="col-sm-10">
+			<textarea class="form-control" id="textBody" name="textBody" rows="12" bennu-localized-string>${messageBean.textBody.json()}</textarea>
 		</div>
 	</div>
 	<div id="htmlMessage" class="form-group">
