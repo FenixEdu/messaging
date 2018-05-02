@@ -239,6 +239,10 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
         getPolicy().pruneMessages(this);
     }
 
+    public void pruneUploadedFiles() {
+        getUploadedFileSet().forEach(MessageFile::pruneOrphanFile);
+    }
+
     @Atomic(mode = TxMode.WRITE)
     public void delete() {
         getMessageSet().forEach(Message::delete);

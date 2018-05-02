@@ -21,6 +21,9 @@ public class MessagingConfiguration {
 
         @ConfigurationProperty(key = "messaging.pebble.newlineTrimming", defaultValue = "false")
         Boolean pebbleNewlineTrim();
+
+        @ConfigurationProperty(key = "messaging.files.prune.min.days", defaultValue = "3")
+        Integer minPruningDays();
     }
 
     public static ConfigurationProperties getConfiguration() {
