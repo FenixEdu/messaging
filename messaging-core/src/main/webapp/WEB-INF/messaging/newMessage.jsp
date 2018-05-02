@@ -80,11 +80,11 @@ ${portal.toolkit()}
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="textBody"><spring:message code="label.message.body.text"/>:</label>
-		<div class="col-sm-10">
+		<div class="col-sm-8">
 			<textarea class="form-control" id="textBody" name="textBody" rows="12" bennu-localized-string>${messageBean.textBody.json()}</textarea>
 		</div>
 	</div>
-	<div id="htmlMessage" class="form-group">
+	<div id="htmlMessage" class="form-group" hidden>
 		<label class="control-label col-sm-2" for="htmlBody"><spring:message code="label.message.body.html"/>:</label>
 		<div class="col-sm-8">
 			<textarea class="form-control" id="htmlBody" name="htmlBody" bennu-html-editor bennu-localized-string>${messageBean.htmlBody.json()}</textarea>
@@ -105,14 +105,10 @@ ${portal.toolkit()}
 
 <script>
 (function(){
-  $( "#selectSender").select2();
+    var senderSelectEl = $('#selectSender');
+    var recipientsSelectEl = $("#selectRecipients");
 
-  var recipientsEl = $('#recipients'),
-		recipientsContainerEl = $('#recipients-container'),
-		replyToEl = $('#replyTo'),
-		senderSelectEl = $('#senderSelect');
-	var originalSender = "${messageBean.sender.externalId}",
-		adHocRecipients = [];
+    senderSelectEl.select2();
 
 	function readRecipient(recipient) {
         try {
@@ -123,18 +119,18 @@ ${portal.toolkit()}
     function writeRecipient(recipient) {
 	    return btoa(JSON.stringify({expression: recipient.expression, jwt: recipient.jwt}));
     }
+
+    var adHocRecipients = [];
 	var recipient;
     <c:forEach var="recipient" items="${messageBean.adHocRecipients}">
 		recipient = readRecipient("${recipient}");
 		if(recipient){ adHocRecipients.push(recipient); }
     </c:forEach>
 
-    $("#selectRecipients").select2({
+    recipientsSelectEl.select2({
         allowClear: true,
         placeholder: "Select Recipient(s)..."
 	});
-    var senderSelectEl = $('#selectSender');
-    var recipientsSelectEl = $("#selectRecipients");
 
     senderSelectEl.change(function(){
         senderUpdate(this.value);
@@ -151,15 +147,7 @@ ${portal.toolkit()}
             return 0;
         }
 
-        var replyToEl = $('#replyTo');
-        var htmlMessageEl = $('#htmlMessage');
-        var htmlBodyEL = $('#htmlBody');
-        var currentSenderReplyTo;
         $.getJSON('senders/' + sender, function (info) {
-            if (info.replyTo && (!replyToEl.val() || replyToEl.val() == currentSenderReplyTo)) {
-                replyToEl.val(info.replyTo);
-                currentSenderReplyTo = info.replyTo;
-            }
             var result = [];
             info.recipients.sort(nameCompare).forEach(function(recipient){
                 var value = btoa(JSON.stringify({expression: recipient.expression, jwt: recipient.jwt}));
@@ -175,56 +163,33 @@ ${portal.toolkit()}
             recipientsSelectEl.select2({
 				data: result
             });
-
-	var currentSenderReplyTo;
-	function senderUpdate(sender){
-        function toggleHtml(info) {
-            var htmlMessageEl = $('#htmlMessage'),
-                htmlBodyEL = $('#htmlBody');
-            if (info.html) {
-                htmlMessageEl.show();
-                htmlBodyEL.attr('name', 'htmlBody');
-            } else {
-                htmlMessageEl.hide();
-                htmlBodyEL.removeAttr('name');
-            }
-        }
-
-        function toggleAttachments(info) {
-            var htmlMessageEl = $('#attachmentsDiv'),
-                htmlBodyEL = $('#addAttachment');
-            if (info.attachmentsEnabled) {
-                htmlMessageEl.show();
-                htmlBodyEL.attr('name', 'addAttachment');
-            } else {
-                htmlMessageEl.hide();
-                htmlBodyEL.removeAttr('name');
-            }
-        }
-
-        if(sender){
-			$.getJSON('senders/' + sender, function(info){
-				if(info.replyTo && (!replyToEl.val() || replyToEl.val() == currentSenderReplyTo)) {
-					replyToEl.val(info.replyTo);
-					currentSenderReplyTo = info.replyTo;
-				}
-				var expressions = $.map(info.recipients, function(recipient) { return recipient.expression; }),
-					relevantAdHocRecipients = $.grep(adHocRecipients, function(recipient) {
-						return recipient.sender === sender && expressions.indexOf(recipient.expression) < 0;
-					});
-				populateRecipients(info.recipients.concat(relevantAdHocRecipients));
-                toggleHtml(info);
-                toggleAttachments(info);
-			});
-		} else {
-			recipientsContainerEl.hide();
-			if(replyToEl.val() == currentSenderReplyTo) {
-				replyToEl.val(currentSenderReplyTo = '');
-			}
-		}
-	}
-
+            $('#replyTo').val(info.replyTo);
+            toggleHtml(info);
+            toggleAttachments(info);
         });
+    }
+
+    function toggleHtml(info) {
+        var htmlMessageEl = $('#htmlMessage'),
+            htmlBodyEL = $('#htmlBody');
+        if (info.html) {
+            htmlMessageEl.show();
+            htmlBodyEL.attr('name', 'htmlBody');
+        } else {
+            htmlMessageEl.hide();
+            htmlBodyEL.removeAttr('name');
+        }
+    }
+    function toggleAttachments(info) {
+        var htmlMessageEl = $('#attachmentsDiv'),
+            htmlBodyEL = $('#addAttachment');
+        if (info.attachmentsEnabled) {
+            htmlMessageEl.show();
+            htmlBodyEL.attr('name', 'addAttachment');
+        } else {
+            htmlMessageEl.hide();
+            htmlBodyEL.removeAttr('name');
+        }
     }
 
 	var addAttachmentEl = $('#addAttachment');
