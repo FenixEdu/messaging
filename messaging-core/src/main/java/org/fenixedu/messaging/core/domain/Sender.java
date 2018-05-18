@@ -68,7 +68,7 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
         private Group members = Group.nobody();
         private MessageStoragePolicy policy = MessageStoragePolicy.keepAll();
         private Set<Group> recipients = new HashSet<>();
-        private boolean attachmentsEnabled;
+        private boolean attachmentsEnabled, optInRequired;
 
         protected SenderBuilder(String address) {
             from(address);
@@ -152,6 +152,11 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
             return this;
         }
 
+        public SenderBuilder optInRequired(final boolean optInRequired) {
+            this.optInRequired = optInRequired;
+            return this;
+        }
+
         @Atomic(mode = TxMode.WRITE)
         public Sender build() {
             Sender sender = new Sender();
@@ -163,6 +168,7 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
             sender.setPolicy(policy);
             sender.setRecipients(recipients);
             sender.setAttachmentsEnabled(attachmentsEnabled);
+            sender.setOptInRequired(optInRequired);
             return sender;
         }
     }
@@ -231,6 +237,27 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
         }
     }
 
+    // FIXME remove when framework supports read-only relations
+    public Set<User> getInvitedUsers() { return super.getInvitedUserSet(); }
+
+    // FIXME remove when framework supports read-only relations
+    public Set<User> getOptedInUsers() { return super.getOptedInUserSet(); }
+
+    public void addOptedInUser(User user) {
+        if (!getOptedInUsers().contains(user)) {
+            super.addOptedInUser(user);
+            if (!getInvitedUsers().contains(user)){
+                super.addInvitedUser(user);
+            }
+        }
+    }
+
+    public void removeOptedInUser(User user){
+        if (getOptedInUsers().contains(user)){
+            super.removeOptedInUser(user);
+        }
+    }
+
     public String getName(final User user) {
         return getName();
     }
@@ -248,6 +275,8 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
         getMessageSet().forEach(Message::delete);
         setMemberGroup(null);
         getRecipientSet().clear();
+        getOptedInUserSet().clear();
+        getInvitedUserSet().clear();
         setMessagingSystem(null);
         deleteDomainObject();
     }

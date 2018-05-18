@@ -114,6 +114,21 @@
 		</div>
 	</div>
 	<div class="form-group">
+		<label class="control-label col-sm-2"><spring:message code="label.sender.optInRequired"/>:</label>
+		<div class="col-sm-10">
+			<div class="btn-group btn-group-xs" data-toggle="buttons">
+				<label class="optInRequired-switch btn btn-${senderBean.optInRequired ? 'primary active' : 'default'}">
+					<input type="radio" name="optInRequired" id="yes" value="true" ${senderBean.optInRequired ? 'checked' : ''}>
+					<spring:message code="label.on"/>
+				</label>
+				<label class="optInRequired-switch btn btn-${senderBean.optInRequired  ? 'default' : 'primary active'}">
+					<input type="radio" name="optInRequired" id="no" value="false" ${senderBean.optInRequired ? '' : 'checked'}>
+					<spring:message code="label.off"/>
+				</label>
+			</div>
+		</div>
+	</div>
+	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-10">
 			<button class="btn btn-primary" type="submit"><spring:message code="action.${create ? 'create' : 'configure'}"/></button>
 		</div>
@@ -129,11 +144,19 @@
 		}
 	});
 
-    //attacments sender switch
+    //attachments sender switch
     var attachments_switches = $('label.attachments-switch');
     attachments_switches.click(function(event){
         if(!$(event.target).hasClass('active')){
             attachments_switches.toggleClass('btn-primary btn-default active');
+        }
+    });
+
+    //optInRequired sender switch
+    var optInRequired_switches = $('label.optInRequired-switch');
+    optInRequired_switches.click(function(event){
+        if(!$(event.target).hasClass('active')){
+            optInRequired_switches.toggleClass('btn-primary btn-default active');
         }
     });
 

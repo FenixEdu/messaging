@@ -67,7 +67,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import static pt.ist.fenixframework.FenixFramework.atomic;
 
-@SpringApplication(path = "messaging", title = "title.messaging", group = "senders | #managers", hint = "Messaging")
+@SpringApplication(path = "messaging", title = "title.messaging", group = "anyone", hint = "Messaging")
 @SpringFunctionality(app = MessagingController.class, title = "title.messaging.sending", accessGroup = "senders")
 @RequestMapping("/messaging")
 public class MessagingController {

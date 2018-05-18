@@ -8,6 +8,8 @@ import org.fenixedu.commons.configuration.ConfigurationProperty;
 @BennuSpringModule(basePackages = "org.fenixedu.messaging", bundles = "MessagingResources")
 public class MessagingConfiguration {
 
+    public static final String OPTIN_STATUS_UPDATE = "messaging.optInConfig.update";
+
     @ConfigurationManager(description = "Email Dispatcher Configurations")
     public interface ConfigurationProperties {
         @ConfigurationProperty(key = "messaging.jwt.api.secret.key", defaultValue = "somerandomstring")

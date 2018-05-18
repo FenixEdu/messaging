@@ -17,6 +17,7 @@ class Sender {
 	public String replyTo;
 	public MessageStoragePolicy policy;
 	public boolean attachmentsEnabled;
+	public boolean optInRequired;
 }
 
 class Message {
@@ -63,6 +64,24 @@ relation SenderFiles {
         multiplicity 1..1;
     }
     protected MessageFile playsRole uploadedFile {
+        multiplicity 0..*;
+    }
+}
+
+relation SenderOptedInUsers {
+    protected Sender playsRole sender {
+        multiplicity 0..*;
+    }
+    protected .org.fenixedu.bennu.core.domain.User playsRole optedInUser {
+        multiplicity 0..*;
+    }
+}
+
+relation SenderOptInInvited {
+    protected Sender playsRole senderInviting {
+        multiplicity 0..*;
+    }
+    protected .org.fenixedu.bennu.core.domain.User playsRole invitedUser {
         multiplicity 0..*;
     }
 }
