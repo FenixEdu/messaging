@@ -103,6 +103,12 @@ ${portal.toolkit()}
 	</div>
 </form:form>
 
+<style>
+    <%-- CSS custom style to remove selected options from dropdown --%>
+    .select2-results__option[aria-selected="true"] {
+        display: none;
+    }
+</style>
 <script>
 (function(){
     var senderSelectEl = $('#selectSender');
@@ -129,7 +135,7 @@ ${portal.toolkit()}
 
     recipientsSelectEl.select2({
         allowClear: true,
-        placeholder: "Select Recipient(s)..."
+        placeholder: '<spring:message code="label.message.selectedRecipients.placeholder" text="Select Recipient(s)..."/>'
 	});
 
     senderSelectEl.change(function(){
@@ -161,6 +167,7 @@ ${portal.toolkit()}
 
             recipientsSelectEl.empty();
             recipientsSelectEl.select2({
+                placeholder: '<spring:message code="label.message.selectedRecipients.placeholder" text="Select Recipient(s)..."/>',
 				data: result
             });
             $('#replyTo').val(info.replyTo);
@@ -248,6 +255,5 @@ ${portal.toolkit()}
     <c:forEach var="attachment" items="${messageBean.attachments}">
 		addAttachment("${attachment.externalId}","${attachment.filename}", false);
     </c:forEach>
-
 })();
 </script>
