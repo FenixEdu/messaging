@@ -1,5 +1,6 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
+import org.fenixedu.messaging.core.domain.Sender;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
@@ -77,7 +78,7 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
     }
 
     public static LocalEmailMessageDispatchReport dispatch(Message message) {
-        List<String> invalids = new ArrayList<String>();
+        List<String> invalids = new ArrayList<>();
         EmailBlacklist blacklist = EmailBlacklist.getInstance();
         Predicate<String> validator = email -> {
             boolean valid = MessagingSystem.Util.isValidEmail(email);
@@ -86,8 +87,10 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
             }
             return valid;
         };
-        Set<UserProfile> tos = getProfiles(message.getToGroups()), ccs = getProfiles(message.getCcGroups()), bccs =
-                getProfiles(message.getBccGroups());
+
+        Set<UserProfile> tos = getProfilesAllowed(message.getSender(), message.getToGroups());
+        Set<UserProfile> ccs = getProfilesAllowed(message.getSender(), message.getCcGroups());
+        Set<UserProfile> bccs = getProfilesAllowed(message.getSender(), message.getBccGroups());
         Collection<MimeMessageHandler> handlers;
         int valids;
 
@@ -139,7 +142,7 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
         valids = Stream.of(tosByLocale, ccsByLocale, bccsByLocale).flatMap(m -> m.values().stream()).mapToInt(Collection::size)
                 .sum();
 
-        invalids.stream().forEach(blacklist::addInvalidAddress);
+        invalids.forEach(blacklist::addInvalidAddress);
 
         return new LocalEmailMessageDispatchReport(handlers, valids, invalids.size());
     }
@@ -157,9 +160,10 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
         return emails;
     }
 
-    private static Set<UserProfile> getProfiles(Set<Group> groups) {
+    private static Set<UserProfile> getProfilesAllowed(Sender sender, Set<Group> groups) {
         return groups.stream().flatMap(Group::getMembers)
                 .filter(MessagingSystem.getInstance()::isOptedIn)
+                .filter(user -> !sender.getOptInRequired() || sender.getOptedInUsers().contains(user))
                 .map(User::getProfile).filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }

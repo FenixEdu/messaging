@@ -22,7 +22,7 @@ import com.google.common.collect.Sets;
 public class SenderBean {
     protected static final String BUNDLE = "MessagingResources";
 
-    private Boolean htmlEnabled, allPolicy, nonePolicy, attachmentsEnabled;
+    private Boolean htmlEnabled, allPolicy, nonePolicy, attachmentsEnabled, optInRequired;
     private String name, address, members, replyTo, policy, periodPolicy = "";
     private int amountPolicy = -1;
     private Collection<String> recipients, errors;
@@ -41,6 +41,9 @@ public class SenderBean {
         }
         if (getAttachmentsEnabled() == null) {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.attachmentsEnabled.required"));
+        }
+        if (getOptInRequired() == null) {
+            errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.optInRequired.required"));
         }
         if (Strings.isNullOrEmpty(getName())) {
             errors.add(BundleUtil.getString(BUNDLE, "error.sender.validation.name.empty"));
@@ -147,6 +150,8 @@ public class SenderBean {
 
     public Boolean getAttachmentsEnabled() { return attachmentsEnabled; }
 
+    public Boolean getOptInRequired() { return optInRequired; }
+
     public void setHtmlEnabled(boolean htmlEnabled) {
         this.htmlEnabled = htmlEnabled;
     }
@@ -177,6 +182,8 @@ public class SenderBean {
 
     public void setAttachmentsEnabled(final Boolean attachmentsEnabled) { this.attachmentsEnabled = attachmentsEnabled; }
 
+    public void setOptInRequired(Boolean optInRequired) { this.optInRequired = optInRequired; }
+
     Sender newSender() {
         Sender sender = null;
         if (validate().isEmpty()) {
@@ -184,7 +191,8 @@ public class SenderBean {
             sender = Sender.from(getAddress()).as(getName()).members(Group.parse(getMembers()))
                     .storagePolicy(MessageStoragePolicy.internalize(getPolicy())).htmlEnabled(getHtmlEnabled())
                     .replyTo(getReplyTo()).recipients(recipients)
-                    .attachmentsEnabled(getAttachmentsEnabled()).build();
+                    .attachmentsEnabled(getAttachmentsEnabled())
+                    .optInRequired(getOptInRequired()).build();
         }
         return sender;
     }
@@ -199,6 +207,7 @@ public class SenderBean {
             setReplyTo(sender.getReplyTo());
             setRecipients(sender.getRecipients().stream().map(Group::getExpression).collect(Collectors.toSet()));
             setAttachmentsEnabled(sender.getAttachmentsEnabled());
+            setOptInRequired(sender.getOptInRequired());
         }
     }
 
@@ -214,6 +223,7 @@ public class SenderBean {
             sender.setReplyTo(getReplyTo());
             sender.setRecipients(getRecipients().stream().map(Group::parse).collect(Collectors.toSet()));
             sender.setAttachmentsEnabled(attachmentsEnabled);
+            sender.setOptInRequired(optInRequired);
         }
         return errors;
     }
