@@ -163,6 +163,16 @@ ${portal.toolkit()}
             recipientsSelectEl.select2({
 				data: result
             });
+            // Custom select2 fix to have insertion order in selected options
+            recipientsSelectEl.on("select2:select", function (evt) {
+                var element = evt.params.data.element;
+                var $element = $(element);
+
+                $element.detach();
+                $(this).append($element);
+                $(this).trigger("change");
+            });
+
             $('#replyTo').val(info.replyTo);
             toggleHtml(info);
             toggleAttachments(info);
