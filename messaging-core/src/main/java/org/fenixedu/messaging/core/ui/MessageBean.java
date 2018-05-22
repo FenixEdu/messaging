@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -112,7 +113,7 @@ public class MessageBean extends MessageContentBean {
     }
 
     public Set<String> getSelectedRecipients() {
-        return selectedRecipients;
+        return Optional.ofNullable(selectedRecipients).orElseGet(HashSet::new);
     }
 
     public void setSelectedRecipients(final Set<String> recipients) {
