@@ -7,6 +7,27 @@ ${portal.toolkit()}
 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+<script>
+    function checkRequiredFields() {
+        function getLocalizedInputValue(inputEl) {
+            var inputObject = inputEl.val() ? JSON.parse(inputEl.val()) : null;
+            return Bennu.locales.map(function (x) {
+                return Bennu.localizedString.getContent(inputObject, x, true) || false;
+            }).reduce(function (x, y) {
+                return x || y;
+            }, false);
+		}
+		var hasAnySubject = getLocalizedInputValue($("#subject"));
+        var hasAnyMessageBody = getLocalizedInputValue($("#textBody")) || getLocalizedInputValue($("#htmlBody"));
+        var hasAnyRecipient = $("#selectRecipients").val() || $("#singleRecipients").val();
+        if (!hasAnySubject || !hasAnyMessageBody || !hasAnyRecipient) {
+            $('#message-send-button').prop('disabled', true);
+		}
+		else {
+            $('#message-send-button').prop('disabled', false);
+		}
+    }
+</script>
 
 <h2><spring:message code="title.message.new"/></h2>
 
@@ -59,7 +80,7 @@ ${portal.toolkit()}
 		<label class="control-label col-sm-2" for="singleRecipients"><spring:message code="label.message.recipients.single"/>:</label>
 		<div class="col-sm-8">
 			<spring:message code="hint.email.list" var="placeholder"/>
-			<input type="email" multiple="multiple" class="form-control" id="singleRecipients" name="singleRecipients" placeholder="${placeholder}" value="${messageBean.singleRecipients}"/>
+			<input type="email" multiple="multiple" class="form-control" id="singleRecipients" name="singleRecipients" placeholder="${placeholder}" value="${messageBean.singleRecipients}" oninput="checkRequiredFields()"/>
 		</div>
 	</div>
 	<div class="form-group">
@@ -75,19 +96,19 @@ ${portal.toolkit()}
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="subject"><spring:message code="label.message.subject"/>:</label>
 		<div class="col-sm-8">
-			<input class="form-control" id="subject" name="subject" value='<c:out value="${messageBean.subject.json()}"/>' bennu-localized-string/>
+			<input class="form-control" id="subject" name="subject" onchange="checkRequiredFields()" value='<c:out value="${messageBean.subject.json()}"/>' bennu-localized-string/>
 		</div>
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="textBody"><spring:message code="label.message.body.text"/>:</label>
 		<div class="col-sm-8">
-			<textarea class="form-control" id="textBody" name="textBody" rows="12" bennu-localized-string>${messageBean.textBody.json()}</textarea>
+			<textarea class="form-control" id="textBody" name="textBody" onchange="checkRequiredFields()" rows="12" bennu-localized-string>${messageBean.textBody.json()}</textarea>
 		</div>
 	</div>
 	<div id="htmlMessage" class="form-group" hidden>
 		<label class="control-label col-sm-2" for="htmlBody"><spring:message code="label.message.body.html"/>:</label>
 		<div class="col-sm-8">
-			<textarea class="form-control" id="htmlBody" name="htmlBody" bennu-html-editor bennu-localized-string>${messageBean.htmlBody.json()}</textarea>
+			<textarea class="form-control" id="htmlBody" name="htmlBody" onchange="checkRequiredFields()" bennu-html-editor bennu-localized-string>${messageBean.htmlBody.json()}</textarea>
 		</div>
 	</div>
 	<div id="attachmentsDiv" class="form-group">
@@ -98,7 +119,7 @@ ${portal.toolkit()}
 	</div>
 	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-8">
-			<button class="btn btn-primary" type="submit"><spring:message code="action.send.message"/></button>
+			<button id="message-send-button" class="btn btn-primary" type="submit" disabled><spring:message code="action.send.message"/></button>
 		</div>
 	</div>
 </form:form>
@@ -130,6 +151,7 @@ ${portal.toolkit()}
                 return String.fromCharCode('0x' + p1);
             }));
     }
+
 
     function readRecipient(recipient) {
         try {
@@ -184,6 +206,11 @@ ${portal.toolkit()}
                 $element.detach();
                 $(this).append($element);
                 $(this).trigger("change");
+            });
+
+            // Custom select2 configuration to detect on change event
+            recipientsSelectEl.on('change', function(e){
+                checkRequiredFields();
             });
 
             $('#replyTo').val(info.replyTo);
