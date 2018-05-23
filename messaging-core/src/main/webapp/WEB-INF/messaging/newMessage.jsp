@@ -137,22 +137,31 @@ ${portal.toolkit()}
 
     senderSelectEl.select2();
 
+    // Custom functions to use instead of default atob/btoa functions
+	// due to Unicode issue in Base64 encoding use cases
+    function b64DecodeUnicode(str) {
+        return decodeURIComponent(atob(str).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+    }
+
+    function b64EncodeUnicode(str) {
+        return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+            function toSolidBytes(match, p1) {
+                return String.fromCharCode('0x' + p1);
+            }));
+    }
+
+
     function readRecipient(recipient) {
         try {
-            return JSON.parse(atob(recipient));
+            return JSON.parse(b64DecodeUnicode(recipient));
         } catch(e) { console.log("An erroneous recipient was discarded: " + recipient); }
     }
 
     function writeRecipient(recipient) {
-	    return btoa(JSON.stringify({expression: recipient.expression, jwt: recipient.jwt}));
+	    return b64EncodeUnicode(JSON.stringify({expression: recipient.expression, jwt: recipient.jwt}));
     }
-
-    var adHocRecipients = [];
-	var recipient;
-    <c:forEach var="recipient" items="${messageBean.adHocRecipients}">
-		recipient = readRecipient("${recipient}");
-		if(recipient){ adHocRecipients.push(recipient); }
-    </c:forEach>
 
     recipientsSelectEl.select2({
         allowClear: true,
@@ -177,13 +186,11 @@ ${portal.toolkit()}
         $.getJSON('senders/' + sender, function (info) {
             var result = [];
             info.recipients.sort(nameCompare).forEach(function(recipient){
-                var value = btoa(JSON.stringify({expression: recipient.expression, jwt: recipient.jwt}));
-                result.push({ "id": value, "text": recipient.name});
+                result.push({ "id": writeRecipient(recipient), "text": recipient.name});
             });
             <c:forEach var="adHocRecipient" items="${messageBean.adHocRecipients}">
-				var recipient = JSON.parse(atob("${adHocRecipient}"));
-				var value = btoa(JSON.stringify({expression: recipient.expression, jwt: recipient.jwt}));
-				result.push({ "id": value, "text": recipient.name, "selected": "true"});
+				var recipient = readRecipient("${adHocRecipient}");
+				result.push({ "id": writeRecipient(recipient), "text": recipient.name, "selected": "true"});
             </c:forEach>
 
             recipientsSelectEl.empty();
