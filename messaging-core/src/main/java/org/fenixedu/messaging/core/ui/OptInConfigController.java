@@ -18,14 +18,14 @@ import pt.ist.fenixframework.FenixFramework;
 import java.util.HashMap;
 
 @SpringFunctionality(app = MessagingController.class, title = "title.messaging.optInConfig", accessGroup = "anyone")
-@RequestMapping("/messaging/optInConfig")
+@RequestMapping("/messaging/subscriptions")
 public class OptInConfigController {
 
     private static final Logger logger = LoggerFactory.getLogger(OptInConfigController.class);
 
     @RequestMapping(value = { "", "/" })
     public RedirectView redirectToConfiguration() {
-        return new RedirectView("/messaging/optInConfig/senders", true);
+        return new RedirectView("/messaging/subscriptions/senders", true);
     }
 
     @RequestMapping(value = { "/senders", "/senders/" })
@@ -47,7 +47,7 @@ public class OptInConfigController {
             sender.addOptedInUser(user);
             Signal.emit(MessagingConfiguration.OPTIN_STATUS_UPDATE, new OptInUpdateEvent(sender, user, true));
         });
-        return "redirect:/messaging/optInConfig/senders";
+        return "redirect:/messaging/subscriptions/senders";
     }
 
     @RequestMapping(value = {"/optOut/{sender}"})
@@ -57,7 +57,7 @@ public class OptInConfigController {
             sender.removeOptedInUser(user);
             Signal.emit(MessagingConfiguration.OPTIN_STATUS_UPDATE, new OptInUpdateEvent(sender, user, false));
         });
-        return "redirect:/messaging/optInConfig/senders";
+        return "redirect:/messaging/subscriptions/senders";
     }
 
 }
