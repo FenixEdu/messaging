@@ -2,6 +2,7 @@ package org.fenixedu.messaging.emaildispatch.domain;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -22,7 +23,6 @@ import javax.mail.MessagingException;
 import javax.mail.SendFailedException;
 import javax.mail.Session;
 import javax.mail.Transport;
-import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
@@ -37,9 +37,9 @@ import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration;
 import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration.ConfigurationProperties;
 import org.joda.time.DateTime;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
+import org.springframework.util.StringUtils;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
@@ -51,7 +51,7 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
 
     private static synchronized Session session() {
         final Properties properties = new Properties();
-        ConfigurationProperties conf = EmailDispatchConfiguration.getConfiguration();
+        final ConfigurationProperties conf = EmailDispatchConfiguration.getConfiguration();
         properties.put("mail.smtp.host", conf.mailSmtpHost());
         properties.put("mail.smtp.name", conf.mailSmtpName());
         properties.put("mail.smtp.port", conf.mailSmtpPort());
@@ -74,17 +74,21 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
         }
     }
 
-    protected String getFrom() {
+    private InternetAddress getFrom() throws MessagingException {
         final Sender sender = getReport().getMessage().getSender();
         final String name = sender.getName();
-        final String from = sender.getAddress();
-        return Strings.isNullOrEmpty(name) ? from : String.format("\"%s\" <%s>", name.replace(',', ' ').trim() , from);
+        final String address = sender.getAddress();
+        try {
+            return new InternetAddress(address, name, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new MessagingException("Unsupported utf-8 encoding when building from address", e);
+        }
     }
 
-    protected MimeMessage mimeMessage() throws AddressException, MessagingException {
-        Message message = getReport().getMessage();
-        Locale locale = getLocale();
-        String[] languages = {locale.toLanguageTag()};
+    protected MimeMessage mimeMessage() throws MessagingException {
+        final Message message = getReport().getMessage();
+        final Locale locale = getLocale();
+        final String[] languages = {locale.toLanguageTag()};
         MimeMessage mimeMessage = new MimeMessage(session()) {
             private String fenixMessageId = null;
 
@@ -104,30 +108,27 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
 
         };
 
-        InternetAddress fromAddr = new InternetAddress(getFrom());
-        mimeMessage.setFrom(fromAddr);
-
+        mimeMessage.setFrom(getFrom());
         mimeMessage.setContentLanguage(languages);
-
         mimeMessage.setSubject(getContent(message.getSubject(), locale));
 
-        String replyTo = message.getReplyTo();
-        if (!Strings.isNullOrEmpty(replyTo)) {
-            Address[] replyTos = {new InternetAddress(replyTo)};
+        final String replyTo = message.getReplyTo();
+        if (StringUtils.hasText(replyTo)) {
+            Address[] replyTos = { new InternetAddress(replyTo) };
             mimeMessage.setReplyTo(replyTos);
         }
 
         final MimeMultipart mimeMultipart = new MimeMultipart();
 
         final String htmlBody = getContent(message.getHtmlBody(), locale);
-        if (htmlBody != null && !htmlBody.trim().isEmpty()) {
+        if (StringUtils.hasText(htmlBody)) {
             final BodyPart bodyPart = new MimeBodyPart();
             bodyPart.setContent(htmlBody, "text/html");
             mimeMultipart.addBodyPart(bodyPart);
         }
 
         final String textBody = getContent(message.getTextBody(), locale);
-        if (textBody != null && !textBody.trim().isEmpty()) {
+        if (StringUtils.hasText(textBody)) {
             final BodyPart bodyPart = new MimeBodyPart();
             bodyPart.setText(textBody);
             mimeMultipart.addBodyPart(bodyPart);
