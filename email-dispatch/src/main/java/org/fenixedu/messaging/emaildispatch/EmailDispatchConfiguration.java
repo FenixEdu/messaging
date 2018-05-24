@@ -13,7 +13,7 @@ public class EmailDispatchConfiguration {
         @ConfigurationProperty(key = "mail.smtp.name")
         public String mailSmtpName();
 
-        @ConfigurationProperty(key = "mail.smtp.port")
+        @ConfigurationProperty(key = "mail.smtp.port", defaultValue = "25")
         public String mailSmtpPort();
 
         @ConfigurationProperty(key = "mailSender.max.recipients", defaultValue = "50")
