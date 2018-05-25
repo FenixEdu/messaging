@@ -44,7 +44,6 @@ import org.fenixedu.messaging.core.domain.Message;
 import org.fenixedu.messaging.core.domain.MessageFile;
 import org.fenixedu.messaging.core.domain.Sender;
 import org.fenixedu.messaging.core.exception.MessagingDomainException;
-import org.fenixedu.messaging.core.ui.access.SendersGroup;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -74,8 +73,7 @@ public class MessagingController {
 
     @RequestMapping(value = { "", "/" })
     public RedirectView redirectToSending() {
-        return SendersGroup.get().isMember(Authenticate.getUser()) ? new RedirectView("/messaging/senders",
-                true) : new RedirectView("/messaging/config");
+        return new RedirectView("/messaging/senders", true);
     }
 
     @RequestMapping(value = { "/senders", "/senders/" })
@@ -119,7 +117,7 @@ public class MessagingController {
         }
         info.addProperty("html", sender.getHtmlEnabled());
         info.addProperty("attachmentsEnabled", sender.getAttachmentsEnabled());
-        return new ResponseEntity<String>(info.toString(), HttpStatus.OK);
+        return new ResponseEntity<>(info.toString(), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/message", method = RequestMethod.GET)

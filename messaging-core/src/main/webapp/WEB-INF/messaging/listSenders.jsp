@@ -26,22 +26,16 @@
     <h4><spring:message code="title.senders.empty"/></h4>
 </c:if>
 
-<div class="input-group input-group-sm" style="margin-top: 20px; margin-bottom: 5px;">
-    <spring:message code="hint.sender.search" var="placeholder"/>
-    <input id="filter-select" class="form-control" style="text-align: left; width: 400px; padding: 0 5px;" type="text"
-           value="${search}" placeholder="${placeholder}"/>
-</div>
-
 <c:if test="${not empty senders}">
+<div class="input-group input-group-sm" style="margin-top: 20px; margin-bottom: 5px;">
+	<spring:message code="hint.sender.search" var="placeholder"/>
+	<input id="filter-select" class="form-control" style="text-align: left; width: 400px; padding: 0 5px;" type="text" value="${search}" placeholder="${placeholder}"/>
+</div>
 <table class="table table-hover table-condensed">
 	<thead>
 		<tr>
-			<th>
-				<spring:message code="label.sender.name"/>
-			</th>
-			<th>
-				<spring:message code="label.sender.address"/>
-			</th>
+			<th><spring:message code="label.sender.name"/></th>
+			<th><spring:message code="label.sender.address"/></th>
 			<th></th>
 		</tr>
 	</thead>
@@ -77,5 +71,5 @@
 	</c:forEach>
 	</tbody>
 </table>
-</c:if>
 <%@ include file="pagination.jsp" %>
+</c:if>
