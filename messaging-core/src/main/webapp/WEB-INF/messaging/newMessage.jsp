@@ -5,8 +5,9 @@
 <%@ taglib uri="org.fenixedu.messaging.tags.sorter" prefix="sort" %>
 ${portal.toolkit()}
 
-<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+<link href="${pageContext.request.contextPath}/static/lib/select2/css/select2.min.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="${pageContext.request.contextPath}/static/lib/select2/js/select2.min.js"></script>
+
 <script>
     function checkRequiredFields() {
         function getLocalizedInputValue(inputEl) {
