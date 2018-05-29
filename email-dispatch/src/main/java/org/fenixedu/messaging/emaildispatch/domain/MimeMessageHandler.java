@@ -118,21 +118,29 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
             mimeMessage.setReplyTo(replyTos);
         }
 
-        final MimeMultipart mimeMultipart = new MimeMultipart();
+        // Main Message MimeMultipart
+        final MimeMultipart mimeMultipart = new MimeMultipart("mixed");
 
+        // MimeMultipart for html+text content
+        final MimeMultipart htmlAndTextMultipart = new MimeMultipart("alternative");
         final String htmlBody = getContent(message.getHtmlBody(), locale);
         if (StringUtils.hasText(htmlBody)) {
             final BodyPart bodyPart = new MimeBodyPart();
-            bodyPart.setContent(htmlBody, "text/html");
-            mimeMultipart.addBodyPart(bodyPart);
+            bodyPart.setContent(htmlBody, "text/html; charset=utf-8");
+            htmlAndTextMultipart.addBodyPart(bodyPart);
         }
 
         final String textBody = getContent(message.getTextBody(), locale);
         if (StringUtils.hasText(textBody)) {
             final BodyPart bodyPart = new MimeBodyPart();
             bodyPart.setText(textBody);
-            mimeMultipart.addBodyPart(bodyPart);
+            htmlAndTextMultipart.addBodyPart(bodyPart);
         }
+
+        // Store HTML+text Multipart inside a BodyPart to add to main Message MimeMultipart
+        final MimeBodyPart htmlAndTextBodypart = new MimeBodyPart();
+        htmlAndTextBodypart.setContent(htmlAndTextMultipart);
+        mimeMultipart.addBodyPart(htmlAndTextBodypart);
 
         for (final GenericFile file : message.getFileSet()) {
             final MimeBodyPart bodyPart = new MimeBodyPart();
