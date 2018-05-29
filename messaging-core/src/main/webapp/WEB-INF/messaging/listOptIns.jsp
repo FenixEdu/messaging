@@ -19,7 +19,7 @@
 </script>
 <div class="col-sm-6">
     <h3><spring:message code="title.messaging.optInConfig"/></h3>
-    <c:if test="${isOptOutAvailable}">
+    <c:if test="${canConfigOptOut}">
         <div style="display: inline-block">
             <label class="control-label">
                 <spring:message code="label.messaging.globalOptOut.question" />
