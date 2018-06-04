@@ -123,17 +123,19 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
 
         // MimeMultipart for html+text content
         final MimeMultipart htmlAndTextMultipart = new MimeMultipart("alternative");
-        final String htmlBody = getContent(message.getHtmlBody(), locale);
-        if (StringUtils.hasText(htmlBody)) {
-            final BodyPart bodyPart = new MimeBodyPart();
-            bodyPart.setContent(htmlBody, "text/html; charset=utf-8");
-            htmlAndTextMultipart.addBodyPart(bodyPart);
-        }
 
+        // Should be ordered "plainest to richest" (first: text/plain | second: text/html) to display properly in email clients
         final String textBody = getContent(message.getTextBody(), locale);
         if (StringUtils.hasText(textBody)) {
             final BodyPart bodyPart = new MimeBodyPart();
             bodyPart.setText(textBody);
+            htmlAndTextMultipart.addBodyPart(bodyPart);
+        }
+
+        final String htmlBody = getContent(message.getHtmlBody(), locale);
+        if (StringUtils.hasText(htmlBody)) {
+            final BodyPart bodyPart = new MimeBodyPart();
+            bodyPart.setContent(htmlBody, "text/html; charset=utf-8");
             htmlAndTextMultipart.addBodyPart(bodyPart);
         }
 
