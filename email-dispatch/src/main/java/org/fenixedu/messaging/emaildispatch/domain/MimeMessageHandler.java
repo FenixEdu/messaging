@@ -37,9 +37,9 @@ import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration;
 import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration.ConfigurationProperties;
 import org.joda.time.DateTime;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
-import org.springframework.util.StringUtils;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
@@ -113,7 +113,7 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
         mimeMessage.setSubject(getContent(message.getSubject(), locale));
 
         final String replyTo = message.getReplyTo();
-        if (StringUtils.hasText(replyTo)) {
+        if (!Strings.isNullOrEmpty(replyTo)) {
             Address[] replyTos = { new InternetAddress(replyTo) };
             mimeMessage.setReplyTo(replyTos);
         }
@@ -126,14 +126,14 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
 
         // Should be ordered "plainest to richest" (first: text/plain | second: text/html) to display properly in email clients
         final String textBody = getContent(message.getTextBody(), locale);
-        if (StringUtils.hasText(textBody)) {
+        if (!Strings.isNullOrEmpty(textBody)) {
             final BodyPart bodyPart = new MimeBodyPart();
-            bodyPart.setText(textBody);
+            bodyPart.setContent(textBody, "text/plain; charset=utf-8");
             htmlAndTextMultipart.addBodyPart(bodyPart);
         }
 
         final String htmlBody = getContent(message.getHtmlBody(), locale);
-        if (StringUtils.hasText(htmlBody)) {
+        if (!Strings.isNullOrEmpty(htmlBody)) {
             final BodyPart bodyPart = new MimeBodyPart();
             bodyPart.setContent(htmlBody, "text/html; charset=utf-8");
             htmlAndTextMultipart.addBodyPart(bodyPart);
