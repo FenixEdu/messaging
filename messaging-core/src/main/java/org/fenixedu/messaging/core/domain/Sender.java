@@ -24,11 +24,13 @@
  */
 package org.fenixedu.messaging.core.domain;
 
+import org.joda.time.DateTime;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
 import java.text.Collator;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
@@ -292,6 +294,13 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
 
     public static Set<Sender> all() {
         return Sets.newHashSet(MessagingSystem.getInstance().getSenderSet());
+    }
+
+    public DateTime getLastMessageSentDate() {
+        return getMessageSet().stream()
+                .map(Message::getCreated)
+                .max(Comparator.naturalOrder())
+                .orElseGet(() -> new DateTime(Long.MIN_VALUE));
     }
 
     @Override
