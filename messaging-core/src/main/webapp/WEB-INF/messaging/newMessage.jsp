@@ -41,6 +41,16 @@ ${portal.toolkit()}
 	</div>
 </c:if>
 
+<div class="row">
+	<div id="nonOptInRequiredDiv" class="col-sm-8 col-sm-offset-2 alert alert-warning">
+		<h4>
+			<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+			<spring:message code="title.disclaimer.non.optin.required.sender.selected"/>
+		</h4>
+		<p><spring:message code="disclaimer.non.optin.required.sender.selected"/></p>
+	</div>
+</div>
+
 <spring:eval expression="T(org.fenixedu.messaging.core.domain.Sender).available()" var="senders"/>
 <spring:eval expression="T(org.fenixedu.bennu.core.util.CoreConfiguration).supportedLocales()" var="locales"/>
 <form:form modelAttribute="messageBean" role="form" class="form-horizontal" action="${pageContext.request.contextPath}/messaging/message" method="post">
@@ -217,6 +227,7 @@ ${portal.toolkit()}
             $('#replyTo').val(info.replyTo);
             toggleHtml(info);
             toggleAttachments(info);
+            toggleNonOptInRequiredDisclaimer(info);
         });
     }
 
@@ -240,6 +251,16 @@ ${portal.toolkit()}
         } else {
             htmlMessageEl.hide();
             htmlBodyEL.removeAttr('name');
+        }
+    }
+
+    function toggleNonOptInRequiredDisclaimer(info) {
+        var nonOptInRequiredDisclaimerEl = $('#nonOptInRequiredDiv');
+        if (!info.optInRequired) {
+            nonOptInRequiredDisclaimerEl.show();
+        }
+        else {
+            nonOptInRequiredDisclaimerEl.hide();
         }
     }
 
