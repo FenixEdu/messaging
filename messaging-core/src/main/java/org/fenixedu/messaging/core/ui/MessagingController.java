@@ -24,6 +24,7 @@
  */
 package org.fenixedu.messaging.core.ui;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -44,6 +45,7 @@ import org.fenixedu.messaging.core.domain.Message;
 import org.fenixedu.messaging.core.domain.MessageFile;
 import org.fenixedu.messaging.core.domain.Sender;
 import org.fenixedu.messaging.core.exception.MessagingDomainException;
+import org.joda.time.DateTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -83,7 +85,7 @@ public class MessagingController {
         Set<Sender> senders = Sender.available().stream()
                 .filter(sender -> sender.getName().toLowerCase().contains(search.toLowerCase()))
                 .collect(Collectors.toSet());
-        PaginationUtils.paginate(model, "messaging/senders", "senders", senders, items, page);
+        PaginationUtils.paginate(model, "messaging/senders", "senders", senders, Comparator.comparing(Sender::getLastMessageSentDate).reversed(), items, page);
         model.addAttribute("search", search);
         return "/messaging/listSenders";
     }
