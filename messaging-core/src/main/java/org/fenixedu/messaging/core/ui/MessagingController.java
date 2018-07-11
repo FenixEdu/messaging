@@ -119,6 +119,7 @@ public class MessagingController {
         }
         info.addProperty("html", sender.getHtmlEnabled());
         info.addProperty("attachmentsEnabled", sender.getAttachmentsEnabled());
+        info.addProperty("optInRequired", sender.getOptInRequired());
         return new ResponseEntity<>(info.toString(), HttpStatus.OK);
     }
 
