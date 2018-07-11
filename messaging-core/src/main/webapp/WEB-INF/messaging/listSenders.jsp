@@ -3,6 +3,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@ taglib uri="org.fenixedu.messaging.tags.sorter" prefix="sort" %>
+<%@taglib prefix="joda" uri="http://www.joda.org/joda/time/tags" %>
 
 
 <c:choose>
@@ -35,18 +36,18 @@
 	<thead>
 		<tr>
 			<th><spring:message code="label.sender.name"/></th>
-			<th><spring:message code="label.sender.address"/></th>
+			<th><spring:message code="label.sender.lastMessageSent"/></th>
 			<th></th>
 		</tr>
 	</thead>
 	<tbody>
-	<c:forEach items="${sort:uniqueSort(senders)}" var="sender">
+	<c:forEach items="${senders}" var="sender">
 		<tr>
 			<td class="col-sm-5">
 				<c:out value="${sender.name}"/>
 			</td>
 			<td class="col-sm-4">
-				<code><c:out value="${sender.address}"/></code>
+				<code><joda:format value="${sender.getLastMessageSentDate()}" style="LM" /></code>
 			</td>
 			<td class="col-sm-3">
 				<div class="btn-group btn-group-xs pull-right">
