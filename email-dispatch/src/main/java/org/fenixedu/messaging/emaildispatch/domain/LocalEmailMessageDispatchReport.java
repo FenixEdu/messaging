@@ -56,12 +56,12 @@ public class LocalEmailMessageDispatchReport extends LocalEmailMessageDispatchRe
                 try {
                     handler.deliver();
                 } catch (MessagingException e) {
-                    logger.error("Error sending message", e);
+                    logger.error("Error sending message " + getMessage().getExternalId(), e);
                 }
             }
             if (isFinished()) {
                 if (!super.isFinished()) {
-                    logger.error("Numbers are not right: total {} delivered {} invalid {} failed {}", getTotalCount(),
+                    logger.error("Numbers are not right for message {} : total {} delivered {} invalid {} failed {}", getMessage().getExternalId(), getTotalCount(),
                             getDeliveredCount(), getInvalidCount(), getFailedCount());
                 }
                 finishUpDelivery();
