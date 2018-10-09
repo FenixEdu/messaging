@@ -114,7 +114,8 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
 
         final String replyTo = message.getReplyTo();
         if (!Strings.isNullOrEmpty(replyTo)) {
-            Address[] replyTos = { new InternetAddress(replyTo) };
+            // Use parse since there may be multiple reply tos specified
+            Address[] replyTos = InternetAddress.parse(replyTo);
             mimeMessage.setReplyTo(replyTos);
         }
 
@@ -270,7 +271,8 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
             MimeMessage message = mimeMessage();
             Transport.send(message);
             report.setDeliveredCount(report.getDeliveredCount() + message.getAllRecipients().length);
-        } catch (SendFailedException e) {
+        }
+        catch (SendFailedException e) {
             if (e.getValidSentAddresses() != null) {
                 report.setDeliveredCount(report.getDeliveredCount() + e.getValidSentAddresses().length);
             }
