@@ -9,14 +9,14 @@
 
     <artifactId>messaging</artifactId>
     <name>Messaging</name>
-    <version>4.0.0</version>
+    <version>4.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <scm>
         <connection>scm:git:git@github.com:ist-dsi/messaging.git</connection>
         <developerConnection>scm:git:git@github.com:ist-dsi/messaging.git</developerConnection>
         <url>http://ist-dsi.github.io/messaging/</url>
-        <tag>v4.0.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <modules>
