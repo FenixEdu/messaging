@@ -57,8 +57,6 @@ import static org.fenixedu.messaging.core.domain.MessagingSystem.Util.isValidEma
  */
 public class Sender extends Sender_Base implements Comparable<Sender> {
 
-    private static Collator ptCollator = Collator.getInstance(Locale.forLanguageTag("pt"));
-
     protected Sender() {
         super();
         setMessagingSystem(MessagingSystem.getInstance());
@@ -305,7 +303,7 @@ public class Sender extends Sender_Base implements Comparable<Sender> {
 
     @Override
     public int compareTo(Sender sender) {
-        int c = ptCollator.compare(getName(), sender.getName());
+        int c = Collator.getInstance(Locale.ROOT).compare(getName(),sender.getName());
         return c == 0 ? getExternalId().compareTo(sender.getExternalId()) : c;
     }
 }
