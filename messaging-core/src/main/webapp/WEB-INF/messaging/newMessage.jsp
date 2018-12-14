@@ -21,13 +21,33 @@ ${portal.toolkit()}
 		var hasAnySubject = getLocalizedInputValue($("#subject"));
         var hasAnyMessageBody = getLocalizedInputValue($("#textBody")) || getLocalizedInputValue($("#htmlBody"));
         var hasAnyRecipient = $("#selectRecipients").val() || $("#singleRecipients").val();
-        if (!hasAnySubject || !hasAnyMessageBody || !hasAnyRecipient) {
-            $('#message-send-button').prop('disabled', true);
-		}
-		else {
-            $('#message-send-button').prop('disabled', false);
-		}
+		$('#message-send-button').prop('disabled', !hasAnySubject || !hasAnyMessageBody || !hasAnyRecipient);
     }
+
+    $(document).ready(function() {
+        checkRequiredFields();
+		var formChanged = false;
+		document.getElementById('newMessageForm').addEventListener('change', function() { formChanged = true });
+
+		let beforeUnload = (event) => {
+			if (!formChanged) {
+				event.returnValue = 'You have unfinished changes!';
+			}
+		};
+
+		window.addEventListener('beforeunload', beforeUnload);
+		
+		$("#newMessageForm").submit(function() {
+			var result = confirm('<spring:message code="label.message.send.confirmation"/>');
+			if (!result) {
+				return false;
+			}
+			window.removeEventListener('beforeunload', beforeUnload);
+			return true;
+		});
+		
+	});
+    
 </script>
 
 <h2><spring:message code="title.message.new"/></h2>
@@ -53,7 +73,7 @@ ${portal.toolkit()}
 
 <spring:eval expression="T(org.fenixedu.messaging.core.domain.Sender).available()" var="senders"/>
 <spring:eval expression="T(org.fenixedu.bennu.core.util.CoreConfiguration).supportedLocales()" var="locales"/>
-<form:form modelAttribute="messageBean" role="form" class="form-horizontal" action="${pageContext.request.contextPath}/messaging/message" method="post">
+<form:form id="newMessageForm" modelAttribute="messageBean" role="form" class="form-horizontal" action="${pageContext.request.contextPath}/messaging/message" method="post">
 	${csrf.field()}
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="senderSelect"><spring:message code="label.message.sender"/>:</label>
