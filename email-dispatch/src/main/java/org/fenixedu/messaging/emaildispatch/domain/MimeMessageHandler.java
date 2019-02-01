@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -28,6 +29,8 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
+import com.google.common.collect.Sets;
+import com.sun.mail.smtp.SMTPAddressFailedException;
 import org.fenixedu.bennu.io.domain.GenericFile;
 import org.fenixedu.commons.i18n.LocalizedString;
 import org.fenixedu.messaging.core.domain.Message;
@@ -40,12 +43,16 @@ import org.joda.time.DateTime;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
 public final class MimeMessageHandler extends MimeMessageHandler_Base {
     private static final int MAX_RECIPIENTS = EmailDispatchConfiguration.getConfiguration().mailSenderMaxRecipients();
     private static final String MIME_MESSAGE_ID_SUFFIX = EmailDispatchConfiguration.getConfiguration().mailMimeMessageIdSuffix();
+
+    private static final Logger logger = LoggerFactory.getLogger(MimeMessageHandler.class);
 
     private static Session SESSION = null;
 
@@ -283,10 +290,35 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
                 }
             }
             if (e.getValidUnsentAddresses() != null) {
-                resend(e.getValidUnsentAddresses());
+                HashSet<InternetAddress> invalidAddresses = getInvalidsFromExceptionChain(e.getNextException());
+                report.setFailedCount(report.getFailedCount() + invalidAddresses.size());
+                invalidAddresses.forEach(failed -> EmailBlacklist.getInstance().addFailedAddress(failed.toString()));
+
+                Address[] onlyValidAddress = Sets.difference(Sets.newHashSet(e.getValidUnsentAddresses()), invalidAddresses)
+                                .toArray(new Address[0]);
+                resend(onlyValidAddress);
             }
         }
         delete();
+    }
+
+    private HashSet<InternetAddress> getInvalidsFromExceptionChain(Exception nextException) {
+        HashSet<InternetAddress> invalidAddresses = Sets.newHashSet();
+        while (nextException != null) {
+            if (nextException instanceof SMTPAddressFailedException) {
+                SMTPAddressFailedException smtpException = (SMTPAddressFailedException) nextException;
+                InternetAddress address = smtpException.getAddress();
+                invalidAddresses.add(address);
+
+                logger.warn("Ignoring failed address {} due to error code {} with message {}",
+                        address.getAddress(), smtpException.getReturnCode(), smtpException.getMessage());
+            }
+            else {
+                logger.error("Unhandled chain exception: {}", nextException.getMessage());
+            }
+            nextException = ((MessagingException) nextException).getNextException();
+        }
+        return invalidAddresses;
     }
 
     private void resend(Address[] validUnsentAddresses) {

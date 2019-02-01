@@ -1,5 +1,6 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
+import com.google.common.base.Strings;
 import pt.ist.fenixframework.Atomic;
 import pt.ist.fenixframework.Atomic.TxMode;
 
@@ -50,13 +51,17 @@ public class EmailBlacklist extends EmailBlacklist_Base {
     }
 
     public void addInvalidAddress(String invalid) {
-        log(invalid, STATUS_INVALID);
-        logger.warn("Blacklisting email {} because is invalid", invalid);
+        if (!Strings.isNullOrEmpty(invalid)) {
+            log(invalid, STATUS_INVALID);
+            logger.warn("Blacklisting email {} because is invalid", invalid);
+        }
     }
 
     public void addFailedAddress(String failed) {
-        log(failed, STATUS_FAILED);
-        logger.warn("Blacklisting email {} because it failed a deliver", failed);
+        if (!Strings.isNullOrEmpty(failed)) {
+            log(failed, STATUS_FAILED);
+            logger.warn("Blacklisting email {} because it failed a deliver", failed);
+        }
     }
 
     public void pruneOldLogs(DateTime before) {
