@@ -24,16 +24,9 @@
  */
 package org.fenixedu.messaging.core.ui;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import com.google.common.base.Strings;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import org.fenixedu.bennu.core.security.Authenticate;
 import org.fenixedu.bennu.core.util.CoreConfiguration;
@@ -45,7 +38,6 @@ import org.fenixedu.messaging.core.domain.Message;
 import org.fenixedu.messaging.core.domain.MessageFile;
 import org.fenixedu.messaging.core.domain.Sender;
 import org.fenixedu.messaging.core.exception.MessagingDomainException;
-import org.joda.time.DateTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -61,10 +53,14 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
-
-import com.google.gson.JsonObject;
-
 import javax.servlet.http.HttpServletRequest;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static pt.ist.fenixframework.FenixFramework.atomic;
 
@@ -83,7 +79,7 @@ public class MessagingController {
             @RequestParam(value = "items", defaultValue = "10") final int items,
             @RequestParam(value = "search", defaultValue = "") final String search) {
         Set<Sender> senders = Sender.available().stream()
-                .filter(sender -> sender.getName().toLowerCase().contains(search.toLowerCase()))
+                .filter(sender -> sender.getName().toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT)))
                 .collect(Collectors.toSet());
         PaginationUtils.paginate(model, "messaging/senders", "senders", senders, Comparator.comparing(Sender::getLastMessageSentDate).reversed(), items, page);
         model.addAttribute("search", search);
