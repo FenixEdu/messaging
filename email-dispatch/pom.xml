@@ -11,7 +11,7 @@
     <name>Email Dispatcher</name>
 
     <properties>
-        <version.javax.mail.javax.mail-api>1.6.0</version.javax.mail.javax.mail-api>
+        <version.javax.mail>1.6.0</version.javax.mail>
     </properties>
 
     <dependencies>
@@ -23,7 +23,13 @@
         <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>javax.mail-api</artifactId>
-            <version>${version.javax.mail.javax.mail-api}</version>
+            <version>${version.javax.mail}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
+            <version>${version.javax.mail}</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
