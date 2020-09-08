@@ -11,9 +11,9 @@
     <name>Messaging Core</name>
 
     <properties>
-        <version.org.fenixedu.bennu>6.0.0</version.org.fenixedu.bennu>
+        <version.org.fenixedu.bennu>6.11.3</version.org.fenixedu.bennu>
         <version.com.mitchellbosecke.pebble>2.4.0</version.com.mitchellbosecke.pebble>
-        <version.javax.mail.javax.mail-api>1.6.0</version.javax.mail.javax.mail-api>
+        <version.javax.mail.javax.mail-api>1.6.2</version.javax.mail.javax.mail-api>
     </properties>
 
     <dependencies>

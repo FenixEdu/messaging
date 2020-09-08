@@ -11,7 +11,7 @@
     <name>Email Dispatcher</name>
 
     <properties>
-        <version.javax.mail>1.6.0</version.javax.mail>
+        <version.javax.mail>1.6.2</version.javax.mail>
     </properties>
 
     <dependencies>
