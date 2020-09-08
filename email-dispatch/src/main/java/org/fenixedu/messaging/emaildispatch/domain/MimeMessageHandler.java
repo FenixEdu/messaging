@@ -1,19 +1,21 @@
 package org.fenixedu.messaging.emaildispatch.domain;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.sun.mail.smtp.SMTPAddressFailedException;
+import org.fenixedu.bennu.io.domain.GenericFile;
+import org.fenixedu.commons.i18n.LocalizedString;
+import org.fenixedu.messaging.core.domain.Message;
+import org.fenixedu.messaging.core.domain.MessagingSystem;
+import org.fenixedu.messaging.core.domain.Sender;
+import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration;
+import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration.ConfigurationProperties;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -28,25 +30,20 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
-
-import com.google.common.collect.Sets;
-import com.sun.mail.smtp.SMTPAddressFailedException;
-import org.fenixedu.bennu.io.domain.GenericFile;
-import org.fenixedu.commons.i18n.LocalizedString;
-import org.fenixedu.messaging.core.domain.Message;
-import org.fenixedu.messaging.core.domain.MessagingSystem;
-import org.fenixedu.messaging.core.domain.Sender;
-import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration;
-import org.fenixedu.messaging.emaildispatch.EmailDispatchConfiguration.ConfigurationProperties;
-import org.joda.time.DateTime;
-
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.Atomic.TxMode;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class MimeMessageHandler extends MimeMessageHandler_Base {
     private static final int MAX_RECIPIENTS = EmailDispatchConfiguration.getConfiguration().mailSenderMaxRecipients();
@@ -276,10 +273,11 @@ public final class MimeMessageHandler extends MimeMessageHandler_Base {
         LocalEmailMessageDispatchReport report = getReport();
         try {
             MimeMessage message = mimeMessage();
-            Transport.send(message);
-            report.setDeliveredCount(report.getDeliveredCount() + message.getAllRecipients().length);
-        }
-        catch (SendFailedException e) {
+            if (message.getAllRecipients() != null) {
+                Transport.send(message);
+                report.setDeliveredCount(report.getDeliveredCount() + message.getAllRecipients().length);
+            }
+        } catch (SendFailedException e) {
             if (e.getValidSentAddresses() != null) {
                 report.setDeliveredCount(report.getDeliveredCount() + e.getValidSentAddresses().length);
             }
