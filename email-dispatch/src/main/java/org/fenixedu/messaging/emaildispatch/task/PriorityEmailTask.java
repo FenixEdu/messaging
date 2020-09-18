@@ -28,14 +28,22 @@ import org.fenixedu.bennu.scheduler.CronTask;
 import org.fenixedu.bennu.scheduler.annotation.Task;
 import org.fenixedu.messaging.core.domain.MessagingSystem;
 import org.fenixedu.messaging.emaildispatch.domain.LocalEmailMessageDispatchReport;
+import pt.ist.fenixframework.FenixFramework;
 
-@Task(englishTitle = "Email Sender", readOnly = true)
-public class EmailTask extends CronTask {
+@Task(englishTitle = "Email Sender For System", readOnly = true)
+public class PriorityEmailTask extends CronTask {
     @Override
     public void runTask() throws Exception {
         MessagingSystem.getInstance().getUnfinishedReportsSet()
-                .stream()
-                .filter(report -> report.getMessage().getSender() != MessagingSystem.systemSender())
-                .forEach(LocalEmailMessageDispatchReport::deliver);
+                .parallelStream()
+                .forEach(this::process);
+    }
+
+    private void process(final LocalEmailMessageDispatchReport report) {
+        FenixFramework.atomic(() -> {
+            if (report.getMessage().getSender() == MessagingSystem.systemSender()) {
+                report.deliver();
+            }
+        });
     }
 }
