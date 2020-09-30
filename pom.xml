@@ -21,6 +21,7 @@
 
     <modules>
         <module>email-dispatch</module>
+        <module>sms-dispatch</module>
         <module>messaging-core</module>
         <module>messaging-test</module>
     </modules>
