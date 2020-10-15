@@ -14,7 +14,7 @@
         <code.generator.class>pt.ist.fenixframework.backend.jvstm.JVSTMCodeGenerator</code.generator.class>
         <version.ff>2.7.0</version.ff>
         <version.spring>4.2.5.RELEASE</version.spring>
-        <version.junit.junit>4.11</version.junit.junit>
+        <version.junit.junit>4.13.1</version.junit.junit>
         <version.jersey>2.10.1</version.jersey>
     </properties>
 
