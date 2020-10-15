@@ -1,11 +1,9 @@
 package org.fenixedu.beenu;
 
-import org.fenixedu.bennu.spring.BennuSpringModule;
 import org.fenixedu.commons.configuration.ConfigurationInvocationHandler;
 import org.fenixedu.commons.configuration.ConfigurationManager;
 import org.fenixedu.commons.configuration.ConfigurationProperty;
 
-@BennuSpringModule(basePackages = "org.fenixedu.messaging.smsdispatch", bundles = "SMSDispatchResources")
 public class SMSDispatchConfiguration {
 
     @ConfigurationManager(description = "SMS Dispatcher Configurations")
