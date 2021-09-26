@@ -107,9 +107,9 @@ public class SMSMessage {
     public boolean sendSMS(final String number, final String message) {
         if (CoreConfiguration.getConfiguration().developmentMode().booleanValue()) {
             System.out.println("SMS to " + number + " : " + message);
-        } else if (TWILIO_CLIENT != null && isAllowedAlphaSender(number)) {
-            final String mid = sendTwilioSMS(number, message);
-        } else {
+//        } else if (TWILIO_CLIENT != null && isAllowedAlphaSender(number)) {
+//            final String mid = sendTwilioSMS(number, message);
+//        } else {
             return sendGatewaySMS(number, message);
         }
         return true;
