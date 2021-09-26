@@ -109,7 +109,7 @@ public class SMSMessage {
             System.out.println("SMS to " + number + " : " + message);
 //        } else if (TWILIO_CLIENT != null && isAllowedAlphaSender(number)) {
 //            final String mid = sendTwilioSMS(number, message);
-//        } else {
+        } else {
             return sendGatewaySMS(number, message);
         }
         return true;
